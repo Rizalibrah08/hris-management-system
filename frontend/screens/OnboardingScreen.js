@@ -139,7 +139,16 @@ export default function OnboardingScreen({ navigation }) {
                                     </TouchableOpacity>
                                 </View>
 
-                                <TouchableOpacity style={styles.btnPrimary}>
+                                <TouchableOpacity 
+                                    style={styles.btnPrimary}
+                                    onPress={() => {
+                                        setIsModalVisible(false);
+                                        navigation.reset({
+                                            index: 0,
+                                            routes: [{ name: 'Main' }],
+                                        });
+                                    }}
+                                >
                                     <Text style={styles.btnPrimaryText}>Sign In</Text>
                                 </TouchableOpacity>
 

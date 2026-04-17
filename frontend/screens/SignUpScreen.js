@@ -252,7 +252,13 @@ export default function SignUpScreen({ navigation }) {
                 Haven't received the verification code? <Text style={styles.resendLink}>Resend it.</Text>
               </Text>
 
-              <TouchableOpacity style={styles.btnPrimary} onPress={() => setIsVerificationVisible(false)}>
+              <TouchableOpacity style={styles.btnPrimary} onPress={() => {
+                setIsVerificationVisible(false);
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'Main' }],
+                });
+              }}>
                 <Text style={styles.btnPrimaryText}>Submit</Text>
               </TouchableOpacity>
 
