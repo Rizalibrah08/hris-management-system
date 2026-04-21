@@ -94,8 +94,12 @@ export default function SubmitClockInScreen() {
         visible={isSuccessVisible}
         onRequestClose={() => setIsSuccessVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.bottomSheet}>
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPressOut={() => setIsSuccessVisible(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.bottomSheet}>
             {/* Floating Icon */}
             <View style={styles.floatingIconContainer}>
               <View style={styles.floatingIconBox}>
@@ -120,8 +124,8 @@ export default function SubmitClockInScreen() {
             >
               <Text style={styles.btnPrimaryText}>Go To Clock In Page</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
     </SafeAreaView>

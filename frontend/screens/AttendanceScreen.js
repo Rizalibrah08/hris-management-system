@@ -129,8 +129,12 @@ export default function AttendanceScreen() {
         visible={isClockOutVisible}
         onRequestClose={() => setIsClockOutVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.bottomSheet}>
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPressOut={() => setIsClockOutVisible(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.bottomSheet}>
             {/* Floating Icon */}
             <View style={styles.floatingIconContainer}>
               <View style={styles.floatingIconBox}>
@@ -177,8 +181,8 @@ export default function AttendanceScreen() {
             >
               <Text style={styles.btnSecondaryText}>No, Let me check</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
       {/* Clock Out Success Modal */}
@@ -188,8 +192,12 @@ export default function AttendanceScreen() {
         visible={isClockOutSuccessVisible}
         onRequestClose={() => setIsClockOutSuccessVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.bottomSheet}>
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPressOut={() => setIsClockOutSuccessVisible(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.bottomSheet}>
             {/* Floating Icon */}
             <View style={styles.floatingIconContainer}>
               <View style={styles.floatingIconBox}>
@@ -211,8 +219,8 @@ export default function AttendanceScreen() {
             >
               <Text style={styles.btnPrimaryText}>Close Message</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
     </View>

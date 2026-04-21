@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 export default function DashboardScreen() {
+  const navigation = useNavigation();
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.container}>
@@ -10,15 +12,18 @@ export default function DashboardScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.userInfo}>
-            <View style={styles.avatarContainer}>
+            <TouchableOpacity 
+              style={styles.avatarContainer}
+              onPress={() => navigation.navigate('Profile')}
+            >
               <Ionicons name="happy-outline" size={28} color="#8B5CF6" style={styles.avatarIcon} />
-            </View>
+            </TouchableOpacity>
             <View style={styles.userDetails}>
               <View style={styles.nameRow}>
-                <Text style={styles.userName}>Tonald Drump</Text>
+                <Text style={styles.userName}>Rizal Ibrahim</Text>
                 <Ionicons name="checkmark-circle" size={16} color="#3B82F6" style={styles.verifiedIcon} />
               </View>
-              <Text style={styles.userEmail}>Tonald@work.com</Text>
+              <Text style={styles.userEmail}>rizal@work.com</Text>
             </View>
           </View>
           <View style={styles.headerActions}>
@@ -91,7 +96,7 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 40, // Increased to avoid status bar overlap
     paddingBottom: 40,
   },
   header: {
