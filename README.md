@@ -11,6 +11,12 @@ Workmate adalah aplikasi HRIS (Human Resource Information System) modern yang di
     - **Sign Up**: Pendaftaran akun baru dengan validasi Company ID dan integrasi Syarat & Ketentuan.
     - **Verifikasi Email**: Sistem verifikasi menggunakan kode OTP (One-Time Password) setelah pendaftaran.
 - **UI/UX Modern**: Desain bersih menggunakan skema warna ungu (Lavender/Violet) dengan navigasi yang intuitif.
+- **Attendance Module**: 
+    - **Dashboard Kehadiran**: Pemantauan jam kerja terintegrasi dan daftar riwayat aktivitas presensi karyawan.
+    - **Selfie Verification**: Integrasi kamera depan (`expo-camera`) untuk memvalidasi absensi lengkap dengan *Geo-location* (Lat/Long) dan *Timestamp*.
+    - **State Management Dinamis**: Status UI interaktif sesuai kondisi harian (*Clock In Now* → *Clock Out* → *Clocked Out*).
+    - **Interactive Modals**: *Slide-up Notification* untuk konfirmasi aksi absen dan notifikasi sukses.
+    - **Attendance Details**: Rekap detail laporan jam kerja secara spesifik pada masing-masing hari dan tersedianya aksi simulasi *Export As PDF*.
 
 ### Backend (Server)
 - **Framework**: Express.js (Node.js).
@@ -21,7 +27,8 @@ Workmate adalah aplikasi HRIS (Human Resource Information System) modern yang di
 
 ### Frontend
 - **React Native** (Expo SDK 54)
-- **React Navigation** (Native Stack)
+- **React Navigation** (Native Stack / Bottom Tabs)
+- **Expo Camera** (Akses sensor perangkat keras)
 - **Expo Linear Gradient** (Efek visual gradasi)
 - **Vector Icons** (Ionicons)
 

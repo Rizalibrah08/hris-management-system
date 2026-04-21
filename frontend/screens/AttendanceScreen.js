@@ -1,14 +1,24 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 export default function AttendanceScreen() {
-  const historyData = [
+  const navigation = useNavigation();
+  const route = useRoute();
+  const [isClockOutVisible, setIsClockOutVisible] = useState(false);
+  const [isClockOutSuccessVisible, setIsClockOutSuccessVisible] = useState(false);
+  const clockState = route.params?.clockState || 'not_clocked_in';
+  const baseHistoryData = [
     { id: 1, date: '27 September 2024', totalHours: '08:00:00 hrs', clockInOut: '09:00 AM — 05:00 PM' },
     { id: 2, date: '26 September 2024', totalHours: '08:00:00 hrs', clockInOut: '09:00 AM — 05:00 PM' },
     { id: 3, date: '25 September 2024', totalHours: '08:00:00 hrs', clockInOut: '09:00 AM — 05:00 PM' },
   ];
+
+  const historyData = clockState === 'clocked_out' 
+    ? [{ id: 0, date: '28 September 2024', totalHours: '08:00:00 hrs', clockInOut: '09:00 AM — 05:00 PM' }, ...baseHistoryData]
+    : baseHistoryData;
 
   return (
     <View style={styles.container}>
@@ -44,7 +54,9 @@ export default function AttendanceScreen() {
                 <Ionicons name="time-outline" size={16} color="#9CA3AF" />
                 <Text style={styles.statBoxTitle}>Today</Text>
               </View>
-              <Text style={styles.statBoxValue}>00:00 Hrs</Text>
+              <Text style={styles.statBoxValue}>
+                {clockState === 'clocked_in' ? "04:10 Hrs" : clockState === 'clocked_out' ? "08:00 Hrs" : "00:00 Hrs"}
+              </Text>
             </View>
             
             <View style={styles.statBox}>
@@ -56,15 +68,39 @@ export default function AttendanceScreen() {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.clockInButton}>
-            <Text style={styles.clockInButtonText}>Clock In Now</Text>
-          </TouchableOpacity>
+          {clockState === 'clocked_in' ? (
+            <TouchableOpacity 
+              style={styles.clockOutButtonFull}
+              onPress={() => setIsClockOutVisible(true)}
+            >
+              <Text style={styles.clockOutButtonText}>Clock Out</Text>
+            </TouchableOpacity>
+          ) : clockState === 'clocked_out' ? (
+            <TouchableOpacity 
+              style={styles.clockedOutButtonFull}
+              disabled={true}
+            >
+              <Text style={styles.clockedOutButtonText}>Clocked Out</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity 
+              style={styles.clockInButton}
+              onPress={() => navigation.navigate('ClockIn')}
+            >
+              <Text style={styles.clockInButtonText}>Clock In Now</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* History List */}
         <View style={styles.historyContainer}>
           {historyData.map((item) => (
-            <View key={item.id} style={styles.historyCard}>
+            <TouchableOpacity 
+              key={item.id} 
+              style={styles.historyCard}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('AttendanceDetails', { item })}
+            >
               <View style={styles.historyCardHeader}>
                 <Ionicons name="calendar-outline" size={16} color="#8B5CF6" />
                 <Text style={styles.historyDate}>{item.date}</Text>
@@ -80,11 +116,105 @@ export default function AttendanceScreen() {
                   <Text style={styles.historyValue}>{item.clockInOut}</Text>
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
 
       </ScrollView>
+
+      {/* Clock Out Confirmation Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isClockOutVisible}
+        onRequestClose={() => setIsClockOutVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.bottomSheet}>
+            {/* Floating Icon */}
+            <View style={styles.floatingIconContainer}>
+              <View style={styles.floatingIconBox}>
+                <Ionicons name="time-outline" size={40} color="#FFFFFF" />
+              </View>
+            </View>
+
+            <Text style={styles.modalTitle}>Confirm Clockout</Text>
+            <Text style={styles.modalSubtitle}>
+              Once you clock out, you won't be able to edit this time. Please double-check your hours before proceeding.
+            </Text>
+
+            {/* Modal Stats */}
+            <View style={styles.modalStatsContainer}>
+              <View style={styles.modalStatBox}>
+                <View style={styles.modalStatBoxHeader}>
+                  <Ionicons name="time-outline" size={14} color="#9CA3AF" />
+                  <Text style={styles.modalStatBoxTitle}>Today</Text>
+                </View>
+                <Text style={styles.modalStatBoxValue}>08:00:00 Hrs</Text>
+              </View>
+              <View style={styles.modalStatBox}>
+                <View style={styles.modalStatBoxHeader}>
+                  <Ionicons name="time-outline" size={14} color="#9CA3AF" />
+                  <Text style={styles.modalStatBoxTitle}>Overtime</Text>
+                </View>
+                <Text style={styles.modalStatBoxValue}>00:00:00 Hrs</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.btnPrimary}
+              onPress={() => {
+                setIsClockOutVisible(false);
+                setIsClockOutSuccessVisible(true);
+              }}
+            >
+              <Text style={styles.btnPrimaryText}>Yes, Clock Out</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.btnSecondary}
+              onPress={() => setIsClockOutVisible(false)}
+            >
+              <Text style={styles.btnSecondaryText}>No, Let me check</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Clock Out Success Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isClockOutSuccessVisible}
+        onRequestClose={() => setIsClockOutSuccessVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.bottomSheet}>
+            {/* Floating Icon */}
+            <View style={styles.floatingIconContainer}>
+              <View style={styles.floatingIconBox}>
+                <Ionicons name="time-outline" size={40} color="#FFFFFF" />
+              </View>
+            </View>
+
+            <Text style={styles.modalTitle}>Clockout Successful!</Text>
+            <Text style={styles.modalSubtitle}>
+              You've officially clocked out for the day. Thank you for your hard work! Time to relax and enjoy your break.
+            </Text>
+
+            <TouchableOpacity 
+              style={styles.btnPrimary}
+              onPress={() => {
+                setIsClockOutSuccessVisible(false);
+                navigation.setParams({ clockState: 'clocked_out' });
+              }}
+            >
+              <Text style={styles.btnPrimaryText}>Close Message</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -237,5 +367,134 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     color: '#4B5563',
+  },
+  clockOutButtonFull: {
+    backgroundColor: '#2D2D2D',
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: 'center',
+    width: '100%',
+  },
+  clockOutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  clockedOutButtonFull: {
+    backgroundColor: '#C4B5FD',
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: 'center',
+    width: '100%',
+  },
+  clockedOutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(31, 41, 55, 0.7)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 40,
+    alignItems: 'center',
+  },
+  floatingIconContainer: {
+    position: 'absolute',
+    top: -45,
+    alignSelf: 'center',
+    zIndex: 10,
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+  floatingIconBox: {
+    width: 90,
+    height: 90,
+    backgroundColor: '#8B5CF6',
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#4B5563',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 30,
+    paddingHorizontal: 10,
+  },
+  modalStatsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 30,
+  },
+  modalStatBox: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    backgroundColor: '#FAFAFA',
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 5,
+  },
+  modalStatBoxHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modalStatBoxTitle: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginLeft: 6,
+    fontWeight: '500',
+  },
+  modalStatBoxValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111827',
+  },
+  btnPrimary: {
+    backgroundColor: '#8B5CF6',
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 16,
+  },
+  btnPrimaryText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  btnSecondary: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: 'center',
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#8B5CF6',
+  },
+  btnSecondaryText: {
+    color: '#8B5CF6',
+    fontSize: 15,
+    fontWeight: 'bold',
   },
 });
