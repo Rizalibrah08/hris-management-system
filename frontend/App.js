@@ -19,6 +19,9 @@ import ProfileScreen from './screens/ProfileScreen';
 import PayrollTaxScreen from './screens/PayrollTaxScreen';
 import PayrollDetailsScreen from './screens/PayrollDetailsScreen';
 import ExpenseScreen from './screens/ExpenseScreen';
+import PersonalDataScreen from './screens/PersonalDataScreen';
+import LeaveScreen from './screens/LeaveScreen';
+import SubmitLeaveScreen from './screens/SubmitLeaveScreen';
 
 // Dummy screen for other tabs
 const DummyScreen = () => <View style={{ flex: 1, backgroundColor: '#F3F4F6' }} />
@@ -51,7 +54,7 @@ function MainTabs() {
             iconName = focused ? 'clipboard' : 'clipboard-outline';
           } else if (route.name === 'Expense') {
             iconName = focused ? 'receipt' : 'receipt-outline';
-          } else if (route.name === 'More') {
+          } else if (route.name === 'Leave') {
             iconName = focused ? 'layers' : 'layers-outline';
           }
 
@@ -68,7 +71,7 @@ function MainTabs() {
       <Tab.Screen name="Calendar" component={AttendanceScreen} />
       <Tab.Screen name="Tasks" component={DummyScreen} />
       <Tab.Screen name="Expense" component={ExpenseScreen} />
-      <Tab.Screen name="More" component={DummyScreen} />
+      <Tab.Screen name="Leave" component={LeaveScreen} />
     </Tab.Navigator>
   );
 }
@@ -151,6 +154,18 @@ export default function App() {
         <Stack.Screen
           name="PayrollDetails"
           component={PayrollDetailsScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="PersonalData"
+          component={PersonalDataScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="SubmitLeave"
+          component={SubmitLeaveScreen}
           options={{ headerShown: false }}
         />
 
