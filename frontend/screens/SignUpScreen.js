@@ -162,8 +162,8 @@ export default function SignUpScreen({ navigation }) {
         visible={isTnCModalVisible}
         onRequestClose={() => setIsTnCModalVisible(false)}
       >
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setIsTnCModalVisible(false)}>
-          <View style={styles.bottomSheet} onStartShouldSetResponder={() => true}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPressOut={() => setIsTnCModalVisible(false)}>
+          <TouchableOpacity activeOpacity={1} style={styles.bottomSheet}>
             <Text style={styles.modalTitleCentered}>Terms & Conditions and{'\n'}Privacy Policy</Text>
             
             <ScrollView style={styles.tncScroll} showsVerticalScrollIndicator={true}>
@@ -197,7 +197,7 @@ export default function SignUpScreen({ navigation }) {
                 <Text style={styles.btnSecondaryText}>Decline</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
 
@@ -212,7 +212,7 @@ export default function SignUpScreen({ navigation }) {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1 }}
         >
-          <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setIsVerificationVisible(false)}>
+          <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPressOut={() => setIsVerificationVisible(false)}>
             {/* Wrap the bottom sheet in a clickable container that does nothing to stop event propagation */}
             <TouchableOpacity activeOpacity={1} style={styles.verificationBottomSheet}>
               

@@ -15,6 +15,10 @@ import ClockInScreen from './screens/ClockInScreen';
 import CameraScreen from './screens/CameraScreen';
 import SubmitClockInScreen from './screens/SubmitClockInScreen';
 import AttendanceDetailsScreen from './screens/AttendanceDetailsScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import PayrollTaxScreen from './screens/PayrollTaxScreen';
+import PayrollDetailsScreen from './screens/PayrollDetailsScreen';
+import ExpenseScreen from './screens/ExpenseScreen';
 
 // Dummy screen for other tabs
 const DummyScreen = () => <View style={{ flex: 1, backgroundColor: '#F3F4F6' }} />
@@ -45,8 +49,8 @@ function MainTabs() {
             iconName = focused ? 'calendar' : 'calendar-outline';
           } else if (route.name === 'Tasks') {
             iconName = focused ? 'clipboard' : 'clipboard-outline';
-          } else if (route.name === 'Notices') {
-            iconName = focused ? 'newspaper' : 'newspaper-outline';
+          } else if (route.name === 'Expense') {
+            iconName = focused ? 'receipt' : 'receipt-outline';
           } else if (route.name === 'More') {
             iconName = focused ? 'layers' : 'layers-outline';
           }
@@ -63,7 +67,7 @@ function MainTabs() {
       <Tab.Screen name="Home" component={DashboardScreen} />
       <Tab.Screen name="Calendar" component={AttendanceScreen} />
       <Tab.Screen name="Tasks" component={DummyScreen} />
-      <Tab.Screen name="Notices" component={DummyScreen} />
+      <Tab.Screen name="Expense" component={ExpenseScreen} />
       <Tab.Screen name="More" component={DummyScreen} />
     </Tab.Navigator>
   );
@@ -127,6 +131,26 @@ export default function App() {
         <Stack.Screen
           name="AttendanceDetails"
           component={AttendanceDetailsScreen}
+          options={{ headerShown: false }}
+        />
+
+        {/* Daftarkan halaman Profile */}
+        <Stack.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{ headerShown: false }}
+        />
+
+        {/* Daftarkan halaman Payroll & Tax */}
+        <Stack.Screen
+          name="PayrollTax"
+          component={PayrollTaxScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="PayrollDetails"
+          component={PayrollDetailsScreen}
           options={{ headerShown: false }}
         />
 

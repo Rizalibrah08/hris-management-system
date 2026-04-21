@@ -101,8 +101,12 @@ export default function AttendanceDetailsScreen() {
         visible={isExportVisible}
         onRequestClose={() => setIsExportVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.bottomSheet}>
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPressOut={() => setIsExportVisible(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.bottomSheet}>
             {/* Floating Icon */}
             <View style={styles.floatingIconContainer}>
               <View style={styles.floatingIconBox}>
@@ -124,8 +128,8 @@ export default function AttendanceDetailsScreen() {
             >
               <Text style={styles.btnPrimaryText}>Close Message</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
     </SafeAreaView>

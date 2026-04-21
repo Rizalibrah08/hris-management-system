@@ -15,8 +15,16 @@ Workmate adalah aplikasi HRIS (Human Resource Information System) modern yang di
     - **Dashboard Kehadiran**: Pemantauan jam kerja terintegrasi dan daftar riwayat aktivitas presensi karyawan.
     - **Selfie Verification**: Integrasi kamera depan (`expo-camera`) untuk memvalidasi absensi lengkap dengan *Geo-location* (Lat/Long) dan *Timestamp*.
     - **State Management Dinamis**: Status UI interaktif sesuai kondisi harian (*Clock In Now* → *Clock Out* → *Clocked Out*).
-    - **Interactive Modals**: *Slide-up Notification* untuk konfirmasi aksi absen dan notifikasi sukses.
     - **Attendance Details**: Rekap detail laporan jam kerja secara spesifik pada masing-masing hari dan tersedianya aksi simulasi *Export As PDF*.
+- **Profile & Payroll Module**:
+    - **User Profile**: Layar profil karyawan modern yang menyediakan manajemen pengaturan dan navigasi akun.
+    - **Payroll & Tax Management**: Daftar rekapitulasi gaji bulanan yang menyajikan *Total Hours*, *Received Amount*, dan parameter pajak.
+    - **Payroll Details/Slip**: Dokumen rinci spesifikasi penggajian (Basic Salary, Reimbursement, Overtime, Tax, dll) disertai integrasi cetak/pdf.
+- **Expense Summary Module**:
+    - Menu bawaan yang terpasang pada navigasi bawah untuk melihat rincian klaim (*Review*, *Approved*, *Rejected*). Mendukung transisi UX mulus dan *Empty State*.
+- **Global UX Improvements**: 
+    - **Interactive & Dismissible Modals**: Penggunaan ekstensif *Slide-up Modal bottom-sheets* interaktif. Seluruh modal mendukung gestur "ketuk-di-luar" (*click-outside-to-dismiss*) untuk otomatis kembali/keluar, memblokir propagasi klik internal yang tak disengaja.
+    - Optimasi *Top Padding* layar di bawah Status Bar (*Notch*) untuk memastikan komponen selalu rekat nyaman secara *cross-platform*.
 
 ### Backend (Server)
 - **Framework**: Express.js (Node.js).
