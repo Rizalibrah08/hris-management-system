@@ -64,7 +64,10 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>ACCOUNT</Text>
             <View style={styles.cardInfo}>
-              <TouchableOpacity style={styles.actionRow}>
+              <TouchableOpacity 
+                style={styles.actionRow} 
+                onPress={() => navigation.navigate('PersonalData')}
+              >
                 <View style={styles.actionLeft}>
                   <Ionicons name="person" size={20} color="#8B5CF6" style={styles.itemIcon} />
                   <Text style={styles.itemText}>Personal Data</Text>
