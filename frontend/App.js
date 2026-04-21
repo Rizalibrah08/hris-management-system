@@ -11,6 +11,10 @@ import OnboardingScreen from './screens/OnboardingScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import AttendanceScreen from './screens/AttendanceScreen';
+import ClockInScreen from './screens/ClockInScreen';
+import CameraScreen from './screens/CameraScreen';
+import SubmitClockInScreen from './screens/SubmitClockInScreen';
+import AttendanceDetailsScreen from './screens/AttendanceDetailsScreen';
 
 // Dummy screen for other tabs
 const DummyScreen = () => <View style={{ flex: 1, backgroundColor: '#F3F4F6' }} />
@@ -96,6 +100,34 @@ export default function App() {
           name="Main"
           component={MainTabs}
           options={{ headerShown: false, gestureEnabled: false }}
+        />
+
+        {/* Daftarkan halaman Clock In Area */}
+        <Stack.Screen
+          name="ClockIn"
+          component={ClockInScreen}
+          options={{ headerShown: false }}
+        />
+
+        {/* Daftarkan halaman Kamera */}
+        <Stack.Screen
+          name="Camera"
+          component={CameraScreen}
+          options={{ headerShown: false }}
+        />
+
+        {/* Daftarkan halaman Submit Clock In */}
+        <Stack.Screen
+          name="SubmitClockIn"
+          component={SubmitClockInScreen}
+          options={{ headerShown: false }}
+        />
+
+        {/* Daftarkan halaman Attendance Details */}
+        <Stack.Screen
+          name="AttendanceDetails"
+          component={AttendanceDetailsScreen}
+          options={{ headerShown: false }}
         />
 
       </Stack.Navigator>
