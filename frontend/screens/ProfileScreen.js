@@ -75,7 +75,10 @@ export default function ProfileScreen() {
                 <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.actionRow}>
+              <TouchableOpacity 
+                style={styles.actionRow}
+                onPress={() => navigation.navigate('OfficeAssets')}
+              >
                 <View style={styles.actionLeft}>
                   <Ionicons name="folder" size={20} color="#8B5CF6" style={styles.itemIcon} />
                   <Text style={styles.itemText}>Office Assets</Text>

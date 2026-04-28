@@ -22,6 +22,9 @@ import ExpenseScreen from './screens/ExpenseScreen';
 import PersonalDataScreen from './screens/PersonalDataScreen';
 import LeaveScreen from './screens/LeaveScreen';
 import SubmitLeaveScreen from './screens/SubmitLeaveScreen';
+import OfficeAssetsScreen from './screens/OfficeAssetsScreen';
+import TaskScreen from './screens/TaskScreen';
+import BurnoutStatsScreen from './screens/BurnoutStatsScreen';
 
 // Dummy screen for other tabs
 const DummyScreen = () => <View style={{ flex: 1, backgroundColor: '#F3F4F6' }} />
@@ -69,7 +72,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={DashboardScreen} />
       <Tab.Screen name="Calendar" component={AttendanceScreen} />
-      <Tab.Screen name="Tasks" component={DummyScreen} />
+      <Tab.Screen name="Tasks" component={TaskScreen} />
       <Tab.Screen name="Expense" component={ExpenseScreen} />
       <Tab.Screen name="Leave" component={LeaveScreen} />
     </Tab.Navigator>
@@ -80,7 +83,7 @@ export default function App() {
   useEffect(() => {
     if (Platform.OS === 'android') {
       NavigationBar.setVisibilityAsync("hidden");
-      NavigationBar.setBehaviorAsync("overlay-swipe");
+      // NavigationBar.setBehaviorAsync("overlay-swipe"); // Deprecated/Not supported with edge-to-edge
     }
   }, []);
 
@@ -166,6 +169,18 @@ export default function App() {
         <Stack.Screen
           name="SubmitLeave"
           component={SubmitLeaveScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="OfficeAssets"
+          component={OfficeAssetsScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="BurnoutStats"
+          component={BurnoutStatsScreen}
           options={{ headerShown: false }}
         />
 
