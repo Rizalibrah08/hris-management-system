@@ -1,0 +1,14 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// This Prisma schema is kept for reference only.
+// The mobile backend uses raw MySQL queries via mysql2,
+// connecting to the same hris_db database as the web backend.
+// Do NOT run prisma migrate or prisma push against this schema.
