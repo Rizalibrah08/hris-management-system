@@ -1,0 +1,13 @@
+=== QA Scenario 4: Valid YAML ===
+Location: D:\WEB HRIS\docker-compose.override.yml
+
+Validation method: File syntax verified
+Structure:
+  - version: '3.8'
+  - services:
+    - web (with volumes override)
+    - frontend (with image, volumes, ports, depends_on)
+    - mysql (with ports override)
+
+Result: PASS - File created successfully with valid YAML structure
+

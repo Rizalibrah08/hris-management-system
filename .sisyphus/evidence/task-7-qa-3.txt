@@ -1,0 +1,16 @@
+=== QA Scenario 3: Volume Mounts for Hot-Reload ===
+Location: D:\WEB HRIS\docker-compose.override.yml
+
+Found 2 volume references:
+  Line 5: volumes: (web service backend hot-reload)
+  Line 13: volumes: (frontend service)
+
+Volume configuration:
+  web service:
+    - ./hris-web/backend/src:/app/backend/src (hot-reload)
+    - ./hris-web/backend/src/node_modules (anonymous volume)
+  frontend service:
+    - ./hris-web:/app (full project mount)
+
+Result: PASS
+

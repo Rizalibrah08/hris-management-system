@@ -1,0 +1,23 @@
+Task 5 Complete: Dockerfile + .dockerignore
+
+## Files Created
+
+### Dockerfile (D:\WEB HRIS\hris-web\Dockerfile)
+Multi-stage build with:
+- Stage 1 (builder): node:20-alpine, installs all deps, runs npm run build
+- Stage 2 (runner): node:20-alpine, installs prod deps only (--omit=dev), copies backend + dist
+- USER node for security (non-root execution)
+- EXPOSE 5000
+- CMD ["node", "backend/src/server.js"]
+
+### .dockerignore (D:\WEB HRIS\hris-web\.dockerignore)
+Excludes: node_modules, dist, .git, .env, *.md, .sisyphus
+
+## Context
+- server.js uses dotenv.config({ path: 'backend/.env' }) with CWD-relative path
+- WORKDIR /app ensures backend/.env resolves correctly from container root
+- Multi-stage build keeps final image lean (no src, no devDeps)
+
+## Verification
+Docker daemon not running on this system - build could not be executed.
+Files created successfully and verified via Read tool.

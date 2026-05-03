@@ -1,6 +1,7 @@
+// Replace YOUR_VPS_IP with your actual VPS IP address before building APK
 const API_BASE_URL = __DEV__
   ? 'http://10.0.2.2:5000'
-  : 'https://your-production-api.com';
+  : 'http://YOUR_VPS_IP:5000';
 
 let authToken = null;
 

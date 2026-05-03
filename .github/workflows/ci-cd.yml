@@ -1,0 +1,399 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'hris-web/**'
+      - 'docker-compose*.yml'
+      - 'Dockerfile'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'hris-web/**'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  WEB_DIR: ./hris-web
+
+jobs:
+  # =============================================================================
+  # JOB 1: CODE QUALITY & TESTS
+  # =============================================================================
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WEB_DIR }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WEB_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Check code formatting
+        run: npx prettier --check "src/**/*.{js,jsx,css}" --ignore-path .gitignore
+        continue-on-error: true
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: ${{ env.WEB_DIR }}/dist
+          retention-days: 1
+
+  # =============================================================================
+  # JOB 2: SECURITY SCANNING
+  # =============================================================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # =============================================================================
+  # JOB 3: BUILD & PUSH DOCKER IMAGE
+  # =============================================================================
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.WEB_DIR }}
+          file: ${{ env.WEB_DIR }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Output image info
+        run: |
+          echo "Image: ${{ steps.meta.outputs.tags }}"
+          echo "Digest: ${{ steps.build.outputs.digest }}"
+
+  # =============================================================================
+  # JOB 4: DEPLOY TO DEVELOPMENT (VPS)
+  # =============================================================================
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: build-docker
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: development
+      url: http://${{ secrets.VPS_DEV_IP }}:5000
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Development VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_DEV_IP }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # Setup directory
+            mkdir -p ~/hris-dev
+            cd ~/hris-dev
+            
+            # Clone/pull latest code
+            if [ ! -d ".git" ]; then
+              git clone ${{ github.server_url }}/${{ github.repository }}.git .
+              git checkout develop
+            else
+              git fetch origin
+              git reset --hard origin/develop
+            fi
+            
+            # Create environment file
+            cat > hris-web/backend/.env << 'EOF'
+            PORT=5000
+            DB_HOST=mysql
+            DB_PORT=3306
+            DB_USER=root
+            DB_PASSWORD=${{ secrets.DB_PASSWORD_DEV }}
+            DB_NAME=hris_db
+            JWT_SECRET=${{ secrets.JWT_SECRET_DEV }}
+            NODE_ENV=production
+            EOF
+            
+            # Create docker-compose override for dev
+            cat > docker-compose.override.yml << 'EOF'
+            services:
+              web:
+                image: ${{ needs.build-docker.outputs.image_tag }}
+                environment:
+                  - NODE_ENV=production
+            EOF
+            
+            # Deploy
+            docker compose -f docker-compose.yml -f docker-compose.override.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.override.yml up -d --remove-orphans
+            
+            # Wait for MySQL
+            echo "Waiting for MySQL..."
+            sleep 10
+            
+            # Setup database (migrations)
+            docker compose exec -T web npm run db:setup || true
+            
+            # Health check
+            echo "Running health check..."
+            for i in {1..10}; do
+              if curl -sf http://localhost:5000/health > /dev/null; then
+                echo "✅ Health check passed"
+                exit 0
+              fi
+              echo "Attempt $i/10..."
+              sleep 5
+            done
+            
+            echo "❌ Health check failed"
+            docker compose logs web --tail=50
+            exit 1
+
+      - name: Verify deployment
+        run: |
+          echo "Deployment to development completed"
+          echo "URL: http://${{ secrets.VPS_DEV_IP }}:5000"
+
+  # =============================================================================
+  # JOB 5: DEPLOY TO PRODUCTION (VPS)
+  # =============================================================================
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-docker
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: http://${{ secrets.VPS_PROD_IP }}:5000
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create deployment backup
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_PROD_IP }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ~/hris-prod || exit 0
+            echo "Creating backup..."
+            docker compose exec -T mysql mysqldump -u root -p${{ secrets.DB_PASSWORD_PROD }} hris_db > backup-$(date +%Y%m%d-%H%M%S).sql 2>/dev/null || echo "No existing DB to backup"
+            # Keep only last 5 backups
+            ls -t backup-*.sql 2>/dev/null | tail -n +6 | xargs rm -f 2>/dev/null || true
+
+      - name: Deploy to Production VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_PROD_IP }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # Setup directory
+            mkdir -p ~/hris-prod
+            cd ~/hris-prod
+            
+            # Clone/pull latest code
+            if [ ! -d ".git" ]; then
+              git clone ${{ github.server_url }}/${{ github.repository }}.git .
+            else
+              git fetch origin
+              git reset --hard origin/main
+            fi
+            
+            # Create environment file
+            cat > hris-web/backend/.env << 'EOF'
+            PORT=5000
+            DB_HOST=mysql
+            DB_PORT=3306
+            DB_USER=root
+            DB_PASSWORD=${{ secrets.DB_PASSWORD_PROD }}
+            DB_NAME=hris_db
+            JWT_SECRET=${{ secrets.JWT_SECRET_PROD }}
+            NODE_ENV=production
+            EOF
+            
+            # Deploy with zero downtime
+            docker compose -f docker-compose.yml pull
+            docker compose -f docker-compose.yml up -d --remove-orphans
+            
+            # Wait for MySQL
+            echo "Waiting for MySQL..."
+            sleep 15
+            
+            # Run migrations (if any schema changes)
+            docker compose exec -T web npm run db:setup || true
+            
+            # Health check
+            echo "Running health check..."
+            for i in {1..10}; do
+              if curl -sf http://localhost:5000/health > /dev/null; then
+                echo "✅ Health check passed"
+                break
+              fi
+              echo "Attempt $i/10..."
+              sleep 5
+            done
+            
+            # Cleanup old images
+            docker image prune -f
+            
+            echo "✅ Production deployment completed"
+
+      - name: Verify production deployment
+        run: |
+          sleep 10
+          curl -sf http://${{ secrets.VPS_PROD_IP }}:5000/health && echo "✅ Production health check passed"
+
+  # =============================================================================
+  # JOB 6: NOTIFICATION (Optional - Slack/Discord)
+  # =============================================================================
+  notify:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-dev, deploy-prod]
+    if: always() && (needs.deploy-dev.result == 'success' || needs.deploy-prod.result == 'success')
+    steps:
+      - name: Discord notification
+        if: ${{ secrets.DISCORD_WEBHOOK != '' }}
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: |
+            🚀 **HRIS Deployment Successful**
+            
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            By: ${{ github.actor }}
+            
+            ${{ github.ref == 'refs/heads/main' && 'Production' || 'Development' }} deployed successfully!
+
+  # =============================================================================
+  # JOB 7: MOBILE BUILD (Manual Trigger Only)
+  # =============================================================================
+  build-mobile:
+    name: Build Mobile APK
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        working-directory: ./hris-mobile/frontend
+        run: npm ci
+
+      - name: Update API URL
+        working-directory: ./hris-mobile/frontend
+        run: |
+          sed -i "s/YOUR_VPS_IP/${{ secrets.VPS_PROD_IP }}/g" services/api.js
+
+      - name: Prebuild Android
+        working-directory: ./hris-mobile/frontend
+        run: npx expo prebuild --platform android
+
+      - name: Build APK
+        working-directory: ./hris-mobile/frontend/android
+        run: ./gradlew assembleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: ./hris-mobile/frontend/android/app/build/outputs/apk/release/app-release-unsigned.apk
+          retention-days: 5

@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  web:
+    volumes:
+      - ./hris-web/backend/src:/app/backend/src
+      - ./hris-web/backend/src/node_modules
+    command: npm run dev:server
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./hris-web:/app
+    command: npm run dev
+    ports:
+      - "5173:5173"
+    depends_on:
+      - web
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+
+  mysql:
+    ports:
+      - "3306:3306"

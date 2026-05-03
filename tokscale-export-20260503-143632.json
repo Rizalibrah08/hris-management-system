@@ -1,0 +1,452 @@
+{
+  "agents": [
+    {
+      "agent": "Build",
+      "clients": "opencode",
+      "cost": 32.408322051000056,
+      "messageCount": 2069,
+      "tokens": {
+        "cacheRead": 246837040,
+        "cacheWrite": 126267,
+        "input": 5671072,
+        "output": 870176,
+        "total": 253619178
+      }
+    },
+    {
+      "agent": "Prometheus",
+      "clients": "opencode",
+      "cost": 1.6770238,
+      "messageCount": 63,
+      "tokens": {
+        "cacheRead": 4502304,
+        "cacheWrite": 0,
+        "input": 579107,
+        "output": 61705,
+        "total": 5143116
+      }
+    },
+    {
+      "agent": "Explore",
+      "clients": "claude, opencode",
+      "cost": 1.515339068999998,
+      "messageCount": 173,
+      "tokens": {
+        "cacheRead": 4086494,
+        "cacheWrite": 14468,
+        "input": 1303046,
+        "output": 124102,
+        "total": 5539504
+      }
+    },
+    {
+      "agent": "General",
+      "clients": "opencode",
+      "cost": 1.2414627789999997,
+      "messageCount": 169,
+      "tokens": {
+        "cacheRead": 6143712,
+        "cacheWrite": 0,
+        "input": 473497,
+        "output": 139933,
+        "total": 6803224
+      }
+    },
+    {
+      "agent": "Sisyphus",
+      "clients": "opencode",
+      "cost": 0.7203601999999999,
+      "messageCount": 42,
+      "tokens": {
+        "cacheRead": 5525504,
+        "cacheWrite": 0,
+        "input": 169703,
+        "output": 19252,
+        "total": 5717203
+      }
+    },
+    {
+      "agent": "Metis",
+      "clients": "opencode",
+      "cost": 0.695859,
+      "messageCount": 49,
+      "tokens": {
+        "cacheRead": 1699168,
+        "cacheWrite": 0,
+        "input": 269827,
+        "output": 26937,
+        "total": 1995932
+      }
+    },
+    {
+      "agent": "Plan",
+      "clients": "opencode",
+      "cost": 0.5676329969999997,
+      "messageCount": 120,
+      "tokens": {
+        "cacheRead": 10020608,
+        "cacheWrite": 0,
+        "input": 770202,
+        "output": 47237,
+        "total": 10872159
+      }
+    },
+    {
+      "agent": "Compaction",
+      "clients": "opencode",
+      "cost": 0.52968918,
+      "messageCount": 6,
+      "tokens": {
+        "cacheRead": 288,
+        "cacheWrite": 112864,
+        "input": 327442,
+        "output": 10784,
+        "total": 451740
+      }
+    },
+    {
+      "agent": "Sisyphus-Junior",
+      "clients": "opencode",
+      "cost": 0.33587141000000015,
+      "messageCount": 109,
+      "tokens": {
+        "cacheRead": 2921728,
+        "cacheWrite": 0,
+        "input": 283844,
+        "output": 16516,
+        "total": 3235113
+      }
+    },
+    {
+      "agent": "Atlas",
+      "clients": "opencode",
+      "cost": 0.30840539999999994,
+      "messageCount": 16,
+      "tokens": {
+        "cacheRead": 1815552,
+        "cacheWrite": 0,
+        "input": 154347,
+        "output": 9628,
+        "total": 1981313
+      }
+    },
+    {
+      "agent": "Librarian",
+      "clients": "opencode",
+      "cost": 0.024384899999999998,
+      "messageCount": 2,
+      "tokens": {
+        "cacheRead": 19840,
+        "cacheWrite": 0,
+        "input": 43819,
+        "output": 4435,
+        "total": 68094
+      }
+    }
+  ],
+  "daily": [
+    {
+      "cost": 4.976036545000001,
+      "date": "2026-05-03",
+      "messageCount": 684,
+      "tokens": {
+        "cacheRead": 64275552,
+        "cacheWrite": 0,
+        "input": 3151340,
+        "output": 367373,
+        "total": 67884716
+      },
+      "turnCount": 0
+    },
+    {
+      "cost": 0.7605951220000009,
+      "date": "2026-05-02",
+      "messageCount": 545,
+      "tokens": {
+        "cacheRead": 115458304,
+        "cacheWrite": 0,
+        "input": 388334,
+        "output": 133410,
+        "total": 116045642
+      },
+      "turnCount": 0
+    },
+    {
+      "cost": 0.17630155600000003,
+      "date": "2026-05-01",
+      "messageCount": 87,
+      "tokens": {
+        "cacheRead": 3190912,
+        "cacheWrite": 0,
+        "input": 284660,
+        "output": 20149,
+        "total": 3522592
+      },
+      "turnCount": 0
+    },
+    {
+      "cost": 0.7472563329999998,
+      "date": "2026-04-30",
+      "messageCount": 246,
+      "tokens": {
+        "cacheRead": 12165280,
+        "cacheWrite": 0,
+        "input": 770247,
+        "output": 123365,
+        "total": 13100104
+      },
+      "turnCount": 0
+    },
+    {
+      "cost": 0.17670203999999995,
+      "date": "2026-04-29",
+      "messageCount": 19,
+      "tokens": {
+        "cacheRead": 351264,
+        "cacheWrite": 0,
+        "input": 45339,
+        "output": 4977,
+        "total": 401580
+      },
+      "turnCount": 0
+    },
+    {
+      "cost": 22.686787790000007,
+      "date": "2026-04-28",
+      "messageCount": 402,
+      "tokens": {
+        "cacheRead": 29210403,
+        "cacheWrite": 499165,
+        "input": 4443343,
+        "output": 147000,
+        "total": 34299911
+      },
+      "turnCount": 12
+    },
+    {
+      "cost": 6.810820789999996,
+      "date": "2026-04-26",
+      "messageCount": 390,
+      "tokens": {
+        "cacheRead": 19722576,
+        "cacheWrite": 239131,
+        "input": 825639,
+        "output": 174776,
+        "total": 20962122
+      },
+      "turnCount": 0
+    },
+    {
+      "cost": 10.84450424,
+      "date": "2026-04-25",
+      "messageCount": 369,
+      "tokens": {
+        "cacheRead": 30953024,
+        "cacheWrite": 0,
+        "input": 1078062,
+        "output": 292598,
+        "total": 32323684
+      },
+      "turnCount": 0
+    },
+    {
+      "cost": 3.270808320000001,
+      "date": "2026-04-24",
+      "messageCount": 133,
+      "tokens": {
+        "cacheRead": 8630592,
+        "cacheWrite": 0,
+        "input": 514162,
+        "output": 69779,
+        "total": 9214533
+      },
+      "turnCount": 0
+    },
+    {
+      "cost": 0.07871040000000001,
+      "date": "2026-04-21",
+      "messageCount": 16,
+      "tokens": {
+        "cacheRead": 164800,
+        "cacheWrite": 0,
+        "input": 31413,
+        "output": 1689,
+        "total": 198679
+      },
+      "turnCount": 0
+    },
+    {
+      "cost": 0.08451565,
+      "date": "2026-04-14",
+      "messageCount": 34,
+      "tokens": {
+        "cacheRead": 257053,
+        "cacheWrite": 0,
+        "input": 99772,
+        "output": 2468,
+        "total": 364084
+      },
+      "turnCount": 0
+    }
+  ],
+  "models": [
+    {
+      "client": "opencode, claude",
+      "cost": 32.564420920000025,
+      "model": "glm-5.1",
+      "provider": "opencode-go, anthropic",
+      "sessionCount": 81,
+      "tokens": {
+        "cacheRead": 85172512,
+        "cacheWrite": 0,
+        "input": 5413897,
+        "output": 645480,
+        "total": 91231889
+      }
+    },
+    {
+      "client": "claude",
+      "cost": 10.39448075,
+      "model": "claude-opus-4-6",
+      "provider": "anthropic",
+      "sessionCount": 2,
+      "tokens": {
+        "cacheRead": 550469,
+        "cacheWrite": 484697,
+        "input": 1399298,
+        "output": 3736,
+        "total": 2438200
+      }
+    },
+    {
+      "client": "opencode",
+      "cost": 2.4458766000000005,
+      "model": "glm-5",
+      "provider": "opencode-go",
+      "sessionCount": 4,
+      "tokens": {
+        "cacheRead": 6201632,
+        "cacheWrite": 0,
+        "input": 915323,
+        "output": 90696,
+        "total": 7207651
+      }
+    },
+    {
+      "client": "opencode",
+      "cost": 2.3674206260000004,
+      "model": "deepseek-v4-pro",
+      "provider": "deepseek",
+      "sessionCount": 31,
+      "tokens": {
+        "cacheRead": 177510272,
+        "cacheWrite": 0,
+        "input": 2608404,
+        "output": 470772,
+        "total": 180796021
+      }
+    },
+    {
+      "client": "opencode",
+      "cost": 1.2832749999999993,
+      "model": "kimi-k2.5",
+      "provider": "opencode-go",
+      "sessionCount": 4,
+      "tokens": {
+        "cacheRead": 9060352,
+        "cacheWrite": 0,
+        "input": 404718,
+        "output": 36912,
+        "total": 9509873
+      }
+    },
+    {
+      "client": "opencode, claude",
+      "cost": 1.0866539499999999,
+      "model": "claude-haiku-4-5",
+      "provider": "github-copilot, anthropic",
+      "sessionCount": 2,
+      "tokens": {
+        "cacheRead": 3723022,
+        "cacheWrite": 253599,
+        "input": 171023,
+        "output": 45266,
+        "total": 4192910
+      }
+    },
+    {
+      "client": "opencode",
+      "cost": 0.2755124999999999,
+      "model": "minimax-m2.7",
+      "provider": "opencode-go",
+      "sessionCount": 16,
+      "tokens": {
+        "cacheRead": 1343680,
+        "cacheWrite": 0,
+        "input": 492007,
+        "output": 36500,
+        "total": 1872187
+      }
+    },
+    {
+      "client": "gemini",
+      "cost": 0.09825465,
+      "model": "gemini-3-flash-preview",
+      "provider": "google",
+      "sessionCount": 3,
+      "tokens": {
+        "cacheRead": 257053,
+        "cacheWrite": 0,
+        "input": 118604,
+        "output": 3132,
+        "total": 384357
+      }
+    },
+    {
+      "client": "opencode",
+      "cost": 0.08529999999999999,
+      "model": "gpt-4.1",
+      "provider": "github-copilot",
+      "sessionCount": 1,
+      "tokens": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 39030,
+        "output": 905,
+        "total": 39935
+      }
+    },
+    {
+      "client": "opencode",
+      "cost": 0.01184379,
+      "model": "gpt-5-nano",
+      "provider": "opencode",
+      "sessionCount": 3,
+      "tokens": {
+        "cacheRead": 560768,
+        "cacheWrite": 0,
+        "input": 70007,
+        "output": 4185,
+        "total": 644624
+      }
+    },
+    {
+      "client": "claude",
+      "cost": 0.0,
+      "model": "<synthetic>",
+      "provider": "anthropic",
+      "sessionCount": 3,
+      "tokens": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0,
+        "total": 0
+      }
+    }
+  ],
+  "totals": {
+    "cost": 50.61303878600001,
+    "tokens": 298317647
+  }
+}

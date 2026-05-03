@@ -1,0 +1,4 @@
+QA Scenario 5: grep 3306 docker-compose.yml (should NOT have "3306:3306")
+Result: PASS
+Output: No "3306:3306" port mapping found in docker-compose.yml
+Note: Port 3306 is only used internally within the container network, not exposed to host

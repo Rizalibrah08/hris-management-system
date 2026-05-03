@@ -1,0 +1,41 @@
+{
+  "active_plan": "D:\\WEB HRIS\\.sisyphus\\plans\\deployment-connectivity.md",
+  "started_at": "2026-05-03T14:08:28+00:00",
+  "session_ids": [
+    "ses_2120f5b07ffesklcS5z003qRPT"
+  ],
+  "plan_name": "deployment-connectivity",
+  "session_origins": {
+    "ses_2120f5b07ffesklcS5z003qRPT": "direct"
+  },
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "Configure Express for Production (API Middleware + Static Serving + SPA Fallback)",
+      "session_id": "ses_211d21aa5ffeX6vcMGrjoYOm26",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-05-03T14:21:48.691Z"
+    },
+    "todo:5": {
+      "task_key": "todo:5",
+      "task_label": "5",
+      "task_title": "Create Dockerfile + .dockerignore",
+      "session_id": "ses_211c76d38ffeuLcJRF5MuK36xp",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-03T14:24:00.197Z"
+    },
+    "todo:8": {
+      "task_key": "todo:8",
+      "task_label": "8",
+      "task_title": "Verify Docker Production Build + Run",
+      "session_id": "ses_211975ff9ffeAJd23yx27NlndV",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-05-03T15:24:29.196Z"
+    }
+  },
+  "agent": "atlas"
+}

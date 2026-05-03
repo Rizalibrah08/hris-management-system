@@ -1,0 +1,187 @@
+name: Manual Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - production
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'main'
+      skip_tests:
+        description: 'Skip tests (emergency only)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_tests }}
+    defaults:
+      run:
+        working-directory: ./hris-web
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ./hris-web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build frontend
+        run: npm run build
+
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    if: always() && (needs.test.result == 'success' || inputs.skip_tests)
+    
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ inputs.environment }}-${{ github.run_number }}
+            type=raw,value=${{ inputs.environment }}-latest
+            type=sha
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./hris-web
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    needs: build-docker
+    environment:
+      name: ${{ inputs.environment }}
+      url: http://${{ inputs.environment == 'production' && secrets.VPS_PROD_IP || secrets.VPS_DEV_IP }}:5000
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ inputs.environment == 'production' && secrets.VPS_PROD_IP || secrets.VPS_DEV_IP }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # Setup directory
+            mkdir -p ~/hris-${{ inputs.environment }}
+            cd ~/hris-${{ inputs.environment }}
+            
+            # Clone/pull code
+            if [ ! -d ".git" ]; then
+              git clone ${{ github.server_url }}/${{ github.repository }}.git .
+              git checkout ${{ inputs.branch }}
+            else
+              git fetch origin
+              git reset --hard origin/${{ inputs.branch }}
+            fi
+            
+            # Set environment variables
+            if [ "${{ inputs.environment }}" = "production" ]; then
+              DB_PASSWORD="${{ secrets.DB_PASSWORD_PROD }}"
+              JWT_SECRET="${{ secrets.JWT_SECRET_PROD }}"
+            else
+              DB_PASSWORD="${{ secrets.DB_PASSWORD_DEV }}"
+              JWT_SECRET="${{ secrets.JWT_SECRET_DEV }}"
+            fi
+            
+            # Create .env file
+            cat > hris-web/backend/.env << EOF
+            PORT=5000
+            DB_HOST=mysql
+            DB_PORT=3306
+            DB_USER=root
+            DB_PASSWORD=$DB_PASSWORD
+            DB_NAME=hris_db
+            JWT_SECRET=$JWT_SECRET
+            NODE_ENV=production
+            EOF
+            
+            # Deploy
+            docker compose -f docker-compose.yml pull
+            docker compose -f docker-compose.yml up -d --remove-orphans
+            
+            # Setup database
+            sleep 10
+            docker compose exec -T web npm run db:setup || true
+            
+            # Health check
+            for i in {1..10}; do
+              if curl -sf http://localhost:5000/health > /dev/null; then
+                echo "✅ Deployment successful!"
+                exit 0
+              fi
+              sleep 5
+            done
+            
+            echo "❌ Health check failed"
+            exit 1
+
+      - name: Verify deployment
+        run: |
+          sleep 5
+          curl -sf http://${{ inputs.environment == 'production' && secrets.VPS_PROD_IP || secrets.VPS_DEV_IP }}:5000/health

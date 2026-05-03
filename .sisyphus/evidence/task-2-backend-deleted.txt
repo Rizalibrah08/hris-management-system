@@ -1,0 +1,19 @@
+Task 2: Hapus Backend Mobile yang Deprecated
+=============================================
+
+Files Deleted:
+- hris-mobile/backend/.env
+- hris-mobile/backend/node_modules/
+- hris-mobile/backend/package-lock.json
+- hris-mobile/backend/package.json
+- hris-mobile/backend/prisma.config.ts
+- hris-mobile/backend/prisma/
+- hris-mobile/backend/README.md
+- hris-mobile/backend/server.js
+
+Verification Results:
+- T2.3: Directory exists check → False (directory deleted) ✅
+- T2.4: Orphaned imports check → No matches (no references to backend) ✅
+
+Status: COMPLETED
+Timestamp: 2026-05-03T20:35:00+07:00
