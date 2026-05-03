@@ -1,0 +1,3 @@
+-- Seed data is now handled by backend/src/setup-db.js
+-- This file is intentionally left minimal.
+-- Run `npm run db:setup` to create schema and seed data.

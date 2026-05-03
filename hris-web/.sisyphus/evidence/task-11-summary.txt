@@ -1,0 +1,57 @@
+﻿=== Task 11: Verify Web Frontend Production Build ===
+
+Date: 2026-05-03
+Status: COMPLETED
+
+=== Test 1: Default Build ===
+Command: npm run build
+Exit Code: 0
+Status: SUCCESS
+
+=== Test 2: Verify dist/ Directory ===
+Location: D:\WEB HRIS\hris-web\dist
+Contents:
+- assets/ (directory)
+- index.html (490 bytes)
+- favicon.svg
+- icons.svg
+
+=== Test 3: Verify dist/assets/ Directory ===
+Location: D:\WEB HRIS\hris-web\dist\assets
+JS Files Found:
+- index-CvycHDHi.js (1,045.71 kB)
+- index.es-pPfRP3QE.js (151.38 kB)
+- html2canvas-vKfJEJjc.js (199.56 kB)
+- purify.es-DbTVInW-.js (22.43 kB)
+CSS Files Found:
+- index-jjPvd0-T.css (9.87 kB)
+
+=== Test 4: Verify Default /api Path ===
+Command: Select-String -Path "dist/assets/*.js" -Pattern "/api"
+Result: FOUND in index-CvycHDHi.js
+Occurrences: 1
+Status: PASS
+
+=== Test 5: Build with Custom VITE_API_URL ===
+Command: $env:VITE_API_URL="http://192.168.1.100:5000/api"; npm run build
+Exit Code: 0
+Status: SUCCESS
+
+=== Test 6: Verify Custom URL in Bundle ===
+Command: Select-String -Path "dist/assets/*.js" -Pattern "192.168.1.100"
+Result: FOUND in index-BDCCnOvc.js (or current index-*.js)
+Occurrences: 1
+Status: PASS
+
+=== Summary ===
+All QA scenarios passed:
+1. npm run build -> exit 0
+2. ls dist/ -> index.html exists
+3. ls dist/assets/ -> JS files exist
+4. grep /api dist/assets/*.js -> found
+5. VITE_API_URL=... npm run build -> succeeds
+6. grep custom URL -> found
+
+Evidence saved to:
+- .sisyphus/evidence/task-11-default-api-path.txt
+- .sisyphus/evidence/task-11-custom-api-url.txt
