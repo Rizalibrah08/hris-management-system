@@ -63,11 +63,6 @@ Workmate adalah aplikasi HRIS (Human Resource Information System) modern yang di
     - **SafeAreaView**: Seluruh layar menggunakan `SafeAreaView` dari `react-native-safe-area-context` (bukan dari `react-native`) sesuai rekomendasi terbaru.
     - **Navigation Bar**: Konfigurasi navigasi bar Android dioptimalkan untuk menghindari white space pada layout.
 
-### Backend (Server)
-- **Framework**: Express.js (Node.js).
-- **Database**: SQLite (untuk pengembangan lokal yang ringan).
-- **ORM**: Prisma untuk manajemen skema database yang type-safe.
-
 ## 🛠️ Tech Stack
 
 ### Frontend
@@ -78,12 +73,6 @@ Workmate adalah aplikasi HRIS (Human Resource Information System) modern yang di
 - **Expo Linear Gradient** (Efek visual gradasi)
 - **Expo Navigation Bar** (Kontrol Android navigation bar)
 - **Vector Icons** (Ionicons)
-
-### Backend
-- **Node.js**
-- **Express.js**
-- **Prisma ORM**
-- **SQLite**
 
 ## 📂 Struktur Proyek
 
@@ -111,9 +100,6 @@ workmate-hr-app/
 │   │   ├── TaskScreen.js            # ⭐ Modul Task (Baru)
 │   │   └── BurnoutStatsScreen.js    # ⭐ Detail Burnout Stats (Baru)
 │   └── App.js                  # Entry point & navigasi frontend
-├── backend/                    # Server API (Express.js)
-│   ├── prisma/                 # Skema database & migrasi
-│   └── server.js               # Entry point backend
 └── README.md
 ```
 
@@ -135,21 +121,23 @@ npx expo start
 > npx expo start --clear
 > ```
 
-### 3. Menjalankan Backend
+### 3. Menjalankan Backend (Web)
+> **Catatan**: Mobile app menggunakan backend dari project `hris-web` (port 5000).
+
+Pastikan backend web sudah berjalan:
 ```bash
-cd backend
+cd ../hris-web
 npm install
-npx prisma generate
-node server.js
+npm run dev:all  # Menjalankan frontend + backend bersamaan
 ```
 
+Backend akan berjalan di `http://localhost:5000`.
+
 ## 📝 Catatan Pengembangan
-- Backend saat ini sedang dalam tahap inisialisasi struktur dasar.
-- Database menggunakan SQLite untuk kemudahan setup tanpa perlu server database eksternal di tahap awal.
-- Seluruh data pada modul Task, Burnout Stats, Leave, Attendance, dan Payroll masih menggunakan data statis (*mockup*) — belum terhubung ke API backend.
+- Semua modul (Attendance, Leave, Payroll, dll.) sudah terhubung ke API backend web (hris-web).
+- Task Module dan Burnout Stats menggunakan data statis (mockup) — fitur ini masih dalam pengembangan.
 
 ## 🗺️ Roadmap (Next Steps)
 - [ ] Form **Create Task** — layar input untuk membuat tugas baru.
 - [ ] Integrasi Task Screen dengan API backend (filter & list tugas nyata).
 - [ ] Integrasi Burnout Stats dengan data dinamis dari server.
-- [ ] Koneksi modul Leave, Attendance, dan Payroll ke REST API backend.

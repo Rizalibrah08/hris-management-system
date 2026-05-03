@@ -44,8 +44,7 @@ Sistem HRIS (Human Resource Information System) terpadu berbasis cloud yang meny
 | Layer | Teknologi |
 |-------|-----------|
 | Frontend | React Native (Expo SDK 54), React Navigation |
-| Backend | Node.js, Express 5, JWT, bcryptjs |
-| Database | MySQL (production), Prisma ORM |
+| Backend | Menggunakan backend hris-web (port 5000) |
 | Camera | Expo Camera, Expo Linear Gradient |
 
 ## Struktur Proyek
@@ -80,11 +79,6 @@ WEB HRIS/
 │   │   ├── services/                 # API service layer
 │   │   ├── assets/                   # Gambar & icon
 │   │   └── App.js                    # Entry point & navigasi
-│   ├── backend/
-│   │   ├── server.js                 # API server (Express)
-│   │   ├── prisma/
-│   │   │   └── schema.prisma         # Prisma schema
-│   │   └── package.json
 │   └── README.md
 │
 ├── .gitignore
@@ -143,21 +137,10 @@ npm run dev:all
 
 ### 3. Setup Mobile App
 
+> **Catatan**: Mobile app menggunakan backend dari `hris-web` (port 5000). Pastikan langkah 2 (Setup Web Dashboard) sudah dijalankan terlebih dahulu.
+
 ```bash
-cd hris-mobile/backend
-
-# Install backend dependencies
-npm install
-
-# Setup environment
-# Buat file .env atau edit konfigurasi di server.js
-# Pastikan MySQL berjalan dan database hris_db sudah ada
-
-# Jalankan backend
-node server.js
-# Server berjalan di port 5001
-
-cd ../frontend
+cd hris-mobile/frontend
 
 # Install frontend dependencies
 npm install
@@ -167,15 +150,11 @@ npx expo start
 # Scan QR code dengan Expo Go di perangkat mobile
 ```
 
-**Konfigurasi mobile backend** (`hris-mobile/backend/.env`):
-```env
-PORT=5001
-JWT_SECRET=super-secret-key
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=hris_db
+**Konfigurasi API**: Pastikan `hris-mobile/frontend/services/api.js` mengarah ke backend web:
+```javascript
+const API_BASE_URL = __DEV__
+  ? 'http://10.0.2.2:5000'  // Android Emulator → localhost:5000
+  : 'https://your-production-api.com';
 ```
 
 ### 4. Menjalankan Secara Terpisah
@@ -186,12 +165,6 @@ cd hris-web
 npm run dev          # Frontend only (port 5173)
 npm run dev:server   # Backend only (port 5000)
 npm run dev:all      # Keduanya bersamaan
-```
-
-**Mobile backend saja:**
-```bash
-cd hris-mobile/backend
-node server.js       # Backend mobile (port 5001)
 ```
 
 ## API Endpoints
@@ -214,21 +187,19 @@ node server.js       # Backend mobile (port 5001)
 | GET | `/payslip/:id` | Lihat slip gaji |
 | GET | `/reports/dashboard` | Data dashboard |
 
-### Mobile API (port 5001)
+### Mobile Endpoints (Web Backend - port 5000)
+
+Mobile app menggunakan endpoint yang sama dengan web dashboard. Berikut endpoint khusus mobile:
 
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
-| POST | `/auth/login` | Login |
 | POST | `/auth/register` | Registrasi akun baru |
 | GET | `/auth/me` | Profil user login |
 | GET | `/employees/me` | Data karyawan login |
 | PUT | `/employees/me` | Update profil |
-| POST | `/attendance/clockin` | Clock in (dengan GPS & selfie) |
-| POST | `/attendance/clockout` | Clock out |
 | GET | `/attendance/my` | Riwayat absensi |
 | GET | `/attendance/my-status` | Status absensi hari ini |
 | GET | `/attendance/today` | Absensi semua karyawan hari ini |
-| POST | `/leave` | Ajukan cuti |
 | GET | `/leave/my` | Daftar cuti saya |
 | GET | `/payroll/my` | Profil gaji saya |
 | GET | `/payroll/my-runs` | Riwayat payroll run |
@@ -262,7 +233,7 @@ Database menggunakan MySQL dengan tabel utama:
 | `ECONNREFUSED` MySQL | Pastikan MySQL berjalan, cek `DB_HOST`/`DB_PORT` di `.env` |
 | Frontend tidak bisa dibuka | Pastikan `npm run dev:all` masih aktif, cek port Vite di terminal |
 | Login gagal | Jalankan `npm run db:setup` untuk reset seed data |
-| Expo tidak connect | Pastikan backend mobile berjalan di port 5001, cek IP di `services/api.js` |
+| Expo tidak connect | Pastikan backend web berjalan di port 5000, cek IP di `services/api.js` |
 
 ## Pengembangan
 
