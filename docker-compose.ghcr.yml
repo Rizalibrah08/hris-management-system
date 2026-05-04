@@ -38,7 +38,7 @@ services:
       resources:
         limits:
           memory: ${MYSQL_MEM_LIMIT:-384m}
-          cpus: ${MYSQL_CPU_LIMIT:-'0.5'}
+          cpus: ${MYSQL_CPU_LIMIT:-0.5}
     logging:
       driver: json-file
       options:
@@ -87,7 +87,7 @@ services:
       resources:
         limits:
           memory: ${WEB_MEM_LIMIT:-256m}
-          cpus: ${WEB_CPU_LIMIT:-'0.5'}
+          cpus: ${WEB_CPU_LIMIT:-0.5}
     logging:
       driver: json-file
       options:
