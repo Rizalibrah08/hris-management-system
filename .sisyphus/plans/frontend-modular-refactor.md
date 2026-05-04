@@ -688,7 +688,7 @@ Max Concurrent: 2 (Waves 1-2), 1 (Wave 3)
   - Files: `src/pages/Dashboard.jsx`, `src/App.jsx`
   - Pre-commit: `npm run build`
 
-- [ ] 7. Extract Karyawan, Absensi, and Cuti pages
+- [x] 7. Extract Karyawan, Absensi, and Cuti pages
 
   **What to do**:
   - Create `src/pages/Karyawan.jsx`:
@@ -785,7 +785,7 @@ Max Concurrent: 2 (Waves 1-2), 1 (Wave 3)
   - Files: `src/pages/Karyawan.jsx`, `src/pages/Absensi.jsx`, `src/pages/Cuti.jsx`, `src/App.jsx`
   - Pre-commit: `npm run build`
 
-- [ ] 8. Extract Payroll page (most complex — 500+ lines)
+- [x] 8. Extract Payroll page (most complex — 500+ lines)
 
   **What to do**:
   - Create `src/pages/Payroll.jsx`:
@@ -890,7 +890,7 @@ Max Concurrent: 2 (Waves 1-2), 1 (Wave 3)
   - Files: `src/pages/Payroll.jsx`, `src/App.jsx`
   - Pre-commit: `npm run build`
 
-- [ ] 9. Extract Laporan and RoleManagement pages
+- [x] 9. Extract Laporan and RoleManagement pages
 
   **What to do**:
   - Create `src/pages/Laporan.jsx`:
@@ -973,7 +973,7 @@ Max Concurrent: 2 (Waves 1-2), 1 (Wave 3)
   - Files: `src/pages/Laporan.jsx`, `src/pages/RoleManagement.jsx`, `src/App.jsx`
   - Pre-commit: `npm run build`
 
-- [ ] 10. Wire up React Router with URL-based navigation
+- [x] 10. Wire up React Router with URL-based navigation
 
   **What to do**:
   - Update `src/main.jsx`:
@@ -1113,7 +1113,7 @@ Max Concurrent: 2 (Waves 1-2), 1 (Wave 3)
   - Files: `src/App.jsx`, `src/main.jsx`
   - Pre-commit: `npm run build`
 
-- [ ] 11. Split CSS into per-page files
+- [x] 11. Split CSS into per-page files
 
   **What to do**:
   - Create `src/styles/global.css`:
@@ -1302,20 +1302,20 @@ Max Concurrent: 2 (Waves 1-2), 1 (Wave 3)
 
 ## Final Verification Wave
 
-- [ ] F1. **Plan Compliance Audit** — `oracle`
+- [x] F1. **Plan Compliance Audit** — `oracle`
   Read the plan end-to-end. For each "Must Have": verify implementation exists (read file, check import). For each "Must NOT Have": search codebase for forbidden patterns. Check evidence files. Compare deliverables against plan.
   Output: `Must Have [N/N] | Must NOT Have [N/N] | Tasks [N/N] | VERDICT: APPROVE/REJECT`
 
-- [ ] F2. **Code Quality Review** — `unspecified-high`
+- [x] F2. **Code Quality Review** — `unspecified-high`
   Run `npm run lint` + `npm run build`. Review all changed files for: console.log in prod, unused imports, hardcoded values that shouldn't be, inconsistent naming. Check no behavioral changes: login flow, API calls, form submissions must match original.
   Output: `Build [PASS/FAIL] | Lint [PASS/FAIL] | Files [N clean/N issues] | VERDICT`
 
-- [ ] F3. **Real Manual QA** — `unspecified-high` (+ `playwright` skill)
+- [x] F3. **Real Manual QA** — `unspecified-high` (+ `playwright` skill)
   Start app with `npm run dev:all`. Execute comprehensive QA: Login → Dashboard → every page → Payroll workflow → Logout → Direct URL access. Test responsive layout. Capture screenshots.
   Save evidence to `.sisyphus/evidence/final-qa/`.
   Output: `Scenarios [N/N pass] | Integration [N/N] | Edge Cases [N tested] | VERDICT`
 
-- [ ] F4. **Scope Fidelity Check** — `deep`
+- [x] F4. **Scope Fidelity Check** — `deep`
   For each task: read "What to do", read actual diff. Verify 1:1 — everything in spec was built (no missing), nothing beyond spec was built (no creep). Check "Must NOT do" compliance. Detect cross-task contamination. Verify App.jsx is < 100 lines.
   Output: `Tasks [N/N compliant] | Contamination [CLEAN/N issues] | Unaccounted [CLEAN/N files] | VERDICT`
 
