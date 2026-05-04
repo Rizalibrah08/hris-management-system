@@ -47,7 +47,7 @@ services:
 
   web:
     # ⬇️ Image dari GitHub Container Registry (di-build oleh GitHub Actions)
-    image: ghcr.io/${GHCR_REPO:-YOUR_USER/hris-management-system}:latest
+    image: ghcr.io/${GHCR_REPO:-rizalibrah08/hris-management-system}:latest
     container_name: hris-web
     restart: always
     env_file:
