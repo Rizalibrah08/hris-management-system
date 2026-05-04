@@ -112,7 +112,6 @@ jobs:
     needs: build-docker
     environment:
       name: ${{ inputs.environment }}
-      url: http://${{ inputs.environment == 'production' && secrets.VPS_PROD_IP || secrets.VPS_DEV_IP }}:5000
 
     steps:
       - name: Checkout code
