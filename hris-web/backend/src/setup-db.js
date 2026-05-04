@@ -32,7 +32,7 @@ async function run() {
     'payroll_components', 'employees', 'positions', 'departments', 'roles',
   ]
   for (const t of tablesToDrop) {
-    try { await conn.execute(`DROP TABLE IF EXISTS \`${t}\``) } catch {}
+    try { await conn.execute(`DROP TABLE IF EXISTS \`${t}\``) } catch { /* intentional: table may not exist */ }
   }
   await conn.query('SET FOREIGN_KEY_CHECKS = 1')
 

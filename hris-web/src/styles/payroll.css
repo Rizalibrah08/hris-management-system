@@ -1,0 +1,168 @@
+/* ===== Payroll ===== */
+.payroll-tabs {
+  display: flex;
+  gap: 10px;
+  padding: 6px;
+  border: 1px solid #e8ebfb;
+  background: linear-gradient(180deg, #fbfcff, #f6f8ff);
+}
+
+.payroll-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.payroll-layout .panel {
+  border: 1px solid #e9ecfa;
+  box-shadow: 0 12px 26px rgba(33, 50, 112, 0.08);
+}
+
+.payroll-layout .panel h3 {
+  font-weight: 700;
+  color: #20295a;
+}
+
+.salary-form {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1fr auto auto;
+  gap: 10px;
+}
+
+.salary-form-head {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1fr auto auto;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.salary-form-head span {
+  font-size: 12px;
+  color: #5f6a99;
+  font-weight: 600;
+}
+
+.salary-form select,
+.salary-form input {
+  border: 1px solid #d9dff5;
+  border-radius: 10px;
+  padding: 9px 11px;
+  background: #fff;
+}
+
+.editing-row td {
+  background: #f1f4ff;
+}
+
+.component-box {
+  margin-top: 14px;
+  border: 1px solid #e7ebfb;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fbfcff;
+}
+
+.component-box h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #35407f;
+}
+
+.detail-toolbar {
+  margin: 12px 0;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-search {
+  flex: 1;
+  border: 1px solid #d8dff8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fbfcff;
+}
+
+.detail-search:focus {
+  outline: none;
+  border-color: #9087dd;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.15);
+}
+
+.payroll-layout table {
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid #e8ecfa;
+  border-radius: 12px;
+}
+
+.payroll-layout th {
+  background: #f6f8ff;
+  color: #5d6798;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.payroll-layout td,
+.payroll-layout th {
+  border-bottom: 1px solid #edf0fb;
+  padding: 11px 10px;
+}
+
+.payroll-layout tbody tr:nth-child(even) td {
+  background: #fcfdff;
+}
+
+.payroll-layout tbody tr:hover td {
+  background: #f4f7ff;
+}
+
+.payroll-layout tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.payroll-layout .component-box {
+  border: 1px solid #e3e8fb;
+  background: linear-gradient(180deg, #fbfcff, #f8faff);
+}
+
+.payroll-layout .component-box h4 {
+  color: #32408a;
+}
+
+.payroll-layout .quick-card {
+  border: 1px solid #e7ebfb;
+  background: #fcfdff;
+}
+
+.payroll-layout .quick-card span {
+  color: #6d77a7;
+}
+
+.payroll-layout .quick-card strong {
+  color: #26306a;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+  .salary-form {
+    grid-template-columns: 1fr;
+  }
+  .salary-form-head {
+    grid-template-columns: 1fr;
+  }
+  .detail-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .payroll-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+  .payroll-actions .primary-btn,
+  .payroll-actions .secondary-btn {
+    width: 100%;
+  }
+}

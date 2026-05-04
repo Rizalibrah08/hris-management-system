@@ -1,8 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PieChart, Pie, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import './App.css'
+import './styles/global.css'
+import './styles/payroll.css'
+import './styles/laporan.css'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
+import Karyawan from './pages/Karyawan'
+import Absensi from './pages/Absensi'
+import Cuti from './pages/Cuti'
+import { useAuth } from './contexts/AuthContext'
+// Payroll page is still handled by FeaturePages component
 
 const menus = [
   { key: 'dashboard', label: 'Dashboard' },
@@ -33,14 +42,9 @@ async function api(path, opts = {}) {
 }
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem('hris_token') || '')
-  const [role, setRole] = useState(localStorage.getItem('hris_role') || '')
+  const { token, role, logout } = useAuth()
   const [activePage, setActivePage] = useState('dashboard')
-  const [nik, setNik] = useState('ADM001')
-  const [password, setPassword] = useState('admin123')
-  const [error, setError] = useState('')
   const [employees, setEmployees] = useState([])
-  const [loadingEmployees, setLoadingEmployees] = useState(false)
   const [runningPayroll, setRunningPayroll] = useState(false)
   const [finalizingPayroll, setFinalizingPayroll] = useState(false)
   const [payrollMessage, setPayrollMessage] = useState('')
@@ -86,51 +90,11 @@ function App() {
     monthlySummary: [],
   })
   const [loadingReports, setLoadingReports] = useState(false)
-  const [attendanceData, setAttendanceData] = useState([])
-  const [leaveData, setLeaveData] = useState([])
 
   const canRunPayroll = ['HRD', 'Finance', 'Super Admin'].includes(role)
   const canApproveFinance = ['Finance', 'Super Admin'].includes(role)
   const canReview = ['HRD', 'Super Admin'].includes(role)
   const canEditSalary = ['HRD', 'Super Admin'].includes(role)
-
-  const attendanceRows = useMemo(
-    () => {
-      if (attendanceData.length > 0) {
-        return attendanceData.map((a) => ({
-          name: a.employee_name,
-          dept: a.department || '-',
-          clockIn: a.clock_in ? new Date(a.clock_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-',
-          clockOut: a.clock_out ? new Date(a.clock_out).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-',
-          status: a.status || 'Aktif',
-        }))
-      }
-      return [
-        { name: 'Aditia Pratama', dept: 'Engineering', clockIn: '07:55', clockOut: '17:05', status: 'Aktif' },
-        { name: 'Nadia Putri', dept: 'HRD', clockIn: '08:10', clockOut: '17:20', status: 'Aktif' },
-        { name: 'Rizky Maulana', dept: 'Finance', clockIn: '08:22', clockOut: '17:15', status: 'Aktif' },
-        { name: 'Salsa Wijaya', dept: 'Marketing', clockIn: '09:01', clockOut: '17:30', status: 'Terlambat' },
-        { name: 'Budi Santoso', dept: 'Operations', clockIn: '07:50', clockOut: '17:00', status: 'Aktif' },
-        { name: 'Intan Lestari', dept: 'Engineering', clockIn: '08:05', clockOut: '-', status: 'Aktif' },
-        { name: 'Dini Prameswari', dept: 'HRD', clockIn: '08:00', clockOut: '17:10', status: 'Aktif' },
-        { name: 'Maya Sari', dept: 'Finance', clockIn: '07:45', clockOut: '17:00', status: 'Aktif' },
-      ]
-    },
-    [attendanceData],
-  )
-
-  const pendingLeaves = useMemo(() => leaveData.filter((l) => l.status === 'Pending'), [leaveData])
-  const recentLeaves = useMemo(() => leaveData.slice(0, 5), [leaveData])
-
-  const metrics = useMemo(
-    () => [
-      { label: 'Total Karyawan', value: String(report.totalEmployees), note: 'Data realtime', trend: '+12%' },
-      { label: 'Kehadiran Hari Ini', value: `${report.attendanceRate}%`, note: 'Target 95%', trend: 'Stabil' },
-      { label: 'Cuti Menunggu', value: String(report.pendingLeave), note: 'Perlu approval', trend: 'Perlu aksi' },
-      { label: 'Total Payroll', value: formatRupiah(report.payrollTotal), note: 'Periode bulan ini', trend: 'Terkendali' },
-    ],
-    [report],
-  )
 
   async function loadSalaryStructures() {
     setLoadingSalary(true)
@@ -163,7 +127,6 @@ function App() {
       setReport(reportData)
     } catch { /* ignore */ }
 
-    setLoadingEmployees(true)
     try {
       const employeeData = await api('/employees')
       setEmployees(employeeData)
@@ -171,7 +134,6 @@ function App() {
         setSalaryForm((c) => ({ ...c, employeeId: String(employeeData[0].id) }))
       }
     } catch { /* ignore */ }
-    setLoadingEmployees(false)
   }
 
 useEffect(() => {
@@ -182,7 +144,6 @@ useEffect(() => {
         const reportData = await api('/reports/dashboard', { signal: ctrl.signal })
         setReport(reportData)
       } catch { /* ignore */ }
-      setLoadingEmployees(true)
       try {
         const employeeData = await api('/employees', { signal: ctrl.signal })
         setEmployees(employeeData)
@@ -190,7 +151,6 @@ useEffect(() => {
           setSalaryForm((c) => ({ ...c, employeeId: String(employeeData[0].id) }))
         }
       } catch { /* ignore */ }
-      setLoadingEmployees(false)
       try {
         const salaryData = await api('/salary-profiles', { signal: ctrl.signal })
         setSalaryStructures(
@@ -210,14 +170,6 @@ useEffect(() => {
         )
       } catch { setSalaryStructures([]) }
       setLoadingSalary(false)
-      try {
-        const attData = await api('/attendance/today', { signal: ctrl.signal })
-        setAttendanceData(attData)
-      } catch { setAttendanceData([]) }
-      try {
-        const leaveResp = await api('/leave', { signal: ctrl.signal })
-        setLeaveData(leaveResp)
-      } catch { setLeaveData([]) }
     }
     init()
     return () => ctrl.abort()
@@ -265,28 +217,8 @@ useEffect(() => {
     return () => window.removeEventListener('keydown', handleEsc)
   }, [editSalaryModal.open])
 
-  const handleLogin = async (event) => {
-    event.preventDefault()
-    setError('')
-    try {
-      const data = await api('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ nik, password }),
-      })
-      setToken(data.token)
-      setRole(data.role)
-      localStorage.setItem('hris_token', data.token)
-      localStorage.setItem('hris_role', data.role)
-    } catch (err) {
-      setError(err.message || 'Login gagal. Cek NIK/password dan pastikan backend aktif.')
-    }
-  }
-
   const handleLogout = () => {
-    localStorage.removeItem('hris_token')
-    localStorage.removeItem('hris_role')
-    setToken('')
-    setRole('')
+    logout()
     setActivePage('dashboard')
   }
 
@@ -482,20 +414,7 @@ useEffect(() => {
   }
 
   if (!token) {
-    return (
-      <div className="login-page">
-        <form className="login-card" onSubmit={handleLogin}>
-          <h2>Login HRIS Dashboard</h2>
-          <p>Gunakan akun seed default untuk mulai eksplorasi backend.</p>
-          <label htmlFor="nik">NIK</label>
-          <input id="nik" value={nik} onChange={(e) => setNik(e.target.value)} />
-          <label htmlFor="password">Password</label>
-          <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          {error ? <small className="error">{error}</small> : null}
-          <button type="submit">Masuk</button>
-        </form>
-      </div>
-    )
+    return <Login />
   }
 
   return (
@@ -534,97 +453,14 @@ useEffect(() => {
           <input placeholder="Cari karyawan, payroll, atau approval..." />
         </header>
 
-        {activePage === 'dashboard' ? (
-          <>
-            <section className="metrics-grid">
-              {metrics.map((item) => (
-                <article key={item.label} className="metric-card">
-                  <span>{item.label}</span>
-                  <strong>{item.value}</strong>
-                  <p>{item.note}</p>
-                  <small>{item.trend}</small>
-                </article>
-              ))}
-            </section>
-
-            <section className="main-grid">
-              <article className="panel table-panel">
-                <div className="panel-head">
-                  <h3>Monitoring Kehadiran Real-time</h3>
-                  <button>Lihat Semua</button>
-                </div>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Nama</th>
-                      <th>Departemen</th>
-                      <th>Clock In</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {attendanceRows.map((row) => (
-                      <tr key={row.name}>
-                        <td>{row.name}</td>
-                        <td>{row.dept}</td>
-                        <td>{row.clockIn}</td>
-                        <td>
-                          <span className={`status ${row.status.toLowerCase()}`}>{row.status}</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </article>
-
-              <article className="panel">
-                <h3>Pengajuan Cuti & Izin</h3>
-                {pendingLeaves.length === 0 && recentLeaves.length === 0 ? (
-                  <p style={{ color: '#6471a4', fontSize: 14 }}>Belum ada pengajuan cuti.</p>
-                ) : (
-                  <ul className="timeline">
-                    {pendingLeaves.slice(0, 4).map((l) => (
-                      <li key={l.id}>
-                        <strong>{l.leave_type} - {l.employee_name}</strong>
-                        <p>{l.reason || 'Tanpa keterangan'} &middot; <span className="status pending">{l.status}</span></p>
-                      </li>
-                    ))}
-                    {pendingLeaves.length === 0 && recentLeaves.slice(0, 3).map((l) => (
-                      <li key={l.id}>
-                        <strong>{l.leave_type} - {l.employee_name}</strong>
-                        <p>{l.start_date?.slice(0, 10)} s/d {l.end_date?.slice(0, 10)} &middot; <span className={`status ${l.status.toLowerCase()}`}>{l.status}</span></p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </article>
-
-              <article className="panel highlight">
-                <h3>Payroll Basic (Bulan Ini)</h3>
-                <p>Total Penggajian</p>
-                <strong>{formatRupiah(report.payrollTotal)}</strong>
-                <div className="payroll-kpis">
-                  <div>
-                    <span>Karyawan Aktif</span>
-                    <b>{report.totalEmployees}</b>
-                  </div>
-                  <div>
-                    <span>Cuti Pending</span>
-                    <b>{report.pendingLeave}</b>
-                  </div>
-                  <div>
-                    <span>Payslip Terbit</span>
-                    <b>{report.totalEmployees}</b>
-                  </div>
-                </div>
-              </article>
-            </section>
-          </>
-        ) : (
+        {activePage === 'dashboard' && <Dashboard />}
+        {activePage === 'karyawan' && <Karyawan />}
+        {activePage === 'absensi' && <Absensi />}
+        {activePage === 'cuti' && <Cuti />}
+        {['payroll', 'laporan', 'role'].includes(activePage) && (
           <FeaturePages
             activePage={activePage}
             employees={employees}
-            loadingEmployees={loadingEmployees}
             report={report}
             role={role}
             canRunPayroll={canRunPayroll}
@@ -668,13 +504,11 @@ useEffect(() => {
             }}
             onEditSalaryModalChange={setEditSalaryModal}
             onSaveEditedSalary={handleSaveEditedSalary}
-             onDeleteSalaryStructure={handleDeleteSalaryStructure}
-             attendanceRows={attendanceRows}
-             leaveData={leaveData}
-             salaryDistribution={salaryDistribution}
-             leaveStats={leaveStats}
-             loadingReports={loadingReports}
-           />
+            onDeleteSalaryStructure={handleDeleteSalaryStructure}
+            salaryDistribution={salaryDistribution}
+            leaveStats={leaveStats}
+            loadingReports={loadingReports}
+          />
         )}
       </main>
     </div>
@@ -684,7 +518,6 @@ useEffect(() => {
 function FeaturePages({
   activePage,
   employees,
-  loadingEmployees,
   report,
   role,
   canRunPayroll,
@@ -722,153 +555,10 @@ function FeaturePages({
   onEditSalaryModalChange,
   onSaveEditedSalary,
   onDeleteSalaryStructure,
-  attendanceRows,
-  leaveData,
   salaryDistribution,
   leaveStats,
   loadingReports,
 }) {
-  if (activePage === 'karyawan') {
-    return (
-      <section className="feature-layout">
-        <article className="panel">
-          <h3>Directory Karyawan</h3>
-          {loadingEmployees ? <p>Memuat data karyawan...</p> : null}
-          <table>
-            <thead>
-              <tr>
-                <th>Nama</th>
-                <th>Departemen</th>
-                <th>Jabatan</th>
-                <th>Akhir Kontrak</th>
-              </tr>
-            </thead>
-            <tbody>
-              {employees.map((employee) => (
-                <tr key={employee.id}>
-                  <td>{employee.name}</td>
-                  <td>{employee.department || '-'}</td>
-                  <td>{employee.position || '-'}</td>
-                  <td>{employee.contract_end ? employee.contract_end.slice(0, 10) : '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </article>
-      </section>
-    )
-  }
-
-  if (activePage === 'absensi') {
-    const lateCount = attendanceRows.filter((r) => r.status === 'Terlambat').length
-    const aktifCount = attendanceRows.filter((r) => r.status === 'Aktif').length
-    return (
-      <section className="feature-layout">
-        <article className="panel">
-          <h3>Absensi Digital (GPS + Selfie)</h3>
-          <div className="quick-grid">
-            <div className="quick-card">
-              <span>Kehadiran Hari Ini</span>
-              <strong>{report.attendanceRate}%</strong>
-            </div>
-            <div className="quick-card">
-              <span>Hadir Tepat Waktu</span>
-              <strong>{aktifCount} orang</strong>
-            </div>
-            <div className="quick-card">
-              <span>Terlambat</span>
-              <strong>{lateCount} orang</strong>
-            </div>
-          </div>
-        </article>
-        <article className="panel">
-          <h3>Log Kehadiran Hari Ini</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Nama</th>
-                <th>Departemen</th>
-                <th>Clock In</th>
-                <th>Clock Out</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {attendanceRows.map((row, idx) => (
-                <tr key={idx}>
-                  <td>{row.name}</td>
-                  <td>{row.dept}</td>
-                  <td>{row.clockIn}</td>
-                  <td>{row.clockOut || '-'}</td>
-                  <td>
-                    <span className={`status ${row.status.toLowerCase()}`}>{row.status}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </article>
-      </section>
-    )
-  }
-
-  if (activePage === 'cuti') {
-    const approvedCount = leaveData.filter((l) => l.status === 'Approved').length
-    const rejectedCount = leaveData.filter((l) => l.status === 'Rejected').length
-    return (
-      <section className="feature-layout">
-        <article className="panel">
-          <h3>Leave Management</h3>
-          <div className="quick-grid">
-            <div className="quick-card">
-              <span>Pending Approval</span>
-              <strong>{report.pendingLeave}</strong>
-            </div>
-            <div className="quick-card">
-              <span>Disetujui</span>
-              <strong>{approvedCount}</strong>
-            </div>
-            <div className="quick-card">
-              <span>Ditolak</span>
-              <strong>{rejectedCount}</strong>
-            </div>
-          </div>
-        </article>
-        <article className="panel">
-          <h3>Daftar Pengajuan Cuti & Izin</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Nama</th>
-                <th>Departemen</th>
-                <th>Jenis</th>
-                <th>Mulai</th>
-                <th>Selesai</th>
-                <th>Alasan</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leaveData.map((l) => (
-                <tr key={l.id}>
-                  <td>{l.employee_name}</td>
-                  <td>{l.department || '-'}</td>
-                  <td>{l.leave_type}</td>
-                  <td>{l.start_date?.slice(0, 10)}</td>
-                  <td>{l.end_date?.slice(0, 10)}</td>
-                  <td>{l.reason || '-'}</td>
-                  <td>
-                    <span className={`status ${l.status.toLowerCase()}`}>{l.status}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </article>
-      </section>
-    )
-  }
-
   if (activePage === 'payroll') {
     const currentRun = payrollRuns.find((r) => r.id === selectedRunId)
     const runStatus = currentRun?.status || ''
