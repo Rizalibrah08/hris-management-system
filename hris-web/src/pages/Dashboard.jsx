@@ -84,7 +84,7 @@ export default function Dashboard() {
   const isLoading = loadingReports || loadingAttendance || loadingLeave
 
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard-page">
       <MetricsGrid metrics={metrics} />
 
       <section className="main-grid">

@@ -13,6 +13,20 @@ build/
 !.env.example
 !**/.env.example
 
+# Backups
+backups/
+*.sql
+*.sql.gz
+*.dump
+
+# Nginx
+nginx/logs/
+nginx/ssl/
+!nginx/nginx.conf
+
+# Docker volumes
+docker-volumes/
+
 # Logs
 logs/
 *.log

@@ -21,16 +21,14 @@ app.use(helmet())
 app.use(morgan('dev'))
 app.use(express.json())
 
-// API 404 handler - must come BEFORE prefix strip to catch unmatched API routes
-app.use('/api', (req, res, next) => {
-  // Store original path for 404 handling
-  req._isApiRoute = true
-  next()
-})
-
 // Strip /api prefix for production (matches Vite proxy behavior)
-app.use('/api', (req, res, next) => {
-  req.url = req.url.replace(/^\/api/, '')
+// NOTE: Using plain app.use (no mount path) because Express mount points restore req.url after sub-app
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api')) {
+    req._isApiRoute = true
+    req.url = req.url.replace(/^\/api/, '')
+    if (req.url === '') req.url = '/'
+  }
   next()
 })
 
@@ -1173,7 +1171,7 @@ app.get('/reports/dashboard', authRequired, async (_, res) => {
       `SELECT 
         d.name AS department,
         COUNT(e.id) AS employee_count,
-        COALESCE(SUM(esp.total_gross), 0) AS total_gross
+        COALESCE(SUM(esp.base_salary), 0) AS total_gross
       FROM employees e
       LEFT JOIN departments d ON d.id = e.department_id
       LEFT JOIN employee_salary_profiles esp ON esp.employee_id = e.id AND esp.is_active = 1
@@ -1206,8 +1204,8 @@ app.get('/reports/salary-distribution', authRequired, async (_, res) => {
       `SELECT 
         d.name AS label,
         COUNT(e.id) AS count,
-        COALESCE(ROUND(SUM(esp.total_gross), 0), 0) AS total_salary,
-        COALESCE(ROUND(AVG(esp.total_gross), 0), 0) AS avg_salary
+        COALESCE(ROUND(SUM(esp.base_salary), 0), 0) AS total_salary,
+        COALESCE(ROUND(AVG(esp.base_salary), 0), 0) AS avg_salary
       FROM employees e
       LEFT JOIN departments d ON d.id = e.department_id
       LEFT JOIN employee_salary_profiles esp ON esp.employee_id = e.id AND esp.is_active = 1
@@ -1219,8 +1217,8 @@ app.get('/reports/salary-distribution', authRequired, async (_, res) => {
       `SELECT 
         p.name AS label,
         COUNT(e.id) AS count,
-        COALESCE(ROUND(SUM(esp.total_gross), 0), 0) AS total_salary,
-        COALESCE(ROUND(AVG(esp.total_gross), 0), 0) AS avg_salary
+        COALESCE(ROUND(SUM(esp.base_salary), 0), 0) AS total_salary,
+        COALESCE(ROUND(AVG(esp.base_salary), 0), 0) AS avg_salary
       FROM employees e
       LEFT JOIN positions p ON p.id = e.position_id
       LEFT JOIN employee_salary_profiles esp ON esp.employee_id = e.id AND esp.is_active = 1
@@ -1232,8 +1230,8 @@ app.get('/reports/salary-distribution', authRequired, async (_, res) => {
       `SELECT 
         r.name AS label,
         COUNT(u.id) AS count,
-        COALESCE(ROUND(SUM(esp.total_gross), 0), 0) AS total_salary,
-        COALESCE(ROUND(AVG(esp.total_gross), 0), 0) AS avg_salary
+        COALESCE(ROUND(SUM(esp.base_salary), 0), 0) AS total_salary,
+        COALESCE(ROUND(AVG(esp.base_salary), 0), 0) AS avg_salary
       FROM users u
       LEFT JOIN roles r ON r.id = u.role_id
       LEFT JOIN employee_salary_profiles esp ON esp.employee_id = u.id AND esp.is_active = 1

@@ -1,29 +1,8 @@
 {
-  "active_plan": "D:\\WEB HRIS\\.sisyphus\\plans\\frontend-modular-refactor.md",
-  "started_at": "2026-05-04T12:09:42Z",
-  "completed_at": "2026-05-04T12:35:00Z",
-  "session_ids": [
-    "ses_20d36fd16ffeHRbYzfRaydStPr"
-  ],
-  "plan_name": "frontend-modular-refactor",
-  "status": "completed",
-  "tasks_completed": 16,
-  "tasks_total": 16,
-  "deliverables": {
-    "pages": 8,
-    "components": 7,
-    "hooks": 4,
-    "utils": 5,
-    "styles": 9,
-    "total_files": 31
-  },
-  "verification": {
-    "eslint": "0 errors",
-    "build": "success",
-    "app_jsx_lines": "< 100"
-  },
-  "session_origins": {
-    "ses_20d36fd16ffeHRbYzfRaydStPr": "direct"
-  },
-  "agent": "atlas"
+  "active_plan": "D:\\WEB HRIS\\.sisyphus\\plans\\docker-local-testing.md",
+  "started_at": "2026-05-04T13:52:08.066Z",
+  "session_ids": ["ses_20d36fd16ffeHRbYzfRaydStPr"],
+  "plan_name": "docker-local-testing",
+  "worktree_path": null,
+  "status": "in_progress"
 }

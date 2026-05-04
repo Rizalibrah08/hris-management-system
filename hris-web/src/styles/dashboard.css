@@ -1,4 +1,8 @@
 /* ===== Dashboard ===== */
+.dashboard-page {
+  /* wrapper for dashboard page content, no conflicting layout */
+}
+
 .metrics-grid {
   margin-top: 20px;
   display: grid;

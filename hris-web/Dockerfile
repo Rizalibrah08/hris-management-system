@@ -8,11 +8,14 @@ RUN npm run build
 
 # Stage 2: Runner
 FROM node:20-alpine
+RUN apk add --no-cache netcat-openbsd wget
 WORKDIR /app
+COPY docker-entrypoint.sh /app/
+RUN chmod +x /app/docker-entrypoint.sh
 COPY --from=builder /app/package*.json ./
 RUN npm install --omit=dev
 COPY --from=builder /app/backend ./backend
 COPY --from=builder /app/dist ./dist
 USER node
 EXPOSE 5000
-CMD ["node", "backend/src/server.js"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
