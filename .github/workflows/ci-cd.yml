@@ -3,15 +3,11 @@ name: CI/CD Pipeline (GHCR)
 on:
   push:
     branches: [main, develop]
-    paths:
-      - 'hris-web/**'
-      - 'docker-compose*.yml'
-      - 'Dockerfile'
-      - '.github/workflows/**'
   pull_request:
     branches: [main, develop]
     paths:
       - 'hris-web/**'
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -165,7 +161,7 @@ jobs:
             JWT_EXPIRY=1d
             PORT=5000
             NODE_ENV=production
-            GHCR_REPO=${{ github.repository }}
+            GHCR_REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
             ENVEOF
             chmod 600 .env
 
