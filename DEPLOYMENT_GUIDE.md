@@ -153,6 +153,10 @@ timedatectl set-timezone Asia/Jakarta
 
 ### 4.3 Jalankan Setup Otomatis (Rekomendasi)
 
+> ⚠️ **Sekali saja!** Jangan jalankan ulang script setup setelah aplikasi berjalan.
+> Script akan menimpa `docker-compose.ghcr.yml` dari GitHub (versi terbaru).
+> Kalau aplikasi sudah jalan, cukup update lewat CI/CD atau `docker compose pull`.
+
 Satu command, semua otomatis:
 
 ```bash
@@ -600,7 +604,39 @@ grep GHCR_REPO .env
 echo "YOUR_GITHUB_TOKEN" | docker login ghcr.io -u Rizalibrah08 --password-stdin
 ```
 
-### Container tidak start
+### Container conflik (nama sudah dipakai)
+
+```bash
+# Hapus paksa container lama
+docker rm -f hris-mysql hris-web 2>/dev/null
+
+# Start ulang
+docker compose -f docker-compose.ghcr.yml up -d
+```
+
+### MySQL "setgid: Operation not permitted" (AWS VPS)
+
+Error ini muncul di VPS AWS karena kernel membatasi `setgid` di container:
+
+```
+[ERROR] [MY-010126] [Server] setgid: Operation not permitted
+```
+
+**Solusi**: Compose file (`docker-compose.ghcr.yml`) sudah dikonfigurasi:
+- `mysql:8.0` (bukan `mysql:8` / `mysql:8.4`)
+- `security_opt: seccomp:unconfined`
+- `cap_add: [SETGID, SETUID]`
+- Tidak pakai `no-new-privileges`
+
+Kalau masih error, download ulang compose file:
+
+```bash
+cd ~/hris-prod
+docker compose -f docker-compose.ghcr.yml down
+docker rm -f hris-mysql hris-web 2>/dev/null
+curl -sL "https://raw.githubusercontent.com/Rizalibrah08/hris-management-system/main/docker-compose.ghcr.yml" -o docker-compose.ghcr.yml
+docker compose -f docker-compose.ghcr.yml up -d
+```
 
 ```bash
 # Lihat logs detail
