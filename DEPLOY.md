@@ -1,12 +1,12 @@
 # VPS Deployment Guide (Docker-Based)
 
-This guide walks you through deploying the HRIS application on a VPS using Docker Compose. The deployment is production-ready and does not require PM2, systemd, or nginx/SSL configuration.
+Panduan deploy manual HRIS di VPS menggunakan Docker Compose.
+
+> 💡 **Untuk deploy otomatis via CI/CD**, lihat [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
 
 ---
 
 ## 1. Prerequisites
-
-Before you begin, ensure your VPS has the following installed:
 
 | Tool | Minimum Version | Installation |
 |------|-----------------|--------------|
@@ -26,58 +26,75 @@ git --version          # Should show 2.30.x or higher
 
 - **RAM**: Minimum 2GB (4GB recommended)
 - **Storage**: Minimum 10GB free space
-- **Ports**: Ensure port 5000 is available (for the web application)
+- **Ports**: Port 5000 untuk aplikasi web
 
 ---
 
 ## 2. Quick Start
 
-Get the HRIS application running in minutes with these steps:
+### Cara 1: Production (GHCR Pull) — Rekomendasi
 
-### Step 1: Clone the Repository
+Image sudah di-build oleh GitHub Actions, VPS tinggal pull & run:
+
+```bash
+# Jalankan setup script otomatis
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Rizalibrah08/hris-management-system/main/scripts/setup-vps.sh)"
+```
+
+Atau manual:
+
+```bash
+mkdir -p ~/hris-prod && cd ~/hris-prod
+
+# Download compose file
+curl -sLO https://raw.githubusercontent.com/Rizalibrah08/hris-management-system/main/docker-compose.ghcr.yml
+
+# Buat .env
+openssl rand -base64 24  # → DB_PASSWORD
+openssl rand -base64 48  # → JWT_SECRET
+
+cat > .env << 'EOF'
+DB_PASSWORD=PASTE_DB_PASSWORD
+DB_NAME=hris_db
+DB_HOST=mysql
+DB_PORT=3306
+DB_USER=root
+JWT_SECRET=PASTE_JWT_SECRET
+JWT_EXPIRY=1d
+PORT=5000
+NODE_ENV=production
+GHCR_REPO=rizalibrah08/hris-management-system
+EOF
+chmod 600 .env
+
+# Pull & start
+docker compose -f docker-compose.ghcr.yml up -d
+
+# Cek health
+curl http://localhost:5000/health
+```
+
+### Cara 2: Development (Build Lokal)
+
+Clone repo dan build sendiri:
 
 ```bash
 git clone https://github.com/Rizalibrah08/hris-management-system.git
 cd hris-management-system
-```
 
-### Step 2: Create Environment Configuration
-
-```bash
-# Copy the example environment file
+# Buat .env (isi DB_PASSWORD & JWT_SECRET)
 cp hris-web/backend/.env.example .env
-
-# Edit the .env file with your secure values
 nano .env
-```
 
-Add these required variables to `.env`:
-
-```bash
-DB_PASSWORD=your_secure_database_password
-JWT_SECRET=your_jwt_secret_key
-```
-
-**Important**: Replace the placeholder values with strong, unique passwords.
-
-### Step 3: Start the Application
-
-```bash
-# Build and start all services
+# Build & start
 docker compose up -d
-
-# Verify services are running
 docker compose ps
-```
 
-### Step 4: Setup Database
-
-```bash
-# Run database setup script inside the web container
+# Setup database
 docker compose exec web npm run db:setup
 ```
 
-The application will be available at `http://your-vps-ip:5000`
+Akses di `http://your-vps-ip:5000`
 
 ---
 
@@ -351,53 +368,48 @@ sudo systemctl stop docker
 
 ## 9. Updating
 
-To update the application to the latest version:
+### Otomatis via CI/CD (Rekomendasi)
 
-### Step 1: Pull Latest Code
+Cukup push/merge ke `main` branch, GitHub Actions akan:
+1. Build image baru
+2. Push ke GHCR
+3. SSH ke VPS → pull image → restart container
 
 ```bash
-# Navigate to the project directory
+git checkout main
+git merge develop
+git push origin main
+# → Auto deploy! 🚀
+```
+
+### Manual Update (GHCR)
+
+```bash
+cd ~/hris-prod
+docker compose -f docker-compose.ghcr.yml pull web
+docker compose -f docker-compose.ghcr.yml up -d
+```
+
+### Manual Update (Build Lokal)
+
+```bash
 cd hris-management-system
-
-# Pull latest changes
 git pull origin main
-```
-
-### Step 2: Rebuild Containers
-
-```bash
-# Rebuild with the latest code
 docker compose build --no-cache
-```
-
-### Step 3: Restart Services
-
-```bash
-# Stop current containers
 docker compose down
-
-# Start with updated containers
 docker compose up -d
-
-# Verify everything is running
 docker compose ps
 ```
 
 ### Database Migrations
 
-If the update includes database changes:
+Jika update termasuk perubahan database:
 
 ```bash
-# Run database setup to apply new schema
 docker compose exec web npm run db:setup
 ```
 
-**Note**: Always backup your database before applying updates. You can backup the volume by:
-
-```bash
-# Create a backup of MySQL data volume
-docker run --rm -v hris-management-system_mysql_data:/data -v $(pwd):/backup alpine tar czf /backup/mysql-backup.tar.gz -C /data .
-```
+> ⚠️ Selalu backup database sebelum update! Lihat [Backup Strategy](#10-security-notes).
 
 ---
 

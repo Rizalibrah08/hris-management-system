@@ -16,12 +16,13 @@ Panduan deploy: **build di GitHub Actions → push ke GHCR → VPS pull ringan �
 ┌─────────────────────────────────────────────────────────┐
 │                    GitHub Actions                        │
 │  npm ci → vite build → docker build → push ke GHCR      │
+│  (HANYA trigger saat push/merge ke main)                │
 └──────────────────────┬──────────────────────────────────┘
                        │ image push
                        ▼
 ┌─────────────────────────────────────────────────────────┐
 │            GitHub Container Registry (ghcr.io)           │
-│  ghcr.io/user/hris-management-system:latest             │
+│  ghcr.io/rizalibrah08/hris-management-system:latest     │
 └──────────────────────┬──────────────────────────────────┘
                        │ docker pull (ringan, ~50MB)
                        ▼
@@ -145,8 +146,7 @@ newgrp docker
 
 ```bash
 # Setup dengan 1 command
-GITHUB_REPO=Rizalibrah08/hris-management-system \
-  bash -c "$(curl -fsSL https://raw.githubusercontent.com/Rizalibrah08/hris-management-system/main/scripts/setup-vps.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Rizalibrah08/hris-management-system/main/scripts/setup-vps.sh)"
 ```
 
 > Script ini otomatis:
@@ -180,7 +180,7 @@ JWT_SECRET=PASTE_JWT_SECRET
 JWT_EXPIRY=1d
 PORT=5000
 NODE_ENV=production
-GHCR_REPO=Rizalibrah08/hris-management-system
+GHCR_REPO=rizalibrah08/hris-management-system
 EOF
 
 chmod 600 .env
@@ -290,23 +290,29 @@ systemctl reload nginx
 
 ## 5. Setup CI/CD GitHub Actions
 
-### 5.1 Secrets di GitHub
+### 5.1 Mode Development vs Production
+
+| Mode | Branch | Trigger | Yang Terjadi |
+|------|--------|---------|--------------|
+| 🔵 **Dev** | `develop` | Push | Test & build check saja — **TIDAK deploy** |
+| 🔴 **Prod** | `main` | Push / Merge | Test → Build image → Push GHCR → **Auto deploy ke VPS** |
+
+> 💡 **Cara kerja**: Ngoding bebas di `develop` tanpa takut deploy. Kalau sudah siap production, merge/push ke `main` — otomatis deploy!
+
+### 5.2 Secrets di GitHub
 
 Buka repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**:
 
 | Secret | Value | Keterangan |
 |--------|-------|------------|
 | `PROD_IP` | `203.0.113.10` | IP VPS production |
-| `STAGING_IP` | `203.0.113.20` | IP VPS staging (opsional) |
-| `SSH_USER` | `root` | Username SSH VPS |
+| `SSH_USER` | `root` atau `ubuntu` | Username SSH VPS |
 | `SSH_KEY` | `isi private key` | Untuk GitHub login ke VPS |
 | `DOMAIN` | `hris.perusahaan.com` | Domain aplikasi |
-| `DB_PASSWORD_PROD` | `isi dari .env` | Password MySQL production |
-| `JWT_SECRET_PROD` | `isi dari .env` | JWT secret production |
-| `DB_PASSWORD_STAGING` | `isi` | Password MySQL staging |
-| `JWT_SECRET_STAGING` | `isi` | JWT secret staging |
+| `DB_PASSWORD_PROD` | `isi password` | Password MySQL production |
+| `JWT_SECRET_PROD` | `isi secret` | JWT secret production |
 
-### 5.2 Setup SSH untuk GitHub Actions
+### 5.3 Setup SSH untuk GitHub Actions
 
 ```bash
 # Di LAPTOP (bukan VPS), generate key khusus CI/CD:
@@ -319,10 +325,10 @@ ssh-copy-id -i ~/.ssh/hris_deploy.pub root@IP_VPS
 cat ~/.ssh/hris_deploy
 ```
 
-### 5.3 Test CI/CD
+### 5.4 Test CI/CD
 
 ```bash
-# Push ke main
+# Push ke main = auto deploy
 git add . && git commit -m "deploy: initial setup" && git push origin main
 ```
 
@@ -389,13 +395,21 @@ crontab -e
 
 ## 8. Update Aplikasi
 
-### Otomatis (via CI/CD)
+### Otomatis (via CI/CD) — Rekomendasi
 
-Cukup push ke `main` branch. GitHub Actions auto:
-1. Build image baru
-2. Push ke GHCR
-3. SSH ke VPS, pull image, restart container
-4. Health check
+Cukup push/merge ke `main` branch. GitHub Actions auto:
+1. Test kode
+2. Build image baru
+3. Push ke GHCR
+4. SSH ke VPS, pull image, restart container
+5. Health check
+
+```bash
+git checkout main
+git merge develop
+git push origin main
+# → Auto deploy! 🚀
+```
 
 ### Manual (kalau CI/CD belum jalan)
 
@@ -466,10 +480,12 @@ docker stats                                           # CPU/RAM
 docker compose -f docker-compose.ghcr.yml exec mysql mysql -uroot -p hris_db
 bash backup-db.sh                                     # Backup
 
-# === GitHub Actions ===
-# Push to deploy:
-git push origin main          # → Deploy production
-git push origin develop       # → Deploy staging
+# === GitHub Workflow ===
+# Dev mode (test only, NO deploy)
+git push origin develop
+
+# Production (auto deploy ke VPS)
+git push origin main          # → Test → Build → Deploy 🚀
 ```
 
 ---
@@ -484,9 +500,10 @@ git push origin develop       # → Deploy staging
 - [ ] Login ADM001/admin123 berhasil
 - [ ] Semua halaman berfungsi
 - [ ] **GANTI password admin!**
-- [ ] CI/CD berjalan (push → auto deploy)
+- [ ] GitHub secrets terisi (PROD_IP, SSH_USER, SSH_KEY, DB_PASSWORD_PROD, JWT_SECRET_PROD, DOMAIN)
+- [ ] CI/CD berjalan (push main → auto deploy)
+- [ ] Package GHCR disetel ke **Public**
 - [ ] Backup cron aktif
-- [ ] GitHub secrets terisi semua
 
 ---
 

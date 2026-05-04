@@ -1,46 +1,42 @@
 # CI/CD Setup - Quick Reference Card
 
-## 🚀 One Command Deploy
+## 🚀 Cara Deploy
 
 ```bash
-# Push ke development
+# 🔵 Development mode — test only, NO deploy
 git checkout develop
 git add .
 git commit -m "feat: your feature"
 git push origin develop
-# ↓ Otomatis deploy ke dev VPS
+# ↓ Test & build check aja. Aman, tidak deploy.
 
-# Push ke production
+# 🔴 Production mode — auto deploy ke VPS
 git checkout main
 git merge develop
 git push origin main
-# ↓ Otomatis deploy ke production VPS
+# ↓ Otomatis: Test → Build → Push GHCR → Deploy VPS 🚀
 ```
 
 ---
 
 ## 🔑 Required Secrets
 
-Masuk ke: `GitHub Repo > Settings > Secrets and variables > Actions`
+Masuk ke: `GitHub Repo > Settings > Secrets and variables > Actions > New repository secret`
 
-### Wajib
-```
-VPS_DEV_IP          = 203.0.113.45
-VPS_PROD_IP         = 198.51.100.20
-VPS_USER            = ubuntu
-VPS_SSH_KEY         = -----BEGIN OPENSSH PRIVATE KEY-----
-                      ... (private key) ...
-                      -----END OPENSSH PRIVATE KEY-----
+### Wajib (6 secrets)
 
-DB_PASSWORD_DEV     = dev_password_secure
-DB_PASSWORD_PROD    = prod_password_super_secure
-JWT_SECRET_DEV      = dev_jwt_secret_key_long
-JWT_SECRET_PROD     = prod_jwt_secret_key_super_long
-```
+| Secret | Contoh | Keterangan |
+|--------|--------|------------|
+| `PROD_IP` | `54.123.45.67` | IP VPS |
+| `SSH_USER` | `ubuntu` | Username SSH |
+| `SSH_KEY` | `-----BEGIN OPENSSH...` | Private key SSH |
+| `DB_PASSWORD_PROD` | `password_aman` | Password MySQL |
+| `JWT_SECRET_PROD` | `jwt_secret_panjang` | JWT secret |
+| `DOMAIN` | `hris.domain.com` | Domain aplikasi |
 
 ---
 
-## 📁 Files Created
+## 📁 Files CI/CD
 
 ```
 .github/
@@ -48,7 +44,8 @@ JWT_SECRET_PROD     = prod_jwt_secret_key_super_long
 │   ├── ci-cd.yml          ← Main workflow (auto trigger)
 │   ├── manual-deploy.yml  ← Manual deploy workflow
 │   └── README.md          ← Setup guide
-└── CI_CD_ARCHITECTURE.md  ← Architecture docs
+├── CI_CD_ARCHITECTURE.md  ← Architecture docs
+└── QUICK_REFERENCE.md     ← File ini
 ```
 
 ---
@@ -56,30 +53,21 @@ JWT_SECRET_PROD     = prod_jwt_secret_key_super_long
 ## 🔄 Pipeline Flow
 
 ```
-Push ke GitHub
-    ↓
-┌─────────────────┐
-│ 1. Test & Lint  │ ← npm test, lint, build
-│ 2. Security     │ ← Trivy scan
-│ 3. Build Docker │ ← Push ke GHCR
-└────────┬────────┘
-         ↓
-┌─────────────────┐
-│ 4. Deploy VPS   │ ← SSH + docker compose up
-│ 5. Health Check │ ← curl /health
-└─────────────────┘
-    ↓
-🎉 Deployed!
+🔵 Push ke develop:
+   🔍 Test & Build Check → ✅ Done (no deploy)
+
+🔴 Push ke main:
+   🔍 Test → 📦 Build & Push GHCR → 🚀 Auto Deploy VPS → ✅ Live!
 ```
 
 ---
 
-## 🎯 Environments
+## 🎯 Mode Branch
 
-| Environment | Branch | URL | Trigger |
-|-------------|--------|-----|---------|
-| **Development** | `develop` | http://DEV_VPS_IP:5000 | Auto push |
-| **Production** | `main` | http://PROD_VPS_IP:5000 | Auto push + Approval |
+| Branch | Test | Build Image | Deploy VPS |
+|--------|:--:|:--:|:--:|
+| `develop` | ✅ | ❌ | ❌ |
+| `main` | ✅ | ✅ | 🚀 Auto |
 
 ---
 
@@ -90,19 +78,21 @@ Push ke GitHub
 ssh ubuntu@YOUR_VPS_IP
 
 # Lihat logs
-cd ~/hris-dev  # atau hris-prod
-docker compose logs -f web
+cd ~/hris-prod
+docker compose -f docker-compose.ghcr.yml logs -f web
 
 # Restart service
-docker compose restart web
+docker compose -f docker-compose.ghcr.yml restart web
 
 # Rollback (jika perlu)
-docker compose down
-docker pull ghcr.io/USER/REPO:previous-tag
-docker compose up -d
+docker compose -f docker-compose.ghcr.yml down
+docker pull ghcr.io/rizalibrah08/hris-management-system:latest-sha-XXXXX
+docker tag ghcr.io/rizalibrah08/hris-management-system:latest-sha-XXXXX ghcr.io/rizalibrah08/hris-management-system:latest
+docker compose -f docker-compose.ghcr.yml up -d
 
 # Backup database manual
-docker compose exec mysql mysqldump -u root -p hris_db > backup.sql
+cd ~/hris-prod
+docker compose -f docker-compose.ghcr.yml exec mysql mysqldump -u root -p hris_db > backup.sql
 ```
 
 ---
@@ -112,17 +102,8 @@ docker compose exec mysql mysqldump -u root -p hris_db > backup.sql
 | Check | Command | Expected |
 |-------|---------|----------|
 | Health | `curl http://IP:5000/health` | `{"status":"ok"}` |
-| API | `curl http://IP:5000/api/employees` | JSON array |
-| SPA | `curl http://IP:5000/` | HTML page |
-
----
-
-## 🔔 Notifications
-
-**Discord Webhook** (Opsional):
-1. Buat webhook di Discord channel
-2. Tambahkan secret `DISCORD_WEBHOOK`
-3. Notifikasi otomatis setiap deploy
+| Login | `curl -X POST http://IP:5000/api/auth/login -H "Content-Type: application/json" -d '{"nik":"ADM001","password":"admin123"}'` | Token JSON |
+| Containers | `docker compose -f docker-compose.ghcr.yml ps` | 2 containers running |
 
 ---
 
@@ -133,39 +114,27 @@ docker compose exec mysql mysqldump -u root -p hris_db > backup.sql
 | Pipeline failed | Check **Actions** tab → Lihat logs |
 | Deploy tapi app error | SSH ke VPS → `docker compose logs web` |
 | DB connection error | Cek `DB_PASSWORD` secret benar? |
-| SSH error | Cek `VPS_SSH_KEY` format (OpenSSH) |
-| 404 not found | Cek branch sudah push? |
-
----
-
-## 📱 Build Mobile APK (Manual)
-
-1. Buka GitHub → Actions tab
-2. Pilih workflow **Manual Deploy**
-3. Click **Run workflow**
-4. Pilih job **Build Mobile**
-5. Download APK dari artifacts
+| SSH error | Cek `SSH_KEY` format (OpenSSH) |
+| GHCR denied | Cek package visibility → **Public** |
+| Image not found | Cek `GHCR_REPO` lowercase (`rizalibrah08/...`) |
 
 ---
 
 ## ✅ Pre-Deploy Checklist
 
-Sebelum push ke `main` (production):
+Sebelum merge ke `main` (production):
 
-- [ ] Tests pass di lokal (`npm run test`)
-- [ ] Build success (`npm run build`)
+- [ ] Tests pass di lokal (`npm run build`)
 - [ ] Tidak ada hardcoded secrets
-- [ ] Database migration sudah tested
-- [ ] Sudah deploy ke dev dan tested
-- [ ] Team informed
+- [ ] Sudah merge dari develop
+- [ ] Semua GitHub secrets terisi
 
 ---
 
 ## 🔗 Useful Links
 
-- **GitHub Actions**: https://github.com/USER/REPO/actions
-- **Container Registry**: https://github.com/USER/REPO/pkgs/container/REPO
-- **Environments**: https://github.com/USER/REPO/settings/environments
+- **GitHub Actions**: https://github.com/Rizalibrah08/hris-management-system/actions
+- **Container Registry**: https://github.com/Rizalibrah08/hris-management-system/pkgs/container/hris-management-system
 
 ---
 

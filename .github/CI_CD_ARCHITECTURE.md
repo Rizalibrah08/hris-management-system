@@ -1,16 +1,16 @@
 # CI/CD Architecture Overview
 
-Dokumen ini menjelaskan arsitektur CI/CD lengkap untuk HRIS Web Application.
+Dokumen ini menjelaskan arsitektur CI/CD untuk HRIS Web Application.
 
 ---
 
 ## 🎯 Goals
 
 1. **Automated Testing** - Setiap push ke repository di-test otomatis
-2. **Security First** - Scan vulnerability sebelum deploy
-3. **Zero Downtime** - Deploy tanpa mematikan service
-4. **Multi Environment** - Development dan Production terpisah
-5. **Rollback Ready** - Backup otomatis sebelum deploy production
+2. **Production Deploy on Main** - Push/merge ke `main` = auto build & deploy
+3. **Safe Development** - Push ke `develop` = test saja, tidak deploy
+4. **Zero Downtime** - Deploy tanpa mematikan service
+5. **Rollback Ready** - Image versioned, mudah rollback
 
 ---
 
@@ -19,57 +19,107 @@ Dokumen ini menjelaskan arsitektur CI/CD lengkap untuk HRIS Web Application.
 ### 1. Source Control (GitHub)
 ```
 Repository
-├── main branch → Production
-├── develop branch → Development
+├── main branch → Production (auto deploy)
+├── develop branch → Development (test only)
 └── feature/* branches → Development
 ```
 
 ### 2. CI/CD Platform (GitHub Actions)
 ```
 GitHub Actions Runner (Ubuntu)
-├── Test Job → npm test, lint, build
-├── Security Job → Trivy scan
-├── Build Job → Docker build & push
-└── Deploy Job → SSH ke VPS
+├── Test Job → npm ci, build check
+├── Build Job → Docker build & push ke GHCR  (HANYA main)
+└── Deploy Job → SSH ke VPS, pull & restart  (HANYA main)
 ```
 
 ### 3. Container Registry (GitHub Container Registry)
 ```
-ghcr.io/username/hris-management-system
+ghcr.io/rizalibrah08/hris-management-system
 ├── latest (main branch)
-├── main-sha-xxxx
-├── develop-sha-xxxx
-└── development-latest
+└── latest-sha-xxxx (versioned)
 ```
 
-### 4. Deployment Targets
+### 4. Deployment Target
 ```
-VPS Development                VPS Production
-├─ MySQL Container            ├─ MySQL Container
-├─ Web Container              ├─ Web Container
-│  ├─ Express API            │  ├─ Express API
-│  └─ React Static           │  └─ React Static
-└─ Port 5000                 └─ Port 5000
+VPS Production
+├─ MySQL Container
+├─ Web Container
+│  ├─ Express API
+│  └─ React Static
+└─ Port 5000 → Cloudflare → HTTPS
 ```
 
 ---
 
 ## 📊 Workflow Triggers
 
-### Automatic Triggers
+### 🔵 Develop Mode — Push ke `develop`
+```
+Push develop → 🔍 Test & Build Check → ✅ Selesai
+                                   ↓
+                         (TIDAK build image, TIDAK deploy)
+```
+**Aman buat ngoding, tidak menyentuh VPS sama sekali.**
 
-| Event | Branch | Action |
-|-------|--------|--------|
-| Push | `main` | Test → Build → Deploy Production |
-| Push | `develop` | Test → Build → Deploy Development |
-| Pull Request | any | Test only (no deploy) |
+### 🔴 Production Mode — Push / Merge ke `main`
+```
+Push main → 🔍 Test → 📦 Build & Push GHCR → 🚀 Auto Deploy VPS
+```
+**Begitu merge/push ke main, langsung otomatis deploy!**
 
-### Manual Triggers
+### 📋 Ringkasan
 
-| Workflow | Kapan Digunakan |
-|----------|----------------|
-| **Manual Deploy** | Deploy spesifik branch ke environment tertentu |
-| **Build Mobile** | Build APK Android |
+| Event | Branch | Test | Build Image | Deploy |
+|-------|--------|:--:|:--:|:--:|
+| Push | `develop` | ✅ | ❌ | ❌ |
+| Push | `main` | ✅ | ✅ | ✅ Auto |
+| Pull Request | `main` | ✅ | ❌ | ❌ |
+| Manual (workflow_dispatch) | — | ✅ | Opsional | Opsional |
+
+---
+
+## 🔄 Deployment Flow
+
+### Development Mode (develop)
+```
+Developer push ke develop
+         │
+         ▼
+┌──────────────────────┐
+│ GitHub Actions       │
+│ ├─ Checkout code     │
+│ ├─ npm ci            │
+│ ├─ Build check       │
+│ └─ ✅ Selesai        │
+└──────────────────────┘
+   (Tidak deploy)
+```
+
+### Production Mode (main)
+```
+Merge/push ke main
+         │
+         ▼
+┌──────────────────────┐
+│ GitHub Actions       │
+│ ├─ Checkout code     │
+│ ├─ npm ci + build    │
+│ ├─ Docker build      │
+│ ├─ Push ke GHCR      │
+│ └─ SSH deploy VPS    │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐
+│ VPS Production       │
+│ ├─ Pull image baru   │
+│ ├─ docker compose up │
+│ ├─ Health check      │
+│ └─ Cleanup old imgs  │
+└──────────────────────┘
+    ↓
+🎉 Deployed! https://domain.com
+```
 
 ---
 
@@ -85,86 +135,19 @@ VPS Development                VPS Production
                            │
                            ▼
 ┌────────────────────────────────────────────────────────┐
-│  Layer 2: Dependency Security                           │
-│  • npm audit (auto check)                               │
-│  • Trivy vulnerability scan                             │
-│  • Dependency review PR check                           │
-└────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌────────────────────────────────────────────────────────┐
-│  Layer 3: Container Security                            │
-│  • Minimal base image (Alpine)                          │
+│  Layer 2: Container Security                            │
 │  • Non-root user                                        │
 │  • Multi-stage build                                    │
+│  • Read-only filesystem                                 │
 └────────────────────────────────────────────────────────┘
                            │
                            ▼
 ┌────────────────────────────────────────────────────────┐
-│  Layer 4: Deployment Security                           │
+│  Layer 3: Deployment Security                           │
 │  • SSH key authentication                               │
 │  • Secrets injection at runtime                         │
-│  • Database backup before deploy                        │
+│  • GHCR package (public/private)                        │
 └────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🔄 Deployment Flow
-
-### Development Deployment
-```
-Developer push ke develop
-         │
-         ▼
-┌──────────────────────┐
-│ GitHub Actions       │
-│ ├─ Checkout code     │
-│ ├─ Run tests         │
-│ ├─ Security scan     │
-│ ├─ Build Docker      │
-│ └─ Push to GHCR      │
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│ VPS Development      │
-│ ├─ Pull new image    │
-│ ├─ Backup DB         │
-│ ├─ Deploy new ver    │
-│ ├─ Health check      │
-│ └─ Notify success    │
-└──────────────────────┘
-```
-
-### Production Deployment
-```
-Merge PR ke main
-         │
-         ▼
-┌──────────────────────┐
-│ Required Reviewers   │
-│ (GitHub Environment) │
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│ GitHub Actions       │
-│ ├─ Full test suite   │
-│ ├─ Security scan     │
-│ ├─ Build & push      │
-│ └─ Deploy to Prod    │
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│ VPS Production       │
-│ ├─ Create DB backup  │
-│ ├─ Pull new image    │
-│ ├─ Deploy            │
-│ ├─ Health check      │
-│ └─ Cleanup old imgs  │
-└──────────────────────┘
 ```
 
 ---
@@ -174,7 +157,7 @@ Merge PR ke main
 ### GitHub Actions Monitoring
 - **Workflow runs history** - Lihat status setiap deploy
 - **Job logs** - Detail tiap step
-- **Artifacts** - Build outputs (APK, test reports)
+- **Artifacts** - Build outputs
 
 ### Application Monitoring
 ```bash
@@ -190,12 +173,6 @@ docker compose logs -f mysql
 docker stats
 ```
 
-### Alerts (Opsional)
-Tambahkan integrasi:
-- **Discord** - Notifikasi deploy success/fail
-- **Slack** - Channel notifikasi
-- **Email** - Alert critical errors
-
 ---
 
 ## 🚀 Performance Optimizations
@@ -203,12 +180,11 @@ Tambahkan integrasi:
 ### Docker Build
 - ✅ Multi-stage build (kecilkan image size)
 - ✅ Build cache (GitHub Actions cache)
-- ✅ Multi-platform (AMD64 & ARM64)
+- ✅ Single platform (AMD64)
 
 ### Deployment
-- ✅ Parallel jobs (test + security scan bersamaan)
 - ✅ Layer caching (Docker layer reuse)
-- ✅ Selective deploy (hanya jika file berubah)
+- ✅ Selective build (hanya main branch)
 
 ---
 
@@ -245,12 +221,10 @@ docker compose exec mysql mysql -u root -p hris_db < backup-latest.sql
 ### Setiap Minggu
 - [ ] Review failed pipeline runs
 - [ ] Check VPS disk space
-- [ ] Review security scan results
 
 ### Setiap Bulan
 - [ ] Update Docker base images
 - [ ] Rotate SSH keys
-- [ ] Review dan update dependencies
 - [ ] Cleanup old Docker images
 
 ### Setiap Quarter
@@ -274,9 +248,9 @@ chore: update dependencies
 
 ### 2. Branch Strategy
 ```
-main (production)
+main (production — auto deploy)
   ↑
-develop (integration)
+develop (development — test only)
   ↑
 feature/login-page
 feature/payroll-export
@@ -315,23 +289,11 @@ e2e-test:
       uses: cypress-io/github-action@v6
 ```
 
-### Menambahkan Deployment Target Baru
-```yaml
-deploy-staging:
-  name: Deploy to Staging
-  needs: build-docker
-  environment:
-    name: staging
-    url: http://${{ secrets.VPS_STAGING_IP }}:5000
-  steps:
-    # ... deployment steps
-```
-
 ### Notifikasi Custom
 ```yaml
 notify-slack:
   runs-on: ubuntu-latest
-  needs: deploy-prod
+  needs: deploy
   steps:
     - uses: slackapi/slack-github-action@v1
       with:
@@ -348,7 +310,6 @@ notify-slack:
 - [GitHub Actions Docs](https://docs.github.com/en/actions)
 - [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
 - [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
-- [Trivy Security Scanner](https://aquasecurity.github.io/trivy/)
 
 ---
 
@@ -358,15 +319,14 @@ Setup CI/CD untuk pertama kali:
 
 - [ ] 1. Copy workflow files ke `.github/workflows/`
 - [ ] 2. Tambahkan secrets ke GitHub (Settings > Secrets)
-- [ ] 3. Buat environment `development` dan `production`
-- [ ] 4. Setup SSH key di VPS
-- [ ] 5. Push ke `develop` branch
-- [ ] 6. Verifikasi pipeline berjalan
-- [ ] 7. Cek deployment di dev VPS
-- [ ] 8. Merge ke `main` untuk production
+- [ ] 3. Setup SSH key di VPS
+- [ ] 4. Set package GHCR ke Public
+- [ ] 5. Push ke `develop` → cek test jalan
+- [ ] 6. Push/merge ke `main` → cek deploy jalan
+- [ ] 7. Verifikasi aplikasi bisa diakses
 
 **Total setup time: ~30 menit**
 
 ---
 
-Selamat! Anda sekarang memiliki CI/CD pipeline enterprise-grade untuk HRIS application.
+Selamat! Anda sekarang memiliki CI/CD pipeline untuk HRIS application.

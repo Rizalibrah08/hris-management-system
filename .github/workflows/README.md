@@ -6,36 +6,39 @@ Panduan lengkap untuk mengatur CI/CD pipeline HRIS dengan GitHub Actions.
 
 ## 📋 Overview
 
-Pipeline ini akan otomatis:
-1. ✅ **Test & Lint** - Cek kualitas kode
-2. 🔒 **Security Scan** - Scan vulnerability
-3. 🐳 **Build Docker** - Build dan push image ke GitHub Container Registry
-4. 🚀 **Deploy** - Deploy ke VPS (Development/Production)
+Pipeline ini:
+- ✅ **Test** — Cek build setiap push
+- 🐳 **Build Docker** — Build dan push image ke GHCR (hanya `main`)
+- 🚀 **Deploy** — Auto deploy ke VPS (hanya `main`)
+
+### 🔵 Develop Mode (`develop` branch)
+```
+Push develop → Test & Build Check → Selesai (TIDAK deploy)
+```
+Aman buat ngoding, VPS tidak tersentuh.
+
+### 🔴 Production Mode (`main` branch)
+```
+Push main → Test → Build & Push GHCR → Auto Deploy VPS
+```
+Merge/push ke main = langsung deploy otomatis.
 
 ---
 
 ## 🔧 Setup Secrets di GitHub
 
-Masuk ke **Settings > Secrets and variables > Actions**, lalu tambahkan secrets berikut:
+Masuk ke **Settings > Secrets and variables > Actions > New repository secret**, tambahkan:
 
-### Wajib untuk Deploy
+### Wajib
 
 | Secret | Deskripsi | Contoh |
 |--------|-----------|--------|
-| `VPS_DEV_IP` | IP Address VPS Development | `203.0.113.45` |
-| `VPS_PROD_IP` | IP Address VPS Production | `198.51.100.20` |
-| `VPS_USER` | Username SSH VPS | `ubuntu` atau `root` |
-| `VPS_SSH_KEY` | Private Key SSH (isi lengkap dengan header/footer) | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
-| `DB_PASSWORD_DEV` | Password MySQL Development | `dev_password_123` |
-| `DB_PASSWORD_PROD` | Password MySQL Production | `prod_secure_password_456` |
-| `JWT_SECRET_DEV` | JWT Secret Development | `dev_jwt_secret_key` |
-| `JWT_SECRET_PROD` | JWT Secret Production | `prod_jwt_secret_key_super_secure` |
-
-### Opsional
-
-| Secret | Deskripsi |
-|--------|-----------|
-| `DISCORD_WEBHOOK` | Webhook URL untuk notifikasi Discord |
+| `PROD_IP` | IP Address VPS | `54.123.45.67` |
+| `SSH_USER` | Username SSH VPS | `ubuntu` atau `root` |
+| `SSH_KEY` | Private Key SSH (isi lengkap) | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
+| `DB_PASSWORD_PROD` | Password MySQL | `password_aman_123` |
+| `JWT_SECRET_PROD` | JWT Secret | `jwt_secret_panjang_dan_acak` |
+| `DOMAIN` | Domain aplikasi | `hris.perusahaan.com` |
 
 ---
 
@@ -43,16 +46,16 @@ Masuk ke **Settings > Secrets and variables > Actions**, lalu tambahkan secrets 
 
 ```bash
 # 1. Generate key pair di komputer lokal
-ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_actions
+ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/hris_deploy
 
 # 2. Copy public key ke VPS
-cat ~/.ssh/github_actions.pub
+cat ~/.ssh/hris_deploy.pub
 # Copy isi file, lalu paste ke ~/.ssh/authorized_keys di VPS
 
 # 3. Copy private key ke GitHub Secrets
-cat ~/.ssh/github_actions
+cat ~/.ssh/hris_deploy
 # Copy isi lengkap (termasuk -----BEGIN... dan -----END...)
-# Paste ke secret VPS_SSH_KEY di GitHub
+# Paste ke secret SSH_KEY di GitHub
 ```
 
 ---
@@ -61,114 +64,55 @@ cat ~/.ssh/github_actions
 
 ```
 .github/
-└── workflows/
-    └── ci-cd.yml          # File workflow utama
+├── workflows/
+│   ├── ci-cd.yml          # Main workflow (auto trigger)
+│   ├── manual-deploy.yml  # Manual deploy
+│   └── README.md          # File ini
+├── CI_CD_ARCHITECTURE.md  # Arsitektur CI/CD
+└── QUICK_REFERENCE.md     # Quick reference
 ```
 
 ---
 
 ## 🚀 Alur Kerja Pipeline
 
-### Push ke Branch `develop`
 ```
-Push to develop
-    ↓
-Test & Lint → Security Scan → Build Docker Image
-    ↓
-Deploy to Development VPS
-```
-
-### Push ke Branch `main`
-```
-Push to main
-    ↓
-Test & Lint → Security Scan → Build Docker Image
-    ↓
-Backup Database → Deploy to Production VPS
-```
-
-### Manual Trigger (Mobile Build)
-```
-GitHub Actions → Workflow dispatch
-    ↓
-Build Mobile APK
-    ↓
-Upload Artifact
-```
-
----
-
-## 🎯 Environment Setup di GitHub
-
-### 1. Buat Environment
-
-1. Buka **Settings > Environments**
-2. Klik **New environment**
-3. Buat 2 environment:
-   - `development`
-   - `production`
-
-### 2. Konfigurasi Production Environment
-
-Untuk environment `production`, aktifkan protection:
-
-- ✅ **Required reviewers** - Tambahkan user yang boleh approve deploy
-- ✅ **Wait timer** - Tunggu 5 menit sebelum deploy (opsional)
-- ✅ **Deployment branches** - Hanya allow dari branch `main`
-
----
-
-## 📊 Diagram Alur CI/CD
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                       GitHub Repository                      │
-│                                                              │
-│   ┌──────────┐   ┌──────────┐   ┌──────────────────────┐   │
-│   │  Push    │   │   PR     │   │   Manual Trigger     │   │
-│   │  main    │   │  opened  │   │   (workflow_dispatch)│   │
-│   └────┬─────┘   └────┬─────┘   └──────────┬───────────┘   │
-└────────┼──────────────┼────────────────────┼───────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                     GitHub Repository                         │
+│                                                               │
+│   ┌──────────┐   ┌──────────┐   ┌──────────────────────┐    │
+│   │  Push    │   │   PR     │   │   Manual Trigger     │    │
+│   │  main    │   │  opened  │   │   (workflow_dispatch)│    │
+│   └────┬─────┘   └────┬─────┘   └──────────┬───────────┘    │
+└────────┼──────────────┼────────────────────┼────────────────┘
          │              │                    │
          ▼              ▼                    ▼
 ┌──────────────────────────────────────────────────────────────┐
 │                     GitHub Actions Runner                     │
 │                                                               │
 │  ┌────────────────────────────────────────────────────────┐  │
-│  │  Stage 1: Test & Quality                                │  │
+│  │  Stage 1: Test & Build Check                            │  │
 │  │  • npm ci (install dependencies)                        │  │
-│  │  • npm run lint (check code style)                      │  │
-│  │  • prettier --check (formatting)                        │  │
 │  │  • npm run build (build frontend)                       │  │
 │  └────────────────────────────────────────────────────────┘  │
 │                              │                                │
+│              (HANYA jika push ke main)                        │
 │                              ▼                                │
 │  ┌────────────────────────────────────────────────────────┐  │
-│  │  Stage 2: Security Scan                                 │  │
-│  │  • Trivy vulnerability scanner                          │  │
-│  │  • Scan dependencies & filesystem                       │  │
+│  │  Stage 2: Build Docker Image                            │  │
+│  │  • Build multi-stage image (AMD64)                      │  │
+│  │  • Push ke GitHub Container Registry (ghcr.io)          │  │
+│  │  • Tag: latest, latest-sha-xxxx                         │  │
 │  └────────────────────────────────────────────────────────┘  │
 │                              │                                │
+│              (HANYA jika push ke main)                        │
 │                              ▼                                │
 │  ┌────────────────────────────────────────────────────────┐  │
-│  │  Stage 3: Build Docker Image                            │  │
-│  │  • Build multi-platform image (AMD64, ARM64)            │  │
-│  │  • Push to GitHub Container Registry (ghcr.io)          │  │
-│  │  • Tag: latest, main, sha-xxxx                          │  │
-│  └────────────────────────────────────────────────────────┘  │
-└──────────────────────────────┬───────────────────────────────┘
-                               │
-                               ▼
-┌──────────────────────────────────────────────────────────────┐
-│                       VPS Server                              │
-│                                                               │
-│  ┌────────────────────────────────────────────────────────┐  │
-│  │  Stage 4: Deploy                                         │  │
+│  │  Stage 3: Deploy ke VPS                                 │  │
 │  │  • SSH ke VPS                                           │  │
-│  │  • Pull latest code                                     │  │
+│  │  • Tulis .env dari secrets                              │  │
 │  │  • docker compose pull (image baru)                     │  │
 │  │  • docker compose up -d (deploy)                        │  │
-│  │  • npm run db:setup (setup DB)                          │  │
 │  │  • Health check (curl /health)                          │  │
 │  └────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────┘
@@ -189,12 +133,12 @@ Untuk environment `production`, aktifkan protection:
 ssh user@your-vps-ip
 
 # Lihat logs container
-cd ~/hris-dev  # atau hris-prod
-docker compose logs -f web
-docker compose logs -f mysql
+cd ~/hris-prod
+docker compose -f docker-compose.ghcr.yml logs -f web
+docker compose -f docker-compose.ghcr.yml logs -f mysql
 
 # Cek status container
-docker compose ps
+docker compose -f docker-compose.ghcr.yml ps
 
 # Health check
 curl http://localhost:5000/health
@@ -210,83 +154,63 @@ curl http://localhost:5000/health
 ssh user@your-vps-ip
 cd ~/hris-prod
 
-# Lihat image lama
-docker images
+# Lihat image yang tersedia
+docker images | grep hris-management-system
 
 # Rollback ke versi sebelumnya
-docker compose down
-docker pull ghcr.io/username/repo:sha-xxxx  # versi lama
-docker tag ghcr.io/username/repo:sha-xxxx ghcr.io/username/repo:latest
-docker compose up -d
-
-# Restore database dari backup (jika perlu)
-mysql -u root -p hris_db < backup-YYYYMMDD-HHMMSS.sql
+docker compose -f docker-compose.ghcr.yml down
+docker pull ghcr.io/rizalibrah08/hris-management-system:latest-sha-XXXXX
+docker tag ghcr.io/rizalibrah08/hris-management-system:latest-sha-XXXXX ghcr.io/rizalibrah08/hris-management-system:latest
+docker compose -f docker-compose.ghcr.yml up -d
 ```
 
-### Automated Rollback
-Pipeline akan otomatis fail jika health check gagal, tapi container tetap berjalan dengan versi lama.
+> Pipeline akan fail jika health check gagal, tapi container tetap berjalan dengan versi lama.
 
 ---
 
 ## 🛡️ Security Best Practices
 
 1. **Jangan hardcode secrets** - Selalu gunakan GitHub Secrets
-2. **SSH Key terpisah** - Gunakan key khusus untuk CI/CD, bukan key pribadi
-3. **Restrict IP** - Batasi IP yang bisa SSH ke VPS
-4. **Enable 2FA** - Aktifkan 2FA untuk akun GitHub
-5. **Database Backup** - Pipeline otomatis backup sebelum deploy production
-6. **Vulnerability Scan** - Trivy scan setiap build
+2. **SSH Key terpisah** - Gunakan key khusus untuk CI/CD
+3. **Enable 2FA** - Aktifkan 2FA untuk akun GitHub
+4. **GHCR Public** - Set package visibility ke Public
+5. **Backup rutin** - Setup cron backup database
 
 ---
 
 ## 📝 Contoh Penggunaan
 
-### Deploy Cepat ke Development
+### Ngoding aman di develop
 ```bash
-# 1. Commit dan push ke develop
 git checkout develop
 git add .
 git commit -m "feat: add new feature"
 git push origin develop
-
-# 2. GitHub Actions akan otomatis deploy ke dev VPS
-# 3. Akses di: http://YOUR_DEV_VPS_IP:5000
+# → Test jalan, tapi TIDAK deploy. Aman!
 ```
 
 ### Deploy ke Production
 ```bash
-# 1. Merge ke main (via PR)
 git checkout main
 git merge develop
 git push origin main
-
-# 2. GitHub Actions akan deploy ke production setelah tests pass
-# 3. Akses di: http://YOUR_PROD_VPS_IP:5000
+# → Auto: Test → Build → Push GHCR → Deploy VPS 🚀
 ```
-
-### Build Mobile APK (Manual)
-1. Buka GitHub repository
-2. Klik tab **Actions**
-3. Pilih workflow **CI/CD Pipeline**
-4. Klik **Run workflow**
-5. Pilih **build-mobile** job
-6. Download APK dari artifacts setelah selesai
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Pipeline Failed di "Test & Lint"
+### Pipeline Failed di "Test"
 ```bash
 # Fix di lokal dulu
 cd hris-web
-npm run lint
 npm run build
 # Fix semua error, lalu push ulang
 ```
 
 ### Deploy Failed - SSH Error
-- Cek VPS_SSH_KEY sudah benar (format OpenSSH)
+- Cek `SSH_KEY` sudah benar (format OpenSSH)
 - Pastikan public key sudah di `~/.ssh/authorized_keys` di VPS
 - Cek firewall VPS allow port 22
 
@@ -294,10 +218,9 @@ npm run build
 - SSH ke VPS, cek logs: `docker compose logs web`
 - Kemungkinan: DB belum ready, port conflict, atau env vars salah
 
-### Image Build Failed
-- Cek Dockerfile valid
-- Cek `docker-compose.yml` valid
-- Pastikan tidak ada syntax error
+### GHCR "denied"
+- Cek package visibility di GitHub → Packages → **Change visibility → Public**
+- Cek `GHCR_REPO` di `.env` VPS sudah lowercase (`rizalibrah08/...`)
 
 ---
 
@@ -306,18 +229,16 @@ npm run build
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [Docker Build Push Action](https://github.com/docker/build-push-action)
 - [SSH Action](https://github.com/appleboy/ssh-action)
-- [Trivy Security Scanner](https://github.com/aquasecurity/trivy-action)
 
 ---
 
 ## ✅ Checklist Setup
 
-- [ ] Tambahkan semua secrets ke GitHub
+- [ ] Tambahkan 6 secrets ke GitHub
 - [ ] Setup SSH key di VPS
-- [ ] Buat environment `development` dan `production`
-- [ ] Test pipeline dengan push ke `develop`
-- [ ] Verifikasi deploy berhasil ke dev VPS
-- [ ] Test pipeline dengan push ke `main` (production)
-- [ ] Setup notifikasi Discord (opsional)
+- [ ] Set package GHCR ke Public
+- [ ] Push ke `develop` → cek test jalan ✅
+- [ ] Merge ke `main` → cek auto deploy jalan 🚀
+- [ ] Verifikasi `https://domain.com` bisa diakses
 
-**Butuh bantuan?** Cek logs di GitHub Actions tab untuk detail error.
+**Butuh bantuan?** Cek logs di GitHub Actions tab.
