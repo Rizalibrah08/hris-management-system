@@ -15,7 +15,7 @@
 
 services:
   mysql:
-    image: mysql:8
+    image: mysql:8.0
     container_name: hris-mysql
     restart: always
     environment:
@@ -33,19 +33,21 @@ services:
       - internal
     # --- Security ---
     security_opt:
-      - no-new-privileges:true
+      - seccomp:unconfined
     cap_drop:
       - ALL
     cap_add:
       - CHOWN
       - DAC_OVERRIDE
       - FOWNER
+      - SETGID
+      - SETUID
     # --- Resource limits ---
     deploy:
       resources:
         limits:
           memory: ${MYSQL_MEM_LIMIT:-512m}
-          cpus: ${MYSQL_CPU_LIMIT:-'1.0'}
+          cpus: ${MYSQL_CPU_LIMIT:-1.0}
     # --- Log rotation ---
     logging:
       driver: json-file
@@ -98,7 +100,7 @@ services:
       resources:
         limits:
           memory: ${WEB_MEM_LIMIT:-256m}
-          cpus: ${WEB_CPU_LIMIT:-'0.5'}
+          cpus: ${WEB_CPU_LIMIT:-0.5}
     # --- Log rotation ---
     logging:
       driver: json-file
