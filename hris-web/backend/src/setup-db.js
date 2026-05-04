@@ -1,7 +1,7 @@
 import dotenv from 'dotenv'
 import mysql from 'mysql2/promise'
 
-dotenv.config({ path: 'backend/.env' })
+dotenv.config()
 
 const host = process.env.DB_HOST || 'localhost'
 const port = Number(process.env.DB_PORT || 3306)

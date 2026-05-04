@@ -1,18 +1,17 @@
-version: '3.8'
-
 services:
   web:
     volumes:
       - ./hris-web/backend/src:/app/backend/src
-      - ./hris-web/backend/src/node_modules
-    command: npm run dev:server
+      - /app/backend/src/node_modules
+    command: node backend/src/server.js
 
   frontend:
-    image: node:20-alpine
+    image: node:20
     working_dir: /app
     volumes:
       - ./hris-web:/app
-    command: npm run dev
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev"
     ports:
       - "5173:5173"
     depends_on:
