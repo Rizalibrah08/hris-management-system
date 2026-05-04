@@ -1,253 +1,234 @@
 #!/bin/bash
 # =============================================================================
-# HRIS VPS First-Time Setup Script
+# HRIS VPS Setup — Mode: GHCR Pull + Cloudflare
 # =============================================================================
-# Usage:
-#   1. Copy this script to your VPS
-#   2. chmod +x setup-vps.sh
-#   3. ./setup-vps.sh
+# VPS TIDAK build. Hanya pull image ringan dari GitHub Container Registry.
+# Cocok untuk VPS kecil (1GB RAM, 1 CPU).
 #
-# This script will:
-#   - Install Docker + Docker Compose (if not installed)
-#   - Clone the repository
-#   - Generate secure .env
-#   - Setup firewall (UFW)
-#   - Start the application
-#   - Optionally setup nginx + SSL
+# PRASYARAT:
+#   1. GitHub repo sudah setup CI/CD (build image ke GHCR)
+#   2. DNS Cloudflare sudah mengarah ke IP VPS ini
+#
+# Usage:
+#   GITHUB_REPO=Rizalibrah08/hris-management-system \
+#     bash setup-vps.sh
 # =============================================================================
 
 set -e
 
-RED='\033[0;31m'
+CYAN='\033[0;36m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
 NC='\033[0m'
+
+# =============================================================================
+# CONFIG — ganti sesuai project kamu
+# =============================================================================
+GITHUB_REPO="${GITHUB_REPO:-Rizalibrah08/hris-management-system}"
+GITHUB_BRANCH="${GITHUB_BRANCH:-main}"
+APP_DIR="${APP_DIR:-$HOME/hris-prod}"
+DOMAIN="${DOMAIN:-}"
+CF_API_TOKEN="${CF_API_TOKEN:-}"
+
+GHCR_IMAGE="ghcr.io/${GITHUB_REPO}:latest"
 
 echo -e "${CYAN}"
 echo "╔══════════════════════════════════════════════════════╗"
-echo "║       HRIS Production VPS Setup                     ║"
+echo "║   HRIS VPS Setup — GHCR Pull + Cloudflare           ║"
 echo "╚══════════════════════════════════════════════════════╝"
 echo -e "${NC}"
+echo ""
+echo "Repo:   ${GITHUB_REPO}"
+echo "Image:  ${GHCR_IMAGE}"
+echo "Dir:    ${APP_DIR}"
+echo "Domain: ${DOMAIN:-nanti diatur}"
+echo ""
 
 # =============================================================================
-# Configuration - CHANGE THESE
+# 1. Install Docker (kalau belum)
 # =============================================================================
-REPO_URL="${REPO_URL:-https://github.com/YOUR_USER/hris-management-system.git}"
-APP_DIR="${APP_DIR:-$HOME/hris-prod}"
-DOMAIN="${DOMAIN:-}"  # e.g. hris.yourdomain.com
-SETUP_NGINX="${SETUP_NGINX:-no}"  # Set to "yes" to enable nginx reverse proxy
-
-# =============================================================================
-# 1. Install Docker
-# =============================================================================
-install_docker() {
-    if command -v docker &> /dev/null; then
-        echo -e "${GREEN}✅ Docker already installed: $(docker --version)${NC}"
-        return
-    fi
-
+if ! command -v docker &> /dev/null; then
     echo -e "${YELLOW}📦 Installing Docker...${NC}"
     curl -fsSL https://get.docker.com | sh
-    sudo usermod -aG docker "$USER"
-    sudo systemctl enable docker
-    sudo systemctl start docker
+    usermod -aG docker "$USER"
     echo -e "${GREEN}✅ Docker installed${NC}"
-}
+else
+    echo -e "${GREEN}✅ Docker: $(docker --version)${NC}"
+fi
 
 # =============================================================================
-# 2. Clone repository
+# 2. Setup direktori
 # =============================================================================
-clone_repo() {
-    if [ -d "$APP_DIR/.git" ]; then
-        echo -e "${GREEN}✅ Repository exists, pulling latest...${NC}"
-        cd "$APP_DIR"
-        git fetch origin
-        git reset --hard origin/main
-    else
-        echo -e "${YELLOW}📦 Cloning repository...${NC}"
-        mkdir -p "$APP_DIR"
-        git clone "$REPO_URL" "$APP_DIR"
-        cd "$APP_DIR"
-    fi
-}
+mkdir -p "${APP_DIR}"
+cd "${APP_DIR}"
 
 # =============================================================================
-# 3. Generate secure .env
+# 3. Download docker-compose file dari GitHub
 # =============================================================================
-generate_env() {
-    if [ -f "$APP_DIR/.env" ]; then
-        echo -e "${YELLOW}⚠️  .env already exists. Overwrite? [y/N]${NC}"
-        read -r OVERWRITE
-        if [ "$OVERWRITE" != "y" ] && [ "$OVERWRITE" != "Y" ]; then
-            echo -e "${GREEN}✅ Keeping existing .env${NC}"
-            return
-        fi
-    fi
+echo -e "${YELLOW}📥 Downloading docker-compose.ghcr.yml...${NC}"
+curl -sL "https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/docker-compose.ghcr.yml" \
+    -o docker-compose.ghcr.yml
+echo -e "${GREEN}✅ Download complete${NC}"
 
+# =============================================================================
+# 4. Generate .env
+# =============================================================================
+if [ ! -f ".env" ]; then
     echo -e "${YELLOW}🔐 Generating secure secrets...${NC}"
     DB_PASSWORD=$(openssl rand -base64 24)
     JWT_SECRET=$(openssl rand -base64 48)
 
-    cat > "$APP_DIR/.env" << ENVEOF
-# Generated by setup-vps.sh on $(date)
-DB_PASSWORD=$DB_PASSWORD
+    cat > .env << ENVEOF
+# Generated: $(date)
+DB_PASSWORD=${DB_PASSWORD}
 DB_NAME=hris_db
 DB_HOST=mysql
 DB_PORT=3306
 DB_USER=root
-JWT_SECRET=$JWT_SECRET
+JWT_SECRET=${JWT_SECRET}
+JWT_EXPIRY=1d
 PORT=5000
 NODE_ENV=production
+GHCR_REPO=${GITHUB_REPO}
 ENVEOF
+    chmod 600 .env
 
-    chmod 600 "$APP_DIR/.env"
-    echo -e "${GREEN}✅ .env generated with secure secrets${NC}"
-    echo -e "${CYAN}   DB_PASSWORD: $DB_PASSWORD${NC}"
-    echo -e "${CYAN}   JWT_SECRET:  $JWT_SECRET${NC}"
-    echo -e "${YELLOW}   📋 Save these! You'll need them for GitHub Secrets.${NC}"
-}
+    echo -e "${GREEN}✅ Secrets generated${NC}"
+    echo -e "${CYAN}   📋 SIMPAN INI (tidak bisa direcover):${NC}"
+    echo -e "${CYAN}   DB_PASSWORD=${DB_PASSWORD}${NC}"
+    echo -e "${CYAN}   JWT_SECRET=${JWT_SECRET}${NC}"
+else
+    echo -e "${GREEN}✅ .env sudah ada, skip generate${NC}"
+fi
 
 # =============================================================================
-# 4. Setup firewall
+# 5. Login GHCR (public repo: tidak perlu login)
 # =============================================================================
-setup_firewall() {
-    if ! command -v ufw &> /dev/null; then
-        echo -e "${YELLOW}⚠️  UFW not installed, skipping firewall${NC}"
-        return
+# Untuk public repo, GHCR bisa diakses tanpa login.
+# Untuk private repo, perlu GitHub token.
+if [ -n "${GITHUB_TOKEN}" ]; then
+    echo -e "${YELLOW}🔑 Logging in to GHCR...${NC}"
+    echo "${GITHUB_TOKEN}" | docker login ghcr.io -u ignored --password-stdin
+    echo -e "${GREEN}✅ Logged in${NC}"
+else
+    echo -e "${YELLOW}ℹ️  No GITHUB_TOKEN set — assuming public repo${NC}"
+fi
+
+# =============================================================================
+# 6. Pull & Start
+# =============================================================================
+echo -e "${YELLOW}📥 Pulling image: ${GHCR_IMAGE}...${NC}"
+docker compose -f docker-compose.ghcr.yml pull web
+echo -e "${GREEN}✅ Image pulled${NC}"
+
+echo -e "${YELLOW}🚀 Starting application...${NC}"
+docker compose -f docker-compose.ghcr.yml up -d
+
+# =============================================================================
+# 7. Health check
+# =============================================================================
+echo -e "${YELLOW}⏳ Waiting for services to be healthy...${NC}"
+for i in $(seq 1 30); do
+    if curl -sf http://localhost:5000/health > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ Application is healthy!${NC}"
+        break
     fi
+    sleep 2
+done
 
+# =============================================================================
+# 8. Firewall
+# =============================================================================
+if command -v ufw &> /dev/null; then
     echo -e "${YELLOW}🔥 Configuring firewall...${NC}"
-    sudo ufw allow 22/tcp    # SSH
-    sudo ufw allow 80/tcp    # HTTP
-    sudo ufw allow 443/tcp   # HTTPS
-    sudo ufw --force enable
-    echo -e "${GREEN}✅ Firewall configured${NC}"
-}
+    ufw allow 22/tcp
+    ufw allow 80/tcp
+    ufw allow 443/tcp
+    ufw --force enable
+    echo -e "${GREEN}✅ Firewall active${NC}"
+fi
 
 # =============================================================================
-# 5. Setup nginx + SSL (optional)
+# 9. Download backup script
 # =============================================================================
-setup_nginx() {
-    if [ "$SETUP_NGINX" != "yes" ]; then
-        echo -e "${YELLOW}⏭️  Skipping nginx setup (SETUP_NGINX=no)${NC}"
-        return
-    fi
-
-    if [ -z "$DOMAIN" ]; then
-        echo -e "${RED}❌ DOMAIN not set. Cannot setup SSL.${NC}"
-        echo -e "${YELLOW}   Set DOMAIN=yourdomain.com and re-run.${NC}"
-        return
-    fi
-
-    echo -e "${YELLOW}🌐 Setting up nginx + SSL for $DOMAIN...${NC}"
-
-    # Install nginx
-    sudo apt update && sudo apt install -y nginx certbot python3-certbot-nginx
-
-    # Copy nginx config
-    sudo cp "$APP_DIR/nginx/nginx.conf" /etc/nginx/nginx.conf
-
-    # Test config
-    sudo nginx -t && sudo systemctl reload nginx
-
-    # Obtain SSL certificate
-    sudo certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email "admin@$DOMAIN"
-
-    # Auto-renewal
-    echo "0 3 * * * certbot renew --quiet" | sudo crontab -
-
-    echo -e "${GREEN}✅ nginx + SSL configured${NC}"
-}
+mkdir -p backups
+curl -sL "https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/scripts/backup-db.sh" \
+    -o backup-db.sh 2>/dev/null || true
+chmod +x backup-db.sh 2>/dev/null || true
 
 # =============================================================================
-# 6. Start application
+# 10. Setup Cloudflare Tunnel (opsional, lebih aman)
 # =============================================================================
-start_app() {
-    echo -e "${YELLOW}🚀 Starting HRIS...${NC}"
-    cd "$APP_DIR"
+if [ -n "${DOMAIN}" ] && [ -n "${CF_API_TOKEN}" ]; then
+    echo -e "${YELLOW}☁️  Setting up Cloudflare Tunnel...${NC}"
 
-    # Create backup directory
-    mkdir -p backups
+    # Install cloudflared
+    curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+        -o /usr/local/bin/cloudflared
+    chmod +x /usr/local/bin/cloudflared
 
-    # Build and start
-    docker compose build web
-    docker compose up -d --remove-orphans
+    # Login & create tunnel
+    cloudflared tunnel login
+    cloudflared tunnel create hris-tunnel
 
-    # Wait for health
-    echo -e "${YELLOW}⏳ Waiting for application to be healthy...${NC}"
-    for i in $(seq 1 30); do
-        if curl -sf http://localhost:5000/health > /dev/null 2>&1; then
-            echo -e "${GREEN}✅ Application is healthy!${NC}"
-            break
-        fi
-        sleep 2
-    done
+    # Config
+    mkdir -p ~/.cloudflared
+    cat > ~/.cloudflared/config.yml << YML
+tunnel: $(cloudflared tunnel list --name hris-tunnel -o json | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+credentials-file: ~/.cloudflared/hris-tunnel.json
 
-    # Show status
-    echo ""
-    docker compose ps
-    echo ""
-    docker compose logs web --tail 10
-}
+ingress:
+  - hostname: ${DOMAIN}
+    service: http://localhost:5000
+  - service: http_status:404
+YML
 
-# =============================================================================
-# 7. Print summary
-# =============================================================================
-print_summary() {
-    echo ""
-    echo -e "${GREEN}╔══════════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║       HRIS Setup Complete! 🎉                       ║${NC}"
-    echo -e "${GREEN}╚══════════════════════════════════════════════════════╝${NC}"
-    echo ""
+    # DNS record
+    cloudflared tunnel route dns hris-tunnel "${DOMAIN}"
 
-    # Detect public IP
-    PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || echo "YOUR_VPS_IP")
+    # Run as service
+    cloudflared service install
+    systemctl start cloudflared
+    systemctl enable cloudflared
 
-    echo -e "${CYAN}📋 Quick Info:${NC}"
-    echo "   URL:      http://$PUBLIC_IP:5000"
-    if [ -n "$DOMAIN" ]; then
-        echo "   Domain:   https://$DOMAIN"
-    fi
-    echo "   Login:    ADM001 / admin123"
-    echo ""
-    echo -e "${CYAN}📋 Management Commands:${NC}"
-    echo "   docker compose ps              # View status"
-    echo "   docker compose logs -f web     # View logs"
-    echo "   docker compose restart web     # Restart web"
-    echo "   docker compose down            # Stop"
-    echo "   docker compose up -d           # Start"
-    echo ""
-    echo -e "${CYAN}📋 Next Steps:${NC}"
-    echo "   1. Change admin password after first login"
-    echo "   2. Add secrets to GitHub (Settings → Secrets → Actions):"
-    echo "      - SSH_KEY:        Your VPS private SSH key"
-    echo "      - SSH_USER:       Your VPS username"
-    echo "      - STAGING_IP:     Staging server IP"
-    echo "      - PROD_IP:         Production server IP"
-    echo "      - PROD_DOMAIN:    Production domain"
-    echo "      - DB_PASSWORD_STAGING:  (from .env on staging)"
-    echo "      - JWT_SECRET_STAGING:   (from .env on staging)"
-    echo "      - DB_PASSWORD_PROD:     (from .env above)"
-    echo "      - JWT_SECRET_PROD:      (from .env above)"
-    echo "   3. Setup SSL: SETUP_NGINX=yes DOMAIN=yourdomain.com ./setup-vps.sh"
-    echo "   4. Setup automatic backups:"
-    echo "      crontab -e"
-    echo "      0 2 * * * cd ~/hris-prod && ./scripts/backup-db.sh"
-    echo ""
-}
+    echo -e "${GREEN}✅ Cloudflare Tunnel active — ${DOMAIN}${NC}"
+fi
 
 # =============================================================================
-# Main
+# Summary
 # =============================================================================
-main() {
-    install_docker
-    clone_repo
-    generate_env
-    setup_firewall
-    setup_nginx
-    start_app
-    print_summary
-}
+PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || echo "VPS_IP")
 
-main
+echo ""
+echo -e "${GREEN}╔══════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║   Setup Complete! 🎉                                 ║${NC}"
+echo -e "${GREEN}╚══════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${CYAN}📋 Akses Aplikasi:${NC}"
+echo "   Lokal VPS:  http://localhost:5000"
+echo "   Public IP:  http://${PUBLIC_IP}:5000"
+if [ -n "${DOMAIN}" ]; then
+    echo "   Domain:     https://${DOMAIN}"
+fi
+echo ""
+echo -e "${CYAN}📋 Login:${NC}"
+echo "   NIK:      ADM001"
+echo "   Password: admin123  ← GANTI SETELAH LOGIN!"
+echo ""
+echo -e "${CYAN}📋 Perintah Penting:${NC}"
+echo "   docker compose -f docker-compose.ghcr.yml ps"
+echo "   docker compose -f docker-compose.ghcr.yml logs -f web"
+echo "   docker compose -f docker-compose.ghcr.yml pull web   ← Update image"
+echo "   docker compose -f docker-compose.ghcr.yml up -d"
+echo ""
+echo -e "${CYAN}📋 GitHub Secrets (copy .env values ke GitHub):${NC}"
+echo "   DB_PASSWORD_PROD  = $(grep DB_PASSWORD .env | cut -d= -f2)"
+echo "   JWT_SECRET_PROD   = $(grep JWT_SECRET .env | cut -d= -f2)"
+echo "   PROD_IP           = ${PUBLIC_IP}"
+echo "   DOMAIN            = ${DOMAIN:-yourdomain.com}"
+echo "   SSH_USER          = $(whoami)"
+echo "   SSH_KEY           = (isi private key untuk GitHub Actions)"
+echo ""
+echo -e "${YELLOW}⚠️  Jangan lupa setup cron backup:${NC}"
+echo "   crontab -e"
+echo "   0 2 * * * cd ${APP_DIR} && bash backup-db.sh"
