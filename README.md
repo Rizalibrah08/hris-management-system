@@ -237,19 +237,28 @@ Database menggunakan MySQL dengan tabel utama:
 
 ## Pengembangan
 
-### Workflow Git
+### Workflow Git & CI/CD
+
+```
+🔵 DEVELOP (branch: develop)
+   Push → Test & Build Check → ✅ Selesai
+   AMAN: Tidak build image, tidak deploy.
+
+🔴 PRODUCTION (branch: main)
+   Push/Merge → Test → Build Image → Push GHCR → Auto Deploy VPS
+   Merge ke main = otomatis live!
+```
 
 ```bash
-git pull origin main
-git checkout -b feat/nama-fitur
+# Ngoding di develop (aman, tidak deploy)
+git checkout develop
+git add . && git commit -m "feat: deskripsi" && git push origin develop
 
-# Setelah selesai:
-npm run lint
-npm run build
-git add .
-git commit -m "feat: deskripsi perubahan"
-git push -u origin feat/nama-fitur
+# Deploy ke production (auto 🚀)
+git checkout main && git merge develop && git push origin main
 ```
+
+> 📖 Panduan deploy lengkap: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
 
 ### Validasi Sebelum Commit
 
