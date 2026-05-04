@@ -10,7 +10,7 @@
 
 services:
   mysql:
-    image: mysql:8
+    image: mysql:8.0
     container_name: hris-mysql
     restart: always
     environment:
@@ -28,13 +28,14 @@ services:
       - internal
     security_opt:
       - seccomp:unconfined
-      - no-new-privileges:true
     cap_drop:
       - ALL
     cap_add:
       - CHOWN
       - DAC_OVERRIDE
       - FOWNER
+      - SETGID
+      - SETUID
     deploy:
       resources:
         limits:
