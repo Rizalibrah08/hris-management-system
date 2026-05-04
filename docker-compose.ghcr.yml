@@ -27,6 +27,7 @@ services:
     networks:
       - internal
     security_opt:
+      - seccomp:unconfined
       - no-new-privileges:true
     cap_drop:
       - ALL
