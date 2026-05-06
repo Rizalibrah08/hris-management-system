@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Reports & Analytics | Curated HR</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "on-surface": "#191c1f",
+          "surface-container-lowest": "#ffffff",
+          "primary-container": "#6c5ce7",
+          "error": "#ba1a1a",
+          "primary-fixed": "#e4dfff",
+          "secondary-fixed-dim": "#c5c0ff",
+          "on-primary-container": "#faf6ff",
+          "background": "#f8f9fd",
+          "secondary-fixed": "#e3dfff",
+          "inverse-surface": "#2e3134",
+          "outline": "#787586",
+          "surface-container": "#edeef2",
+          "surface-dim": "#d9dade",
+          "secondary": "#5952af",
+          "surface-container-highest": "#e1e2e6",
+          "surface-variant": "#e1e2e6",
+          "surface": "#f8f9fd",
+          "surface-bright": "#f8f9fd",
+          "on-background": "#191c1f",
+          "surface-tint": "#5847d2",
+          "surface-container-high": "#e7e8ec",
+          "on-surface-variant": "#474554",
+          "on-primary-fixed-variant": "#4029ba",
+          "on-primary-fixed": "#160066",
+          "on-secondary-container": "#352c8a",
+          "on-primary": "#ffffff",
+          "outline-variant": "#c8c4d7",
+          "inverse-primary": "#c6bfff",
+          "on-secondary": "#ffffff",
+          "surface-container-low": "#f2f3f7",
+          "on-secondary-fixed": "#140067",
+          "primary": "#5341cd",
+        },
+        borderRadius: {
+          DEFAULT: "0.25rem",
+          lg: "0.5rem",
+          xl: "0.75rem",
+          "2xl": "1rem",
+          "3xl": "1.5rem",
+          full: "9999px"
+        },
+        fontFamily: {
+          headline: ["Manrope"],
+          body: ["Inter"],
+          label: ["Inter"]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; background-color: #f8f9fd; }
+  .font-headline { font-family: 'Manrope', sans-serif; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .glass-panel { background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); }
+  .primary-gradient { background: linear-gradient(135deg, #5341cd 0%, #6c5ce7 100%); }
+
+  /* Chart placeholder styling */
+  .chart-visual {
+    width: 100%;
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* Pie chart placeholder */
+  .pie-placeholder {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    position: relative;
+  }
+
+  .pie-placeholder .slice-label {
+    position: absolute;
+    font-size: 10px;
+    font-weight: 600;
+    color: #474554;
+    white-space: nowrap;
+  }
+
+  /* Bar chart placeholder */
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 10px;
+    height: 200px;
+    padding: 0 16px;
+    width: 100%;
+  }
+
+  .bar-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    max-width: 60px;
+  }
+
+  .bar-group .bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 180px;
+  }
+
+  .bar-group .bar {
+    width: 16px;
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+    transition: height 0.4s ease;
+  }
+
+  .bar-group .bar-label {
+    font-size: 10px;
+    color: #474554;
+    text-align: center;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  /* Line chart placeholder */
+  .line-chart-area {
+    width: calc(100% - 32px);
+    height: 180px;
+    margin: 0 16px;
+    position: relative;
+  }
+
+  .line-chart-area svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .chart-legend {
+    display: flex;
+    gap: 16px;
+    padding: 8px 16px 0;
+    flex-wrap: wrap;
+  }
+
+  .chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #474554;
+    font-weight: 500;
+  }
+
+  .chart-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+  }
+
+  /* Grid lines */
+  .grid-line {
+    stroke: #e1e2e6;
+    stroke-width: 1;
+    stroke-dasharray: 4 3;
+  }
+</style>
+</head>
+<body class="text-on-surface">
+
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low shadow-[8px_0_32px_rgba(25,28,31,0.06)] flex flex-col py-8 px-4 z-50">
+  <div class="mb-10 px-4">
+    <h1 class="text-xl font-bold text-primary tracking-widest font-headline">Curated HR</h1>
+    <p class="text-[10px] uppercase tracking-widest text-slate-400 mt-1">Workspace Console</p>
+  </div>
+  <nav class="space-y-2 flex-1">
+    <a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-white/60 transition-all duration-300 font-headline font-semibold text-sm tracking-tight rounded-lg" href="#">
+      <span class="material-symbols-outlined">dashboard</span>
+      Dashboard
+    </a>
+    <a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-white/60 transition-all duration-300 font-headline font-semibold text-sm tracking-tight rounded-lg" href="#">
+      <span class="material-symbols-outlined">group</span>
+      Employees
+    </a>
+    <a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-white/60 transition-all duration-300 font-headline font-semibold text-sm tracking-tight rounded-lg" href="#">
+      <span class="material-symbols-outlined">calendar_today</span>
+      Attendance
+    </a>
+    <a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-white/60 transition-all duration-300 font-headline font-semibold text-sm tracking-tight rounded-lg" href="#">
+      <span class="material-symbols-outlined">beach_access</span>
+      Leave
+    </a>
+    <a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-white/60 transition-all duration-300 font-headline font-semibold text-sm tracking-tight rounded-lg" href="#">
+      <span class="material-symbols-outlined">payments</span>
+      Payroll
+    </a>
+    <a class="flex items-center gap-3 bg-primary-container text-white rounded-lg px-4 py-3 shadow-lg shadow-primary-container/20 font-headline font-semibold text-sm tracking-tight scale-[0.98] active:scale-95 transition-transform" href="#">
+      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">analytics</span>
+      Reports
+    </a>
+    <a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-white/60 transition-all duration-300 font-headline font-semibold text-sm tracking-tight rounded-lg" href="#">
+      <span class="material-symbols-outlined">admin_panel_settings</span>
+      Role Mgmt
+    </a>
+    <a class="flex items-center gap-3 text-slate-500 px-4 py-3 hover:bg-white/60 transition-all duration-300 font-headline font-semibold text-sm tracking-tight rounded-lg" href="#">
+      <span class="material-symbols-outlined">settings</span>
+      Settings
+    </a>
+  </nav>
+  <div class="mt-auto px-4">
+    <div class="flex items-center gap-3 p-2 bg-white/40 rounded-xl">
+      <div class="w-10 h-10 rounded-lg primary-gradient flex items-center justify-center text-white font-headline font-bold text-sm">AR</div>
+      <div class="overflow-hidden">
+        <p class="text-xs font-bold truncate">Alex Rivera</p>
+        <p class="text-[10px] text-slate-500">HR Director</p>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-20 bg-white/80 backdrop-blur-md z-40 flex items-center justify-between px-10">
+  <div class="flex items-center flex-1 max-w-xl">
+    <div class="relative w-full">
+      <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+      <input class="w-full pl-12 pr-4 py-2.5 bg-surface-container-low border-none rounded-full text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-outline/60" placeholder="Search reports, metrics, or insights..." type="text"/>
+    </div>
+  </div>
+  <div class="flex items-center gap-6">
+    <div class="flex items-center gap-4 text-slate-600">
+      <span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">notifications</span>
+      <span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">chat_bubble</span>
+      <span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">help_outline</span>
+    </div>
+    <div class="h-8 w-[1px] bg-outline-variant/30"></div>
+    <div class="flex items-center gap-3 cursor-pointer active:opacity-70 transition-opacity">
+      <div class="text-right hidden sm:block">
+        <p class="text-xs font-bold text-on-surface">Alex Rivera</p>
+        <p class="text-[10px] text-outline uppercase tracking-wider">HR Director</p>
+      </div>
+      <div class="w-10 h-10 rounded-full border-2 border-primary-fixed primary-gradient flex items-center justify-center text-white font-headline font-bold text-sm">AR</div>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="ml-64 pt-20 min-h-screen bg-background">
+  <div class="p-10 max-w-7xl mx-auto">
+
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+      <div>
+        <h2 class="text-[2.75rem] font-extrabold font-headline leading-tight tracking-tight text-on-surface">Reports & Analytics</h2>
+        <p class="text-on-surface-variant font-body mt-2 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-primary"></span>
+          Real-time workforce insights and payroll analytics
+        </p>
+      </div>
+      <button class="primary-gradient text-on-primary px-6 py-3.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+        <span class="material-symbols-outlined text-xl">download</span>
+        Export PDF
+      </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+      <!-- Total Payroll -->
+      <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-[0_8px_32px_-8px_rgba(83,65,205,0.06)] flex flex-col justify-between h-36">
+        <div class="flex justify-between items-start">
+          <p class="text-[0.6875rem] font-bold text-outline uppercase tracking-widest">Total Payroll</p>
+          <span class="material-symbols-outlined text-primary">payments</span>
+        </div>
+        <div>
+          <p class="text-3xl font-extrabold font-headline text-on-surface">Rp 284.5M</p>
+          <p class="text-[10px] text-on-surface-variant font-medium mt-1">Current month gross</p>
+        </div>
+      </div>
+      <!-- Attendance Rate -->
+      <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-[0_8px_32px_-8px_rgba(83,65,205,0.06)] flex flex-col justify-between h-36">
+        <div class="flex justify-between items-start">
+          <p class="text-[0.6875rem] font-bold text-outline uppercase tracking-widest">Attendance Rate</p>
+          <span class="material-symbols-outlined text-emerald-500">trending_up</span>
+        </div>
+        <div>
+          <p class="text-3xl font-extrabold font-headline text-on-surface">92.4%</p>
+          <p class="text-[10px] text-emerald-600 font-bold mt-1">+1.8% from last week</p>
+        </div>
+      </div>
+      <!-- Leave Usage -->
+      <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-[0_8px_32px_-8px_rgba(83,65,205,0.06)] flex flex-col justify-between h-36">
+        <div class="flex justify-between items-start">
+          <p class="text-[0.6875rem] font-bold text-outline uppercase tracking-widest">Leave Usage</p>
+          <span class="material-symbols-outlined text-amber-500">beach_access</span>
+        </div>
+        <div>
+          <p class="text-3xl font-extrabold font-headline text-on-surface">12</p>
+          <p class="text-[10px] text-amber-600 font-bold mt-1">4 pending approval</p>
+        </div>
+      </div>
+      <!-- Headcount -->
+      <div class="primary-gradient p-6 rounded-2xl shadow-[0_8px_32px_-8px_rgba(83,65,205,0.20)] flex flex-col justify-between h-36 text-white">
+        <div class="flex justify-between items-start">
+          <p class="text-[0.6875rem] font-bold text-white/70 uppercase tracking-widest">Headcount</p>
+          <span class="material-symbols-outlined">group</span>
+        </div>
+        <div>
+          <p class="text-3xl font-extrabold font-headline">48</p>
+          <p class="text-[10px] text-white/80 font-bold mt-1">Active employees</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Grid (2x3) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+
+      <!-- 1. Distribusi Gaji per Departemen — Pie -->
+      <div class="bg-surface-container-lowest rounded-2xl shadow-[0_8px_32px_-8px_rgba(83,65,205,0.06)] p-5 overflow-hidden">
+        <h4 class="text-sm font-bold text-on-surface font-headline tracking-tight mb-4">Distribusi Gaji per Departemen</h4>
+        <div class="chart-visual">
+          <svg viewBox="0 0 200 200" width="180" height="180">
+            <!-- Engineering 35% -->
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#FF6B6B" stroke-width="40"
+              stroke-dasharray="175.9 502.65" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
+            <!-- Marketing 22% -->
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#4ECDC4" stroke-width="40"
+              stroke-dasharray="110.6 502.65" stroke-dashoffset="-175.9" transform="rotate(-90 100 100)"/>
+            <!-- Operations 20% -->
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#45B7D1" stroke-width="40"
+              stroke-dasharray="100.5 502.65" stroke-dashoffset="-286.5" transform="rotate(-90 100 100)"/>
+            <!-- HR 13% -->
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#6C5CE7" stroke-width="40"
+              stroke-dasharray="65.3 502.65" stroke-dashoffset="-387" transform="rotate(-90 100 100)"/>
+            <!-- Finance 10% -->
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#FFA07A" stroke-width="40"
+              stroke-dasharray="50.3 502.65" stroke-dashoffset="-452.3" transform="rotate(-90 100 100)"/>
+            <!-- Center hole -->
+            <circle cx="100" cy="100" r="56" fill="white"/>
+            <text x="100" y="96" text-anchor="middle" font-size="18" font-weight="800" font-family="Manrope" fill="#191c1f">5</text>
+            <text x="100" y="114" text-anchor="middle" font-size="10" font-weight="500" fill="#474554">Depts</text>
+          </svg>
+        </div>
+        <div class="chart-legend">
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#FF6B6B"></div>Engineering 35%</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#4ECDC4"></div>Marketing 22%</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#45B7D1"></div>Operations 20%</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#6C5CE7"></div>HR 13%</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#FFA07A"></div>Finance 10%</div>
+        </div>
+      </div>
+
+      <!-- 2. Jumlah Cuti per Tipe — Bar -->
+      <div class="bg-surface-container-lowest rounded-2xl shadow-[0_8px_32px_-8px_rgba(83,65,205,0.06)] p-5 overflow-hidden">
+        <h4 class="text-sm font-bold text-on-surface font-headline tracking-tight mb-4">Jumlah Cuti per Tipe</h4>
+        <div class="chart-visual" style="padding: 0 4px;">
+          <div class="bar-chart" style="width:100%">
+            <div class="bar-group">
+              <div class="bars">
+                <div class="bar" style="height:140px; background:#6C5CE7;"></div>
+                <div class="bar" style="height:110px; background:#4ECDC4;"></div>
+                <div class="bar" style="height:30px; background:#FFA07A;"></div>
+              </div>
+              <span class="bar-label">Annual</span>
+            </div>
+            <div class="bar-group">
+              <div class="bars">
+                <div class="bar" style="height:90px; background:#6C5CE7;"></div>
+                <div class="bar" style="height:70px; background:#4ECDC4;"></div>
+                <div class="bar" style="height:20px; background:#FFA07A;"></div>
+              </div>
+              <span class="bar-label">Sick</span>
+            </div>
+            <div class="bar-group">
+              <div class="bars">
+                <div class="bar" style="height:60px; background:#6C5CE7;"></div>
+                <div class="bar" style="height:50px; background:#4ECDC4;"></div>
+                <div class="bar" style="height:10px; background:#FFA07A;"></div>
+              </div>
+              <span class="bar-label">Personal</span>
+            </div>
+            <div class="bar-group">
+              <div class="bars">
+                <div class="bar" style="height:40px; background:#6C5CE7;"></div>
+                <div class="bar" style="height:35px; background:#4ECDC4;"></div>
+                <div class="bar" style="height:5px; background:#FFA07A;"></div>
+              </div>
+              <span class="bar-label">Maternity</span>
+            </div>
+            <div class="bar-group">
+              <div class="bars">
+                <div class="bar" style="height:25px; background:#6C5CE7;"></div>
+                <div class="bar" style="height:20px; background:#4ECDC4;"></div>
+                <div class="bar" style="height:5px; background:#FFA07A;"></div>
+              </div>
+              <span class="bar-label">Unpaid</span>
+            </div>
+          </div>
+        </div>
+        <div class="chart-legend">
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#6C5CE7"></div>Total</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#4ECDC4"></div>Approved</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#FFA07A"></div>Rejected</div>
+        </div>
+      </div>
+
+      <!-- 3. Tren Kehadiran 7 Hari — Line -->
+      <div class="bg-surface-container-lowest rounded-2xl shadow-[0_8px_32px_-8px_rgba(83,65,205,0.06)] p-5 overflow-hidden">
+        <h4 class="text-sm font-bold text-on-surface font-headline tracking-tight mb-4">Tren Kehadiran (7 Hari)</h4>
+        <div class="chart-visual">
+          <div class="line-chart-area">
+            <svg viewBox="0 0 320 180" preserveAspectRatio="none">
+              <!-- Grid lines -->
+              <line x1="0" y1="36" x2="320" y2="36" class="grid-line"/>
+              <line x1="0" y1="72" x2="320" y2="72" class="grid-line"/>
+              <line x1="0" y1="108" x2="320" y2="108" class="grid-line"/>
+              <line x1="0" y1="144" x2="320" y2="144" class="grid-line"/>
+              <!-- Area fill -->
+              <path d="M0,50 L53,40 L106,60 L160,35 L213,45 L266,30 L320,38 L320,180 L0,180 Z"
+                fill="url(#lineGrad)" opacity="0.25"/>
+              <!-- Line -->
+              <path d="M0,50 L53,40 L106,60 L160,35 L213,45 L266,30 L320,38"
+                fill="none" stroke="#6C5CE7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- Dots -->
+              <circle cx="0" cy="50" r="4" fill="#6C5CE7"/>
+              <circle cx="53" cy="40" r="4" fill="#6C5CE7"/>
+              <circle cx="106" cy="60" r="4" fill="#6C5CE7"/>
+              <circle cx="160" cy="35" r="4" fill="#6C5CE7"/>
+              <circle cx="213" cy="45" r="4" fill="#6C5CE7"/>
+              <circle cx="266" cy="30" r="4" fill="#6C5CE7"/>
+              <circle cx="320" cy="38" r="4" fill="#6C5CE7"/>
+              <defs>
+                <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#6C5CE7"/>
+                  <stop offset="100%" stop-color="#6C5CE7" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+        <div class="flex justify-between px-4 mt-2">
+          <span class="text-[10px] text-outline font-medium">Mon</span>
+          <span class="text-[10px] text-outline font-medium">Tue</span>
+          <span class="text-[10px] text-outline font-medium">Wed</span>
+          <span class="text-[10px] text-outline font-medium">Thu</span>
+          <span class="text-[10px] text-outline font-medium">Fri</span>
+          <span class="text-[10px] text-outline font-medium">Sat</span>
+          <span class="text-[10px] text-outline font-medium">Sun</span>
+        </div>
+        <div class="chart-legend">
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#6C5CE7"></div>Attendance Rate (%)</div>
+        </div>
+      </div>
+
+      <!-- 4. Biaya Payroll per Departemen — Bar -->
+      <div class="bg-surface-container-lowest rounded-2xl shadow-[0_8px_32px_-8px_rgba(83,65,205,0.06)] p-5 overflow-hidden">
+        <h4 class="text-sm font-bold text-on-surface font-headline tracking-tight mb-4">Biaya Payroll per Departemen</h4>
+        <div class="chart-visual" style="padding: 0 4px;">
+          <div class="bar-chart" style="width:100%">
+            <div class="bar-group">
+              <div class="bars">
+                <div class="bar" style="height:160px; background:linear-gradient(180deg,#6C5CE7,#5341cd); border-radius:4px 4px 0 0;"></div>
+              </div>
+              <span class="bar-label">Engin.</span>
+            </div>
+            <div class="bar-group">
+              <div class="bars">
+                <div class="bar" style="height:100px; background:linear-gradient(180deg,#4ECDC4,#3dbdb5); border-radius:4px 4px 0 0;"></div>
+              </div>
+              <span class="bar-label">Market.</span>
+            </div>
+            <div class="bar-group">
+              <div class="bars">
+                <div class="bar" style="height:90px; background:linear-gradient(180deg,#45B7D1,#37a3bd); border-radius:4px 4px 0 0;"></div>
+              </div>
+              <span class="bar-label">Oper.</span>
+            </div>
+            <div class="bar-group">
+              <div class="bars">
+                <div class="bar" style="height:60px; background:linear-gradient(180deg,#FF6B6B,#e55a5a); border-radius:4px 4px 0 0;"></div>
+              </div>
+              <span class="bar-label">HR</span>
+            </div>
+            <div class="bar-group">
+              <div class="bars">
+                <div class="bar" style="height:50px; background:linear-gradient(180deg,#FFA07A,#e8896a); border-radius:4px 4px 0 0;"></div>
+              </div>
+              <span class="bar-label">Finance</span>
+            </div>
+          </div>
+        </div>
+        <div class="chart-legend">
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#6C5CE7"></div>Total Gaji Bruto</div>
+        </div>
+      </div>
+
+      <!-- 5. Distribusi Gaji per Posisi — Pie -->
+      <div class="bg-surface-container-lowest rounded-2xl shadow-[0_8px_32px_-8px_rgba(83,65,205,0.06)] p-5 overflow-hidden">
+        <h4 class="text-sm font-bold text-on-surface font-headline tracking-tight mb-4">Distribusi Gaji per Posisi</h4>
+        <div class="chart-visual">
+          <svg viewBox="0 0 200 200" width="180" height="180">
+            <!-- Manager 28% -->
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#6C5CE7" stroke-width="40"
+              stroke-dasharray="140.7 502.65" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
+            <!-- Senior Dev 24% -->
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#4ECDC4" stroke-width="40"
+              stroke-dasharray="120.6 502.65" stroke-dashoffset="-140.7" transform="rotate(-90 100 100)"/>
+            <!-- Staff 20% -->
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#45B7D1" stroke-width="40"
+              stroke-dasharray="100.5 502.65" stroke-dashoffset="-261.3" transform="rotate(-90 100 100)"/>
+            <!-- Lead 16% -->
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#FF6B6B" stroke-width="40"
+              stroke-dasharray="80.4 502.65" stroke-dashoffset="-361.8" transform="rotate(-90 100 100)"/>
+            <!-- Intern 12% -->
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#FDCB6E" stroke-width="40"
+              stroke-dasharray="60.3 502.65" stroke-dashoffset="-442.2" transform="rotate(-90 100 100)"/>
+            <!-- Center hole -->
+            <circle cx="100" cy="100" r="56" fill="white"/>
+            <text x="100" y="96" text-anchor="middle" font-size="18" font-weight="800" font-family="Manrope" fill="#191c1f">5</text>
+            <text x="100" y="114" text-anchor="middle" font-size="10" font-weight="500" fill="#474554">Levels</text>
+          </svg>
+        </div>
+        <div class="chart-legend">
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#6C5CE7"></div>Manager 28%</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#4ECDC4"></div>Sr. Dev 24%</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#45B7D1"></div>Staff 20%</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#FF6B6B"></div>Lead 16%</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#FDCB6E"></div>Intern 12%</div>
+        </div>
+      </div>
+
+      <!-- 6. Status Cuti Bulanan — Bar -->
+      <div class="bg-surface-container-lowest rounded-2xl shadow-[0_8px_32px_-8px_rgba(83,65,205,0.06)] p-5 overflow-hidden">
+        <h4 class="text-sm font-bold text-on-surface font-headline tracking-tight mb-4">Status Cuti Bulanan (3 Bulan Terakhir)</h4>
+        <div class="chart-visual" style="padding: 0 4px;">
+          <div class="bar-chart" style="width:100%">
+            <div class="bar-group">
+              <div class="bars">
+                <div class="bar" style="height:120px; background:#6C5CE7;"></div>
+                <div class="bar" style="height:100px; background:#4ECDC4;"></div>
+              </div>
+              <span class="bar-label">Mar</span>
+            </div>
+            <div class="bar-group">
+              <div class="bars">
+                <div class="bar" style="height:90px; background:#6C5CE7;"></div>
+                <div class="bar" style="height:75px; background:#4ECDC4;"></div>
+              </div>
+              <span class="bar-label">Apr</span>
+            </div>
+            <div class="bar-group">
+              <div class="bars">
+                <div class="bar" style="height:70px; background:#6C5CE7;"></div>
+                <div class="bar" style="height:60px; background:#4ECDC4;"></div>
+              </div>
+              <span class="bar-label">May</span>
+            </div>
+          </div>
+        </div>
+        <div class="chart-legend">
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#6C5CE7"></div>Total</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#4ECDC4"></div>Disetujui</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Detail Distribusi Gaji Table -->
+    <div class="mt-10 bg-surface-container-lowest rounded-2xl shadow-[0_8px_32px_-8px_rgba(83,65,205,0.06)] overflow-hidden">
+      <div class="px-8 py-5 border-b border-surface-container-low">
+        <h4 class="text-sm font-bold text-on-surface font-headline tracking-tight">Detail Distribusi Gaji</h4>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-surface-container-low/50">
+              <th class="px-8 py-4 text-[0.6875rem] font-bold text-on-surface-variant uppercase tracking-widest">Departemen</th>
+              <th class="px-6 py-4 text-[0.6875rem] font-bold text-on-surface-variant uppercase tracking-widest">Jumlah Karyawan</th>
+              <th class="px-6 py-4 text-[0.6875rem] font-bold text-on-surface-variant uppercase tracking-widest">Total Gaji</th>
+              <th class="px-6 py-4 text-[0.6875rem] font-bold text-on-surface-variant uppercase tracking-widest">Rata-rata Gaji</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-container-low">
+            <tr class="hover:bg-surface-container-low/30 transition-colors">
+              <td class="px-8 py-4 text-sm font-medium text-on-surface">Engineering</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">18</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">Rp 99,500,000</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">Rp 5,527,778</td>
+            </tr>
+            <tr class="bg-surface-container-low/10 hover:bg-surface-container-low/30 transition-colors">
+              <td class="px-8 py-4 text-sm font-medium text-on-surface">Marketing</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">10</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">Rp 62,000,000</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">Rp 6,200,000</td>
+            </tr>
+            <tr class="hover:bg-surface-container-low/30 transition-colors">
+              <td class="px-8 py-4 text-sm font-medium text-on-surface">Operations</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">9</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">Rp 57,000,000</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">Rp 6,333,333</td>
+            </tr>
+            <tr class="bg-surface-container-low/10 hover:bg-surface-container-low/30 transition-colors">
+              <td class="px-8 py-4 text-sm font-medium text-on-surface">HR</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">6</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">Rp 38,000,000</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">Rp 6,333,333</td>
+            </tr>
+            <tr class="hover:bg-surface-container-low/30 transition-colors">
+              <td class="px-8 py-4 text-sm font-medium text-on-surface">Finance</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">5</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">Rp 28,000,000</td>
+              <td class="px-6 py-4 text-sm font-medium text-on-surface-variant">Rp 5,600,000</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+</body>
+</html>

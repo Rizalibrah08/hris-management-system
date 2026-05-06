@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Curated HR - Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#5341cd;
+  --primary-container:#6c5ce7;
+  --secondary:#5952af;
+  --secondary-fixed:#e3dfff;
+  --secondary-container:#a19afd;
+  --surface:#f8f9fd;
+  --surface-container-lowest:#ffffff;
+  --surface-container-low:#f2f3f7;
+  --surface-container:#edeef2;
+  --surface-container-high:#e7e8ec;
+  --on-surface:#191c1f;
+  --on-surface-variant:#474554;
+  --outline:#787586;
+  --outline-variant:#c8c4d7;
+  --error:#ba1a1a;
+  --primary-fixed:#e4dfff;
+  --tertiary:#884800;
+  --tertiary-fixed:#ffdcc3;
+  --tertiary-fixed-dim:#ffb77d;
+  --on-primary:#ffffff;
+  --on-primary-container:#faf6ff;
+  --on-secondary:#ffffff;
+  --on-error:#ffffff;
+  --inverse-surface:#2e3134;
+  --inverse-on-surface:#eff1f5;
+  --gradient:linear-gradient(135deg,#5341cd 0%,#6c5ce7 100%);
+  --shadow-ambient:0 8px 32px rgba(25,28,31,0.06);
+  --shadow-card:8px 8px 32px rgba(25,28,31,0.03);
+  --radius-sm:0.25rem;
+  --radius-md:0.5rem;
+  --radius-lg:0.75rem;
+  --radius-xl:1rem;
+  --radius-2xl:1.5rem;
+  --radius-full:9999px;
+}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{font-family:'Inter',sans-serif;background:var(--surface);color:var(--on-surface);line-height:1.5}
+.font-headline{font-family:'Manrope',sans-serif}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--outline-variant);border-radius:3px}
+
+/* Sidebar */
+.sidebar{position:fixed;left:0;top:0;width:256px;height:100vh;background:var(--surface-container-low);box-shadow:8px 0 32px rgba(25,28,31,0.06);z-index:50;display:flex;flex-direction:column;padding:2rem 1rem}
+.sidebar-brand{padding:0 1rem;margin-bottom:2.5rem}
+.sidebar-brand h1{font-family:'Manrope',sans-serif;font-size:1.25rem;font-weight:700;color:var(--primary);letter-spacing:0.2em;text-transform:uppercase}
+.sidebar-brand p{font-size:0.6875rem;color:var(--on-surface-variant);font-weight:500;letter-spacing:0.01em;margin-top:0.25rem}
+.sidebar-nav{flex:1;display:flex;flex-direction:column;gap:0.5rem}
+.nav-item{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;border-radius:var(--radius-md);font-family:'Manrope',sans-serif;font-weight:600;font-size:0.875rem;letter-spacing:-0.01em;color:var(--on-surface-variant);text-decoration:none;transition:all 0.3s ease;cursor:pointer}
+.nav-item:hover{background:rgba(255,255,255,0.6)}
+.nav-item .material-symbols-outlined{font-size:20px}
+.nav-item--active{background:var(--primary-gradient, var(--gradient));color:var(--on-primary);box-shadow:0 10px 15px -3px rgba(108,92,231,0.2);transform:scale(0.98)}
+.nav-item--active:hover{background:var(--primary-gradient, var(--gradient));opacity:0.95}
+.nav-item--active .material-symbols-outlined{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+.primary-gradient{background:var(--gradient)}
+.sidebar-user{margin-top:auto;padding:1rem;background:var(--surface-container-lowest);border-radius:var(--radius-xl);border:1px solid rgba(200,196,215,0.1)}
+.sidebar-user-inner{display:flex;align-items:center;gap:0.75rem}
+.avatar{width:40px;height:40px;border-radius:50%;object-fit:cover}
+.avatar-initials{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Manrope',sans-serif;font-weight:700;font-size:0.875rem;color:var(--on-primary);background:var(--gradient);flex-shrink:0}
+.sidebar-user-name{font-size:0.75rem;font-weight:700;color:var(--on-surface)}
+.sidebar-user-role{font-size:0.625rem;color:var(--on-surface-variant)}
+
+/* Top Bar */
+.topbar{position:fixed;top:0;right:0;width:calc(100% - 256px);height:80px;z-index:40;display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem;background:rgba(255,255,255,0.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.search-bar{display:flex;align-items:center;background:var(--surface-container-low);padding:0.5rem 1rem;border-radius:var(--radius-full);width:384px}
+.search-bar .material-symbols-outlined{color:var(--outline);font-size:20px;margin-right:0.5rem}
+.search-bar input{background:transparent;border:none;outline:none;font-size:0.875rem;width:100%;color:var(--on-surface);font-family:'Inter',sans-serif}
+.search-bar input::placeholder{color:rgba(120,117,134,0.6)}
+.topbar-actions{display:flex;align-items:center;gap:1.5rem}
+.topbar-icons{display:flex;align-items:center;gap:1rem;color:var(--on-surface-variant)}
+.topbar-icons .material-symbols-outlined{font-size:24px;cursor:pointer;transition:color 0.2s}
+.topbar-icons .material-symbols-outlined:hover{color:var(--primary)}
+.topbar-divider{width:1px;height:32px;background:rgba(200,196,215,0.2)}
+.topbar-profile{display:flex;align-items:center;gap:0.75rem;cursor:pointer}
+.topbar-profile-text{text-align:right}
+.topbar-profile-name{font-size:0.875rem;font-weight:700;color:var(--on-surface)}
+.topbar-profile-sub{font-size:0.625rem;color:var(--on-surface-variant)}
+
+/* Main Content */
+.main{margin-left:256px;padding:6rem 2.5rem 3rem}
+
+/* Section Header */
+.section-header{margin-bottom:2.5rem}
+.section-label{font-family:'Inter',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--on-surface-variant);margin-bottom:0.5rem}
+.section-title{font-family:'Manrope',sans-serif;font-size:2.25rem;font-weight:800;letter-spacing:-0.02em;color:var(--on-surface)}
+.section-header-row{display:flex;align-items:baseline;justify-content:space-between}
+.section-desc{font-size:0.875rem;color:var(--on-surface-variant);max-width:320px;text-align:right;line-height:1.5}
+
+/* Metric Cards Grid */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;margin-bottom:2rem}
+.metric-card{background:var(--surface-container-lowest);padding:1.5rem;border-radius:var(--radius-xl);box-shadow:var(--shadow-card);display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;transition:transform 0.2s}
+.metric-card:hover{transform:translateY(-2px)}
+.metric-card-header{display:flex;justify-content:space-between;align-items:flex-start}
+.metric-icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-md)}
+.metric-icon--primary{color:var(--primary);background:var(--primary-fixed)}
+.metric-icon--secondary{color:var(--secondary);background:var(--secondary-fixed)}
+.metric-icon--tertiary{color:var(--tertiary);background:var(--tertiary-fixed)}
+.metric-badge{font-size:0.75rem;font-weight:700;padding:0.25rem 0.5rem;border-radius:var(--radius-sm)}
+.metric-badge--green{color:#16a34a;background:#f0fdf4}
+.metric-badge--primary{color:var(--primary);background:var(--primary-fixed)}
+.metric-badge--tertiary{color:var(--tertiary);background:var(--tertiary-fixed)}
+.metric-body{margin-top:1rem}
+.metric-label{font-family:'Inter',sans-serif;font-size:0.625rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--on-surface-variant)}
+.metric-value{font-family:'Manrope',sans-serif;font-size:1.875rem;font-weight:700;color:var(--on-surface);margin-top:0.25rem}
+.metric-sub{font-size:0.625rem;color:var(--on-surface-variant);font-weight:500;margin-top:0.5rem}
+.progress-bar{width:100%;height:4px;background:var(--surface-container);border-radius:var(--radius-full);overflow:hidden;margin-top:1rem}
+.progress-bar-fill{height:100%;background:var(--primary);border-radius:var(--radius-full);transition:width 0.6s ease}
+.mini-chart{display:flex;align-items:flex-end;gap:4px;height:48px;margin-top:1rem;position:relative;z-index:1}
+.mini-bar{flex:1;border-radius:2px 2px 0 0;transition:height 0.3s}
+.mini-bar:nth-child(1){background:rgba(83,65,205,0.2);height:33%}
+.mini-bar:nth-child(2){background:rgba(83,65,205,0.4);height:50%}
+.mini-bar:nth-child(3){background:rgba(83,65,205,0.6);height:66%}
+.mini-bar:nth-child(4){background:var(--primary);height:83%}
+.mini-bar:nth-child(5){background:var(--primary-container);height:100%}
+.metric-card .bg-icon{position:absolute;right:-1rem;bottom:-1rem;font-size:6rem;opacity:0.1;color:var(--primary)}
+
+/* Main Grid */
+.dashboard-grid{display:grid;grid-template-columns:8fr 4fr;gap:2rem}
+
+/* Table Card */
+.table-card{background:var(--surface-container-lowest);border-radius:var(--radius-2xl);box-shadow:var(--shadow-card);overflow:hidden}
+.table-card-header{padding:1.5rem 2rem;display:flex;align-items:center;justify-content:space-between}
+.table-card-title{font-family:'Manrope',sans-serif;font-size:1.125rem;font-weight:700;color:var(--on-surface)}
+.table-card-subtitle{font-size:0.75rem;color:var(--on-surface-variant);margin-top:0.125rem}
+.table-card-link{font-size:0.75rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:0.25rem;text-decoration:none}
+.table-card-link .material-symbols-outlined{font-size:1rem}
+.table-card-link:hover{text-decoration:underline}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--surface-container-low)}
+th{padding:1rem 2rem;font-size:0.625rem;font-weight:700;color:var(--on-surface-variant);text-transform:uppercase;letter-spacing:0.1em;text-align:left}
+tbody tr{transition:background-color 0.2s}
+tbody tr:hover{background:rgba(242,243,247,0.5)}
+tbody tr:nth-child(even){background:rgba(242,243,247,0.2)}
+tbody tr:nth-child(even):hover{background:rgba(242,243,247,0.5)}
+td{padding:1rem 2rem}
+.employee-cell{display:flex;align-items:center;gap:0.75rem}
+.employee-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Manrope',sans-serif;font-weight:700;font-size:0.8125rem;color:var(--on-primary);flex-shrink:0}
+.employee-avatar--es{background:var(--gradient)}
+.employee-avatar--mc{background:linear-gradient(135deg,#6366f1 0%,#818cf8 100%)}
+.employee-avatar--sd{background:linear-gradient(135deg,#059669 0%,#34d399 100%)}
+.employee-avatar--jb{background:linear-gradient(135deg,#d97706 0%,#fbbf24 100%)}
+.employee-name{font-size:0.875rem;font-weight:700;color:var(--on-surface)}
+.employee-role{font-size:0.625rem;color:var(--on-surface-variant)}
+.cell-text{font-size:0.875rem;color:var(--on-surface-variant);font-weight:500}
+.status-pill{display:inline-flex;align-items:center;gap:0.25rem;padding:0.25rem 0.5rem;border-radius:var(--radius-full);font-size:0.625rem;font-weight:700}
+.status-dot{width:6px;height:6px;border-radius:50%}
+.status--active{background:#f0fdf4;color:#15803d}
+.status--active .status-dot{background:#22c55e}
+.status--meeting{background:#eff6ff;color:#1d4ed8}
+.status--meeting .status-dot{background:#3b82f6}
+.status--break{background:#fff7ed;color:#c2410c}
+.status--break .status-dot{background:#f97316}
+.status--remote{background:#f5f3ff;color:#6d28d9}
+.status--remote .status-dot{background:#8b5cf6}
+
+/* Right Column */
+.right-column{display:flex;flex-direction:column;gap:2rem}
+
+/* Celebrations Card */
+.celebrations-card{background:var(--surface-container-lowest);padding:2rem;border-radius:var(--radius-2xl);box-shadow:var(--shadow-card);border-top:4px solid var(--primary)}
+.celebrations-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.celebrations-title{font-family:'Manrope',sans-serif;font-size:1.125rem;font-weight:700;color:var(--on-surface)}
+.celebration-item{display:flex;align-items:center;gap:1rem;transition:color 0.2s}
+.celebration-item+.celebration-item{margin-top:1.5rem}
+.celebration-item:hover .celebration-name{color:var(--primary)}
+.celebration-avatar-wrap{position:relative;flex-shrink:0}
+.celebration-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover}
+.celebration-badge{position:absolute;bottom:-4px;right:-4px;background:white;padding:2px;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center}
+.celebration-badge .material-symbols-outlined{font-size:12px}
+.celebration-name{font-size:0.875rem;font-weight:700;color:var(--on-surface);transition:color 0.2s}
+.celebration-desc{font-size:0.625rem;color:var(--on-surface-variant)}
+.celebration-action{background:var(--surface-container-low);padding:0.5rem;border-radius:var(--radius-md);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s;flex-shrink:0}
+.celebration-action .material-symbols-outlined{font-size:1rem;color:var(--primary)}
+.celebration-action:hover{background:var(--primary-fixed)}
+.celebration-item-body{flex:1}
+
+/* Leadership Summit Card */
+.summit-card{background:var(--gradient);padding:2rem;border-radius:var(--radius-2xl);box-shadow:0 20px 25px -5px rgba(108,92,231,0.2);color:white;position:relative;overflow:hidden}
+.summit-card .z-content{position:relative;z-index:1}
+.summit-title{font-family:'Manrope',sans-serif;font-size:1.125rem;font-weight:700;margin-bottom:0.5rem}
+.summit-desc{font-size:0.75rem;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:1.5rem}
+.summit-avatars{display:flex;margin-bottom:1.5rem}
+.summit-avatars .avatar-stack{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,0.2);margin-left:-0.75rem;object-fit:cover}
+.summit-avatars .avatar-stack:first-child{margin-left:0}
+.summit-avatars .avatar-more{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:0.625rem;font-weight:700;margin-left:-0.75rem}
+.summit-btn{width:100%;background:white;color:var(--primary);font-weight:700;font-size:0.75rem;padding:0.75rem;border-radius:var(--radius-xl);border:none;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
+.summit-btn:hover{background:var(--on-primary-container)}
+.summit-btn:active{transform:scale(0.95)}
+.summit-bg-circle{position:absolute;top:-2.5rem;right:-2.5rem;width:10rem;height:10rem;background:rgba(255,255,255,0.1);border-radius:50%;filter:blur(60px)}
+
+/* Workspace Health */
+.health-section{margin-top:3rem}
+.health-card{background:rgba(242,243,247,0.4);padding:2.5rem;border-radius:2.5rem;display:flex;align-items:center;justify-content:space-between;gap:2rem}
+.health-content{max-width:480px}
+.health-title{font-family:'Manrope',sans-serif;font-size:1.5rem;font-weight:800;color:var(--on-surface);margin-bottom:0.5rem}
+.health-desc{font-size:0.875rem;color:var(--on-surface-variant);line-height:1.6}
+.health-stats{display:flex;gap:3rem}
+.health-stat{text-align:center}
+.health-stat-label{font-family:'Inter',sans-serif;font-size:0.625rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--on-surface-variant);margin-bottom:0.5rem}
+.health-stat-value{font-family:'Manrope',sans-serif;font-size:1.875rem;font-weight:700}
+.health-stat-value--primary{color:var(--primary)}
+.health-stat-value--secondary{color:var(--secondary)}
+.health-stat-value--error{color:var(--error)}
+.health-stat-unit{font-size:0.875rem;font-weight:500;color:var(--on-surface-variant)}
+.health-actions{display:flex;flex-direction:column;gap:0.75rem}
+.btn-outline{padding:0.75rem 1.5rem;border-radius:var(--radius-full);border:1px solid var(--primary);color:var(--primary);font-weight:700;font-size:0.875rem;background:transparent;cursor:pointer;font-family:'Inter',sans-serif;transition:background 0.2s}
+.btn-outline:hover{background:rgba(83,65,205,0.05)}
+.btn-gradient{padding:0.75rem 1.5rem;border-radius:var(--radius-full);border:none;color:white;font-weight:700;font-size:0.875rem;background:var(--gradient);cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 10px 15px -3px rgba(108,92,231,0.2);transition:all 0.2s}
+.btn-gradient:active{transform:scale(0.95)}
+
+/* FAB */
+.fab{position:fixed;bottom:2.5rem;right:2.5rem;width:56px;height:56px;border-radius:50%;background:var(--gradient);color:white;border:none;box-shadow:0 25px 50px -12px rgba(108,92,231,0.4);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:50;transition:all 0.2s}
+.fab:hover{transform:scale(1.1)}
+.fab:active{transform:scale(0.95)}
+.fab .material-symbols-outlined{font-size:1.875rem;transition:transform 0.2s}
+.fab:hover .material-symbols-outlined{transform:rotate(90deg)}
+
+/* Material Symbols */
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:24px}
+
+/* Responsive adjustments */
+@media(max-width:1200px){
+  .metrics-grid{grid-template-columns:repeat(2,1fr)}
+  .dashboard-grid{grid-template-columns:1fr}
+  .health-card{flex-direction:column;text-align:center}
+  .health-stats{justify-content:center}
+  .health-actions{flex-direction:row;justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <h1>Curated HR</h1>
+    <p>Workspace Console</p>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item nav-item--active" href="#">
+      <span class="material-symbols-outlined">dashboard</span>
+      Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <span class="material-symbols-outlined">group</span>
+      Employees
+    </a>
+    <a class="nav-item" href="#">
+      <span class="material-symbols-outlined">calendar_today</span>
+      Attendance
+    </a>
+    <a class="nav-item" href="#">
+      <span class="material-symbols-outlined">event_note</span>
+      Leave
+    </a>
+    <a class="nav-item" href="#">
+      <span class="material-symbols-outlined">payments</span>
+      Payroll
+    </a>
+    <a class="nav-item" href="#">
+      <span class="material-symbols-outlined">assessment</span>
+      Reports
+    </a>
+    <a class="nav-item" href="#">
+      <span class="material-symbols-outlined">settings</span>
+      Settings
+    </a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="sidebar-user-inner">
+      <div class="avatar-initials" style="background:linear-gradient(135deg,#5341cd 0%,#6c5ce7 100%)">AR</div>
+      <div>
+        <div class="sidebar-user-name">Alex Rivera</div>
+        <div class="sidebar-user-role">HR Administrator</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Top Bar -->
+<header class="topbar">
+  <div class="search-bar">
+    <span class="material-symbols-outlined">search</span>
+    <input type="text" placeholder="Search employees, records, or tasks..."/>
+  </div>
+  <div class="topbar-actions">
+    <div class="topbar-icons">
+      <span class="material-symbols-outlined">notifications</span>
+      <span class="material-symbols-outlined">chat_bubble</span>
+      <span class="material-symbols-outlined">help_outline</span>
+    </div>
+    <div class="topbar-divider"></div>
+    <div class="topbar-profile">
+      <div class="topbar-profile-text">
+        <div class="topbar-profile-name">HR Dashboard</div>
+        <div class="topbar-profile-sub">Admin Control</div>
+      </div>
+      <div class="avatar-initials" style="background:linear-gradient(135deg,#5341cd 0%,#6c5ce7 100%)">AR</div>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="main">
+
+  <!-- Section Header -->
+  <header class="section-header">
+    <div class="section-label">Workspace Overview</div>
+    <div class="section-header-row">
+      <h1 class="section-title">The HR Studio</h1>
+      <p class="section-desc">Monitoring real-time team dynamics and workspace productivity across all departments.</p>
+    </div>
+  </header>
+
+  <!-- Metric Cards -->
+  <div class="metrics-grid">
+    <!-- Total Headcount -->
+    <div class="metric-card">
+      <div class="metric-card-header">
+        <div class="metric-icon metric-icon--primary">
+          <span class="material-symbols-outlined">group</span>
+        </div>
+        <span class="metric-badge metric-badge--green">+12%</span>
+      </div>
+      <div class="metric-body">
+        <div class="metric-label">Total Headcount</div>
+        <div class="metric-value">1,248</div>
+        <div class="metric-sub">84 New hires this month</div>
+      </div>
+    </div>
+
+    <!-- Attendance Rate -->
+    <div class="metric-card">
+      <div class="metric-card-header">
+        <div class="metric-icon metric-icon--secondary">
+          <span class="material-symbols-outlined">how_to_reg</span>
+        </div>
+        <span class="metric-badge metric-badge--primary">Today</span>
+      </div>
+      <div class="metric-body">
+        <div class="metric-label">Attendance Rate</div>
+        <div class="metric-value">94.2%</div>
+        <div class="progress-bar">
+          <div class="progress-bar-fill" style="width:94.2%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave Requests -->
+    <div class="metric-card">
+      <div class="metric-card-header">
+        <div class="metric-icon metric-icon--tertiary">
+          <span class="material-symbols-outlined">event_busy</span>
+        </div>
+        <span class="metric-badge metric-badge--tertiary">Action Needed</span>
+      </div>
+      <div class="metric-body">
+        <div class="metric-label">Leave Requests</div>
+        <div class="metric-value">14</div>
+        <div class="metric-sub">8 Urgent approvals pending</div>
+      </div>
+    </div>
+
+    <!-- Retention Score -->
+    <div class="metric-card">
+      <div class="metric-body" style="position:relative;z-index:1">
+        <div class="metric-label">Retention Score</div>
+        <div class="metric-value">98%</div>
+      </div>
+      <div class="mini-chart">
+        <div class="mini-bar"></div>
+        <div class="mini-bar"></div>
+        <div class="mini-bar"></div>
+        <div class="mini-bar"></div>
+        <div class="mini-bar"></div>
+      </div>
+      <span class="material-symbols-outlined bg-icon">trending_up</span>
+    </div>
+  </div>
+
+  <!-- Main Dashboard Grid -->
+  <div class="dashboard-grid">
+
+    <!-- Today's Presence Table -->
+    <section class="table-card">
+      <div class="table-card-header">
+        <div>
+          <div class="table-card-title">Today's Presence</div>
+          <div class="table-card-subtitle">Live tracking of active workspace users</div>
+        </div>
+        <a class="table-card-link" href="#">
+          View Full Roster <span class="material-symbols-outlined">arrow_forward</span>
+        </a>
+      </div>
+      <div style="width:100%;overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Department</th>
+              <th>Clocked In</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="employee-cell">
+                  <div class="employee-avatar employee-avatar--es">ES</div>
+                  <div>
+                    <div class="employee-name">Elena Sofia</div>
+                    <div class="employee-role">Lead Designer</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="cell-text">Product</span></td>
+              <td><span class="cell-text">08:45 AM</span></td>
+              <td>
+                <span class="status-pill status--active">
+                  <span class="status-dot"></span> Active
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="employee-cell">
+                  <div class="employee-avatar employee-avatar--mc">MC</div>
+                  <div>
+                    <div class="employee-name">Marcus Chen</div>
+                    <div class="employee-role">Full-stack Dev</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="cell-text">Engineering</span></td>
+              <td><span class="cell-text">09:12 AM</span></td>
+              <td>
+                <span class="status-pill status--meeting">
+                  <span class="status-dot"></span> Meeting
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="employee-cell">
+                  <div class="employee-avatar employee-avatar--sd">SD</div>
+                  <div>
+                    <div class="employee-name">Sarah Drasner</div>
+                    <div class="employee-role">Data Analyst</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="cell-text">Operations</span></td>
+              <td><span class="cell-text">08:00 AM</span></td>
+              <td>
+                <span class="status-pill status--active">
+                  <span class="status-dot"></span> Active
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="employee-cell">
+                  <div class="employee-avatar employee-avatar--jb">JB</div>
+                  <div>
+                    <div class="employee-name">Julian Black</div>
+                    <div class="employee-role">Marketing Lead</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="cell-text">Marketing</span></td>
+              <td><span class="cell-text">10:30 AM</span></td>
+              <td>
+                <span class="status-pill status--break">
+                  <span class="status-dot"></span> On Break
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Right Column -->
+    <section class="right-column">
+
+      <!-- Celebrations Card -->
+      <div class="celebrations-card">
+        <div class="celebrations-header">
+          <h3 class="celebrations-title">Celebrations</h3>
+          <span class="material-symbols-outlined" style="color:var(--primary)">cake</span>
+        </div>
+
+        <div class="celebration-item">
+          <div class="celebration-avatar-wrap">
+            <div class="avatar-initials" style="background:linear-gradient(135deg,#ec4899 0%,#f472b6 100%)">AS</div>
+            <div class="celebration-badge">
+              <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;color:#ec4899;font-size:12px">cake</span>
+            </div>
+          </div>
+          <div class="celebration-item-body">
+            <div class="celebration-name">Aditi Sharma</div>
+            <div class="celebration-desc">Birthday &bull; Today</div>
+          </div>
+          <button class="celebration-action">
+            <span class="material-symbols-outlined">send</span>
+          </button>
+        </div>
+
+        <div class="celebration-item">
+          <div class="celebration-avatar-wrap">
+            <div class="avatar-initials" style="background:linear-gradient(135deg,#3b82f6 0%,#60a5fa 100%)">DM</div>
+            <div class="celebration-badge">
+              <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;color:#3b82f6;font-size:12px">workspace_premium</span>
+            </div>
+          </div>
+          <div class="celebration-item-body">
+            <div class="celebration-name">David Miller</div>
+            <div class="celebration-desc">5 Year Anniversary &bull; Oct 24</div>
+          </div>
+          <button class="celebration-action">
+            <span class="material-symbols-outlined">send</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Leadership Summit Card -->
+      <div class="summit-card">
+        <div class="z-content">
+          <h3 class="summit-title">Leadership Summit</h3>
+          <p class="summit-desc">Quarterly management training session for all team leads starting next Monday.</p>
+          <div class="summit-avatars">
+            <div class="avatar-initials" style="width:32px;height:32px;font-size:0.625rem;border:2px solid rgba(255,255,255,0.2);margin-left:0;background:linear-gradient(135deg,#6366f1 0%,#818cf8 100%)">KL</div>
+            <div class="avatar-initials" style="width:32px;height:32px;font-size:0.625rem;border:2px solid rgba(255,255,255,0.2);margin-left:-0.75rem;background:linear-gradient(135deg,#059669 0%,#34d399 100%)">RW</div>
+            <div class="avatar-initials" style="width:32px;height:32px;font-size:0.625rem;border:2px solid rgba(255,255,255,0.2);margin-left:-0.75rem;background:linear-gradient(135deg,#d97706 0%,#fbbf24 100%)">MT</div>
+            <div class="avatar-more">+12</div>
+          </div>
+          <button class="summit-btn">Manage Participants</button>
+        </div>
+        <div class="summit-bg-circle"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Workspace Health Snapshot -->
+  <section class="health-section">
+    <div class="health-card">
+      <div class="health-content">
+        <h2 class="health-title">Workspace Health Snapshot</h2>
+        <p class="health-desc">The retention and satisfaction scores are at an all-time high this quarter. Employee engagement has seen a 14% increase following the new hybrid work policy implementation.</p>
+      </div>
+      <div class="health-stats">
+        <div class="health-stat">
+          <div class="health-stat-label">Satisfaction</div>
+          <div class="health-stat-value health-stat-value--primary">4.8<span class="health-stat-unit">/5</span></div>
+        </div>
+        <div class="health-stat">
+          <div class="health-stat-label">New Hires</div>
+          <div class="health-stat-value health-stat-value--secondary">+24</div>
+        </div>
+        <div class="health-stat">
+          <div class="health-stat-label">Turnover</div>
+          <div class="health-stat-value health-stat-value--error">1.2%</div>
+        </div>
+      </div>
+      <div class="health-actions">
+        <button class="btn-outline">Download Report</button>
+        <button class="btn-gradient">Studio Settings</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Floating Action Button -->
+<button class="fab">
+  <span class="material-symbols-outlined">add</span>
+</button>
+
+</body>
+</html>

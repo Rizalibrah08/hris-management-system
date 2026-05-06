@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login | Curated HR</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary: #5341cd;
+  --primary-container: #6c5ce7;
+  --primary-fixed: #e4dfff;
+  --primary-fixed-dim: #c6bfff;
+  --on-primary: #ffffff;
+  --on-primary-fixed: #160066;
+  --secondary: #5952af;
+  --background: #f8f9fd;
+  --on-surface: #191c1f;
+  --on-surface-variant: #474554;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f2f3f7;
+  --surface-container-highest: #e1e2e6;
+  --outline: #787586;
+  --outline-variant: #c8c4d7;
+  --error: #ba1a1a;
+  --gradient: linear-gradient(135deg, #5341cd 0%, #6c5ce7 100%);
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--background);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(83,65,205,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(108,92,231,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(228,223,255,0.3) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(83,65,205,0.03) 1px, transparent 0);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.login-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 460px;
+  padding: 0 20px;
+}
+
+.login-card {
+  width: min(420px, 100%);
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  padding: 40px 36px 36px;
+  border-radius: 14px;
+  box-shadow:
+    0 32px 64px -12px rgba(83,65,205,0.10),
+    0 0 0 1px rgba(228,223,255,0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0 auto;
+}
+
+.brand-area {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.brand-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--gradient);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  box-shadow: 0 8px 24px -4px rgba(83,65,205,0.30);
+}
+
+.brand-icon .material-symbols-outlined {
+  color: var(--on-primary);
+  font-size: 26px;
+  font-variation-settings: 'FILL' 1, 'wght' 400;
+}
+
+.brand-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--on-surface);
+  margin-bottom: 4px;
+}
+
+.brand-subtitle {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  font-weight: 400;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-wrapper .material-symbols-outlined {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: var(--outline);
+  font-variation-settings: 'FILL' 0, 'wght' 400;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 14px 12px 44px;
+  border: 1.5px solid var(--primary-fixed);
+  border-radius: 12px;
+  background: var(--surface-container-low);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: var(--on-surface);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.form-input::placeholder {
+  color: var(--outline);
+  opacity: 0.7;
+}
+
+.form-input:focus {
+  border-color: var(--primary);
+  background: var(--surface-container-lowest);
+  box-shadow: 0 0 0 3px rgba(83,65,205,0.10);
+}
+
+.form-input.error {
+  border-color: var(--error);
+  box-shadow: 0 0 0 3px rgba(186,26,26,0.08);
+}
+
+.error-message {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: rgba(186,26,26,0.06);
+  border: 1px solid rgba(186,26,26,0.15);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--error);
+  font-weight: 500;
+}
+
+.error-message.visible {
+  display: flex;
+}
+
+.error-message .material-symbols-outlined {
+  font-size: 18px;
+  font-variation-settings: 'FILL' 1, 'wght' 400;
+}
+
+.forgot-link {
+  text-align: right;
+  margin-bottom: 24px;
+  margin-top: -8px;
+}
+
+.forgot-link a {
+  font-size: 12px;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: color 0.2s;
+}
+
+.forgot-link a:hover {
+  color: var(--primary-container);
+}
+
+.login-btn {
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 9999px;
+  background: var(--gradient);
+  color: var(--on-primary);
+  font-family: 'Manrope', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 8px 24px -4px rgba(83,65,205,0.35);
+  transition: transform 0.15s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.login-btn:hover {
+  box-shadow: 0 12px 32px -4px rgba(83,65,205,0.40);
+}
+
+.login-btn:active {
+  transform: scale(0.98);
+}
+
+.login-btn .material-symbols-outlined {
+  font-size: 20px;
+  font-variation-settings: 'FILL' 0, 'wght' 400;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--outline-variant);
+}
+
+.divider span {
+  font-size: 11px;
+  color: var(--outline);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.sso-btn {
+  width: 100%;
+  padding: 12px 24px;
+  border: 1.5px solid var(--primary-fixed);
+  border-radius: 12px;
+  background: var(--surface-container-lowest);
+  color: var(--on-surface);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sso-btn:hover {
+  background: var(--surface-container-low);
+  border-color: var(--primary-fixed-dim);
+}
+
+.sso-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.footer-text {
+  text-align: center;
+  margin-top: 28px;
+  font-size: 12px;
+  color: var(--outline);
+}
+
+.footer-text a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 32px 24px 28px;
+  }
+  .brand-title {
+    font-size: 22px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="login-wrapper">
+  <form class="login-card" id="loginForm" novalidate>
+
+    <div class="brand-area">
+      <div class="brand-icon">
+        <span class="material-symbols-outlined">apartment</span>
+      </div>
+      <h1 class="brand-title">Curated HR</h1>
+      <p class="brand-subtitle">Sign in to your workspace</p>
+    </div>
+
+    <div class="error-message" id="errorMsg">
+      <span class="material-symbols-outlined">error</span>
+      <span>Login gagal. Cek NIK/password dan pastikan backend aktif.</span>
+    </div>
+
+    <div class="form-group">
+      <label for="nik">NIK</label>
+      <div class="input-wrapper">
+        <span class="material-symbols-outlined">badge</span>
+        <input
+          class="form-input"
+          id="nik"
+          name="nik"
+          type="text"
+          placeholder="Enter your NIK"
+          value="ADM001"
+          autocomplete="username"
+        />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="input-wrapper">
+        <span class="material-symbols-outlined">lock</span>
+        <input
+          class="form-input"
+          id="password"
+          name="password"
+          type="password"
+          placeholder="Enter your password"
+          value="admin123"
+          autocomplete="current-password"
+        />
+      </div>
+    </div>
+
+    <div class="forgot-link">
+      <a href="#">Forgot password?</a>
+    </div>
+
+    <button class="login-btn" type="submit">
+      Sign In
+      <span class="material-symbols-outlined">arrow_forward</span>
+    </button>
+
+    <div class="divider">
+      <span>or continue with</span>
+    </div>
+
+    <button class="sso-btn" type="button">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Google Workspace SSO
+    </button>
+
+    <p class="footer-text">
+      Don't have an account? <a href="#">Request access</a>
+    </p>
+
+  </form>
+</div>
+
+<script>
+  const form = document.getElementById('loginForm');
+  const errorMsg = document.getElementById('errorMsg');
+  const nikInput = document.getElementById('nik');
+  const passwordInput = document.getElementById('password');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const nik = nikInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!nik || !password) {
+      errorMsg.querySelector('span:last-child').textContent =
+        'Please fill in both NIK and Password.';
+      errorMsg.classList.add('visible');
+      nikInput.classList.toggle('error', !nik);
+      passwordInput.classList.toggle('error', !password);
+      return;
+    }
+
+    errorMsg.classList.remove('visible');
+    nikInput.classList.remove('error');
+    passwordInput.classList.remove('error');
+
+    // Simulate login attempt
+    if (nik === 'ADM001' && password === 'admin123') {
+      errorMsg.classList.remove('visible');
+      // Success — redirect would happen here
+      window.location.href = 'reports.html';
+    } else {
+      errorMsg.querySelector('span:last-child').textContent =
+        'Login gagal. Cek NIK/password dan pastikan backend aktif.';
+      errorMsg.classList.add('visible');
+    }
+  });
+</script>
+
+</body>
+</html>
