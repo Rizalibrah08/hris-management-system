@@ -1,0 +1,52 @@
+@startuml HRIS_Leave_Activity_Diagram
+
+start
+
+:Employee submits leave request;
+note right: POST /leave\n{employee_id, leave_type,\nstart_date, end_date, reason}
+
+:Create leave_request record;
+note right: status = 'Pending'
+
+:Validate leave dates;
+
+if (Valid dates?) then (No)
+  :Return validation error;
+  stop
+else (Yes)
+  :Save leave request to DB;
+endif
+
+fork
+  :Notify employee:\nrequest submitted;
+fork again
+  :Notify manager:\nnew request pending;
+end fork
+
+:Retrieve pending requests\nfor manager/HRD;
+
+if (Manager/HRD reviews?) then (Yes)
+  
+  if (Decision?) then (Approve)
+    :Update leave_request\nSET status = 'Approved';
+    :Record approval metadata\n(approver, timestamp);
+    :Notify employee:\nleave approved;
+  else (Reject)
+    :Update leave_request\nSET status = 'Rejected';
+    :Record rejection metadata\n(approver, timestamp, comment);
+    :Notify employee:\nleave rejected;
+  endif
+
+else (No action yet)
+  :Request remains Pending;
+  stop
+endif
+
+if (Leave approved & date reached?) then (Yes)
+  :Mark employee attendance\nas 'Cuti' for leave period;
+  :Recalculate attendance statistics;
+endif
+
+stop
+
+@enduml

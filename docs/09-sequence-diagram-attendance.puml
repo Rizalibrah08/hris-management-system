@@ -1,0 +1,125 @@
+@startuml HRIS_Attendance_Sequence_Diagram
+
+actor Employee as emp
+participant "Mobile App" as mob
+participant "API Server" as api
+participant "AuthService" as auth
+participant "AttendanceService" as att
+database "MySQL" as db
+
+== Clock In Flow ==
+
+emp -> mob : Tap "Clock In"
+activate mob
+
+mob -> emp : Request camera permission
+emp -> mob : Grant permission
+
+mob -> emp : Show camera preview
+emp -> mob : Take selfie
+
+mob -> api : POST /attendance/clockin\n{gps_location, selfie(base64)}
+activate api
+
+api -> auth : verifyToken(token)
+activate auth
+auth --> api : userId, employeeId
+deactivate auth
+
+api -> att : clockIn(employeeId, data)
+activate att
+
+att -> db : SELECT * FROM attendance\nWHERE employee_id=id AND DATE(clock_in)=TODAY
+activate db
+db --> att : existingRecord (if any)
+deactivate db
+
+alt No existing clock-in today
+  att -> db : INSERT INTO attendance\n(employee_id, clock_in, gps_location,\nselfie, status='Aktif')
+  activate db
+  db --> att : attendanceRecord
+  deactivate db
+
+  att --> api : {id, clock_in, status:'Aktif'}
+  api --> mob : 201 Clock-in successful
+  mob --> emp : Show success + clock-in time
+else Already clocked in today
+  att --> api : Error: Already clocked in
+  api --> mob : 409 Conflict
+  mob --> emp : Show "Already clocked in today"
+end
+
+deactivate att
+deactivate api
+deactivate mob
+
+== Clock Out Flow ==
+
+emp -> mob : Tap "Clock Out"
+activate mob
+
+mob -> api : POST /attendance/clockout\n{gps_location}
+activate api
+
+api -> auth : verifyToken(token)
+activate auth
+auth --> api : userId, employeeId
+deactivate auth
+
+api -> att : clockOut(employeeId, data)
+activate att
+
+att -> db : SELECT * FROM attendance\nWHERE employee_id=id\nAND DATE(clock_in)=TODAY\nAND clock_out IS NULL
+activate db
+db --> att : todayRecord
+deactivate db
+
+alt Found active clock-in
+  att -> db : UPDATE attendance\nSET clock_out=NOW(), gps_location=...\nWHERE id=todayRecord.id
+  activate db
+  db --> att : ok
+  deactivate db
+
+  att --> api : {id, clock_in, clock_out, status:'Aktif'}
+  api --> mob : 200 Clock-out successful
+  mob --> emp : Show summary\n(hours worked, time range)
+else No active clock-in found
+  att --> api : Error: No active clock-in
+  api --> mob : 404 Not found
+  mob --> emp : Show "No active clock-in found"
+end
+
+deactivate att
+deactivate api
+deactivate mob
+
+== View Attendance Status ==
+
+emp -> mob : View attendance history
+activate mob
+
+mob -> api : GET /attendance/my-status
+activate api
+
+api -> auth : verifyToken(token)
+activate auth
+auth --> api : userId, employeeId
+deactivate auth
+
+api -> att : getMyStatus(employeeId)
+activate att
+
+att -> db : SELECT * FROM attendance\nWHERE employee_id=id\nORDER BY clock_in DESC\nLIMIT 1
+activate db
+db --> att : todayRecord
+deactivate db
+
+att --> api : {clock_in, clock_out, status}
+api --> mob : 200 Attendance status
+mob --> emp : Display current status
+
+deactivate att
+deactivate api
+deactivate mob
+
+@enduml

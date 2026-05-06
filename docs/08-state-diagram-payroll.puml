@@ -1,0 +1,48 @@
+@startuml HRIS_Payroll_State_Diagram
+
+[*] --> Draft : Generate payroll run
+
+state Draft {
+  [*] --> Calculating
+  Calculating --> Calculated : All salary profiles\nprocessed
+  note right of Calculated : Total gross, deduction,\nnet computed per employee
+  Calculated --> Ready_For_Review : HRD initiates review
+}
+
+Draft --> Reviewed : HRD submits for review
+
+state Reviewed {
+  [*] --> Pending_Finance_Approval
+  Pending_Finance_Approval --> Finance_Approved : Finance approves\n(level 2 approval)
+  Pending_Finance_Approval --> Rejected_By_Finance : Finance rejects
+}
+
+Reviewed --> Approved : Finance approves
+Reviewed --> Draft : Rejected by Finance\n(returns to draft)
+
+state Approved {
+  [*] --> Validation_Check
+  Validation_Check --> Validated : No negative net pay\nAll profiles complete
+  Validation_Check --> Validation_Failed : Negative net pay\ndetected\nor missing profiles
+}
+
+Approved --> Finalized : Finance finalizes\n(validation passed)
+Approved --> Reviewed : Validation failed\n(return for review)
+
+state Finalized {
+  [*] --> Payslips_Generated
+  Payslips_Generated --> Locked : All payslips created
+  note right of Locked : Payroll data is now\nimmutable
+}
+
+Finalized --> Published : Publish to employees
+
+state Published {
+  [*] --> Available_To_Employees
+  Available_To_Employees --> [*] : Employees can view\ntheir payslips
+}
+
+Rejected --> [*] : End
+Draft --> [*] : Delete draft
+
+@enduml

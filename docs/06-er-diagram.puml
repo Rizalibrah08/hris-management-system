@@ -1,0 +1,280 @@
+@startuml HRIS_ER_Diagram
+
+skinparam linetype ortho
+skinparam entityFontSize 12
+
+entity "roles" as roles {
+  * id : INT <<PK>>
+  --
+  * name : VARCHAR(50) <<UNIQUE>>
+}
+
+entity "departments" as departments {
+  * id : INT <<PK>>
+  --
+  * name : VARCHAR(80) <<UNIQUE>>
+}
+
+entity "positions" as positions {
+  * id : INT <<PK>>
+  --
+  * name : VARCHAR(80) <<UNIQUE>>
+}
+
+entity "employees" as employees {
+  * id : INT <<PK>>
+  --
+  * name : VARCHAR(120)
+  * department_id : INT <<FK>>
+  * position_id : INT <<FK>>
+  * contract_end : DATE
+  * is_active : TINYINT(1)
+  * email : VARCHAR(100)
+  * phone : VARCHAR(30)
+}
+
+entity "users" as users {
+  * id : INT <<PK>>
+  --
+  * nik : VARCHAR(30) <<UNIQUE>>
+  * email : VARCHAR(100)
+  * phone : VARCHAR(30)
+  * password : VARCHAR(255)
+  * role_id : INT <<FK>>
+  * employee_id : INT <<FK>>
+  * is_active : TINYINT(1)
+  * created_at : DATETIME
+}
+
+entity "attendance" as attendance {
+  * id : INT <<PK>>
+  --
+  * employee_id : INT <<FK>>
+  * clock_in : DATETIME
+  * clock_out : DATETIME
+  * gps_location : TEXT
+  * selfie : TEXT
+  * status : VARCHAR(30)
+}
+
+entity "leave_request" as leave_request {
+  * id : INT <<PK>>
+  --
+  * employee_id : INT <<FK>>
+  * leave_type : VARCHAR(50)
+  * start_date : DATE
+  * end_date : DATE
+  * reason : TEXT
+  * status : VARCHAR(30)
+  * created_at : DATETIME
+}
+
+entity "payroll" as payroll {
+  * id : INT <<PK>>
+  --
+  * employee_id : INT <<FK>>
+  * salary : BIGINT
+  * allowance : BIGINT
+  * deduction : BIGINT
+  * total : BIGINT
+  * period_month : DATE
+}
+
+entity "payslip" as payslip {
+  * id : INT <<PK>>
+  --
+  * payroll_id : INT <<FK>>
+  * generated_at : DATETIME
+}
+
+entity "expenses" as expenses {
+  * id : INT <<PK>>
+  --
+  * employee_id : INT <<FK>>
+  * title : VARCHAR(200)
+  * amount : BIGINT
+  * category : VARCHAR(50)
+  * description : TEXT
+  * receipt_url : TEXT
+  * status : VARCHAR(30)
+  * created_at : DATETIME
+}
+
+entity "office_assets" as office_assets {
+  * id : INT <<PK>>
+  --
+  * employee_id : INT <<FK>>
+  * asset_name : VARCHAR(200)
+  * brand : VARCHAR(100)
+  * serial_number : VARCHAR(100)
+  * condition_status : VARCHAR(30)
+  * purchase_date : DATE
+  * received_date : DATE
+  * warranty_status : TINYINT(1)
+  * image_url : TEXT
+  * created_at : DATETIME
+}
+
+entity "tasks" as tasks {
+  * id : INT <<PK>>
+  --
+  * employee_id : INT <<FK>>
+  * title : VARCHAR(200)
+  * description : TEXT
+  * status : ENUM('To Do','In Progress','Done')
+  * priority : ENUM('Low','Medium','High')
+  * due_date : DATE
+  * created_at : DATETIME
+  * updated_at : DATETIME
+}
+
+entity "payroll_components" as payroll_components {
+  * id : INT <<PK>>
+  --
+  * code : VARCHAR(50) <<UNIQUE>>
+  * name : VARCHAR(100)
+  * type : ENUM('earning','deduction')
+  * taxable : TINYINT(1)
+  * is_active : TINYINT(1)
+  * created_at : DATETIME
+  * updated_at : DATETIME
+}
+
+entity "employee_salary_profiles" as salary_profiles {
+  * id : INT <<PK>>
+  --
+  * employee_id : INT <<FK>>
+  * effective_date : DATE
+  * base_salary : BIGINT
+  * payment_method : ENUM('bank_transfer','cash')
+  * bank_name : VARCHAR(100)
+  * bank_account_name : VARCHAR(150)
+  * bank_account_number : VARCHAR(50)
+  * tax_profile_id : INT
+  * bpjs_profile_id : INT
+  * is_active : TINYINT(1)
+  * created_at : DATETIME
+  * updated_at : DATETIME
+}
+
+entity "employee_salary_component_values" as salary_component_values {
+  * id : INT <<PK>>
+  --
+  * salary_profile_id : INT <<FK>>
+  * component_id : INT <<FK>>
+  * amount : BIGINT
+  * is_percentage : TINYINT(1)
+  * percentage_value : DECIMAL(8,2)
+  * created_at : DATETIME
+  * updated_at : DATETIME
+  <<UNIQUE>> (salary_profile_id, component_id)
+}
+
+entity "payroll_variable_inputs" as payroll_variable_inputs {
+  * id : INT <<PK>>
+  --
+  * employee_id : INT <<FK>>
+  * period_month : DATE
+  * input_type : ENUM('overtime','bonus','reimbursement','manual_adjustment')
+  * amount : BIGINT
+  * description : TEXT
+  * source_ref : VARCHAR(100)
+  * approval_status : ENUM('pending','approved','rejected')
+  * created_by : INT
+  * approved_by : INT
+  * created_at : DATETIME
+  * updated_at : DATETIME
+}
+
+entity "payroll_runs" as payroll_runs {
+  * id : INT <<PK>>
+  --
+  * period_month : DATE
+  * status : ENUM('draft','reviewed','approved','finalized','published')
+  * employee_count : INT
+  * total_gross : BIGINT
+  * total_deduction : BIGINT
+  * total_net : BIGINT
+  * created_by : INT
+  * approved_by : INT
+  * finalized_by : INT
+  * finalized_at : DATETIME
+  * created_at : DATETIME
+  * updated_at : DATETIME
+}
+
+entity "payroll_run_items" as payroll_run_items {
+  * id : INT <<PK>>
+  --
+  * payroll_run_id : INT <<FK>>
+  * employee_id : INT <<FK>>
+  * gross_amount : BIGINT
+  * deduction_amount : BIGINT
+  * net_amount : BIGINT
+  * tax_amount : BIGINT
+  * bpjs_amount : BIGINT
+  * notes : TEXT
+  * created_at : DATETIME
+  * updated_at : DATETIME
+}
+
+entity "payroll_run_item_components" as payroll_run_item_components {
+  * id : INT <<PK>>
+  --
+  * payroll_run_item_id : INT <<FK>>
+  * component_id : INT <<FK>>
+  * component_name_snapshot : VARCHAR(100)
+  * component_type : ENUM('earning','deduction')
+  * amount : BIGINT
+  * calculation_meta : JSON
+  * created_at : DATETIME
+}
+
+entity "payroll_approvals" as payroll_approvals {
+  * id : INT <<PK>>
+  --
+  * payroll_run_id : INT <<FK>>
+  * approval_level : INT
+  * approver_user_id : INT <<FK>>
+  * status : ENUM('pending','approved','rejected')
+  * comment : TEXT
+  * approved_at : DATETIME
+}
+
+entity "payroll_audit_logs" as payroll_audit_logs {
+  * id : INT <<PK>>
+  --
+  * payroll_run_id : INT <<FK>>
+  * actor_user_id : INT <<FK>>
+  * action : VARCHAR(80)
+  * before_data : JSON
+  * after_data : JSON
+  * ip_address : VARCHAR(45)
+  * created_at : DATETIME
+}
+
+roles ||--|| users : "has"
+departments ||--o{ employees : "employs"
+positions ||--o{ employees : "holds"
+employees ||--o| users : "authenticates"
+employees ||--o{ attendance : "logs"
+employees ||--o{ leave_request : "submits"
+employees ||--o{ payroll : "receives"
+employees ||--o{ expenses : "claims"
+employees ||--o{ office_assets : "owns"
+employees ||--o{ tasks : "assigned"
+employees ||--o| salary_profiles : "has"
+employees ||--o{ payroll_variable_inputs : "receives"
+employees ||--o{ payroll_run_items : "calculated in"
+payroll ||--o| payslip : "generates"
+payroll_runs ||--o{ payroll_run_items : "contains"
+payroll_run_items ||--o{ payroll_run_item_components : "breaks into"
+payroll_components ||--o{ salary_component_values : "defines"
+payroll_components ||--o{ payroll_run_item_components : "snapshotted in"
+salary_profiles ||--o{ salary_component_values : "contains"
+payroll_runs ||--o{ payroll_approvals : "requires"
+payroll_runs ||--o{ payroll_audit_logs : "records"
+users ||--o{ payroll_approvals : "approves"
+users ||--o{ payroll_audit_logs : "actor"
+
+@enduml

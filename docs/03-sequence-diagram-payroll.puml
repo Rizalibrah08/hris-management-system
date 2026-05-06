@@ -1,0 +1,159 @@
+@startuml HRIS_Payroll_Sequence_Diagram
+
+actor HRD as hrd
+actor Finance as fin
+participant "API Server" as api
+participant "PayrollService" as ps
+participant "SalaryProfileService" as sps
+participant "ApprovalService" as as
+database "MySQL" as db
+
+== Generate Payroll Run ==
+
+hrd -> api : POST /payroll/runs/generate\n{period_month: "2026-04"}
+activate api
+
+api -> ps : generatePayrollRun("2026-04")
+activate ps
+
+ps -> sps : getAllActiveSalaryProfiles()
+activate sps
+sps -> db : SELECT * FROM employee_salary_profiles WHERE is_active=1
+activate db
+db --> sps : profiles[]
+deactivate db
+sps --> ps : profiles[]
+deactivate sps
+
+loop For each employee with salary profile
+  ps -> db : SELECT components FROM employee_salary_component_values
+  activate db
+  db --> ps : component values
+  deactivate db
+
+  ps -> ps : calculateGross(earnings)
+  ps -> ps : calculateDeductions(deductions, tax, bpjs)
+  ps -> ps : calculateNet(gross - deductions)
+end
+
+ps -> db : INSERT INTO payroll_runs (status='draft')
+activate db
+db --> ps : payroll_run_id
+deactivate db
+
+ps -> db : INSERT INTO payroll_run_items (batch)
+activate db
+db --> ps : ok
+deactivate db
+
+ps -> db : INSERT INTO payroll_run_item_components (batch)
+activate db
+db --> ps : ok
+deactivate db
+
+ps -> db : INSERT INTO payroll_audit_logs
+activate db
+db --> ps : ok
+deactivate db
+
+ps --> api : PayrollRun{status: 'draft'}
+deactivate ps
+
+api --> hrd : 201 PayrollRun created (draft)
+deactivate api
+
+== Review Payroll Run ==
+
+hrd -> api : POST /payroll/runs/:runId/review
+activate api
+
+api -> ps : reviewPayrollRun(runId)
+activate ps
+
+ps -> db : UPDATE payroll_runs SET status='reviewed' WHERE id=runId
+activate db
+db --> ps : ok
+deactivate db
+
+ps -> db : INSERT INTO payroll_audit_logs\n{action: 'review'}
+activate db
+db --> ps : ok
+deactivate db
+
+ps --> api : PayrollRun{status: 'reviewed'}
+deactivate ps
+
+api --> hrd : 200 PayrollRun reviewed
+deactivate api
+
+== Approve Payroll Run ==
+
+fin -> api : POST /payroll/runs/:runId/approve
+activate api
+
+api -> as : approvePayrollRun(runId, userId)
+activate as
+
+as -> db : INSERT INTO payroll_approvals\n{approval_level: 2, status: 'approved'}
+activate db
+db --> as : ok
+deactivate db
+
+as -> db : UPDATE payroll_runs SET status='approved'\nWHERE id=runId
+activate db
+db --> as : ok
+deactivate db
+
+as -> db : INSERT INTO payroll_audit_logs\n{action: 'approve'}
+activate db
+db --> as : ok
+deactivate db
+
+as --> api : PayrollRun{status: 'approved'}
+deactivate as
+
+api --> fin : 200 PayrollRun approved
+deactivate api
+
+== Finalize Payroll Run ==
+
+fin -> api : POST /payroll/runs/:runId/finalize
+activate api
+
+api -> ps : finalizePayrollRun(runId)
+activate ps
+
+ps -> db : SELECT * FROM payroll_run_items\nWHERE payroll_run_id=runId
+activate db
+db --> ps : items[]
+deactivate db
+
+ps -> ps : validateNoNegativeNet(items)
+
+alt Validation passes
+  ps -> db : UPDATE payroll_runs SET status='finalized',\nfinalized_at=NOW(), finalized_by=userId
+  activate db
+  db --> ps : ok
+  deactivate db
+
+  ps -> db : INSERT INTO payslips (batch)
+  activate db
+  db --> ps : ok
+  deactivate db
+
+  ps -> db : INSERT INTO payroll_audit_logs\n{action: 'finalize'}
+  activate db
+  db --> ps : ok
+  deactivate db
+
+  ps --> api : PayrollRun{status: 'finalized'}
+  api --> fin : 200 PayrollRun finalized
+else Validation fails - negative net
+  ps --> api : Error: Negative net pay detected
+  api --> fin : 400 Validation failed
+end
+
+deactivate ps
+deactivate api
+
+@enduml

@@ -1,0 +1,46 @@
+@startuml HRIS_Deployment_Diagram
+
+skinparam nodeStyle uml2
+
+node "VPS / Cloud Server" as vps {
+  node "Docker Host" as docker {
+    node "nginx Container" as nginx {
+      [Nginx\nReverse Proxy\n:80/:443]
+    }
+
+    node "hris-web Container" as webapp {
+      [React SPA\n(Vite Build)]
+      [Node.js + Express\nAPI Server :5000]
+    }
+
+    node "mysql Container" as mysqldb {
+      database "MySQL 8\n:3306" as db {
+        [hris_db\n(20 tables)]
+      }
+    }
+  }
+
+  artifact "GitHub Actions\nCI/CD Pipeline" as ci {
+    [develop branch → test]
+    [main branch → auto deploy]
+  }
+}
+
+node "Employee Devices" as mobile {
+  [Workmate\nMobile App\n(React Native)]
+}
+
+node "Admin Devices" as admin {
+  [Web Browser\n(Chrome/Firefox)]
+}
+
+cloud "Internet" as inet
+
+admin --> inet : HTTPS
+mobile --> inet : HTTPS
+inet --> nginx : :80/:443
+nginx --> webapp : proxy_pass\n/api → :5000\n/ → React SPA
+webapp --> db : TCP :3306
+ci --> vps : SSH deploy\n(docker-compose pull)
+
+@enduml

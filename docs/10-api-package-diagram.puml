@@ -1,0 +1,88 @@
+@startuml HRIS_API_Package_Diagram
+
+skinparam packageStyle rectangle
+
+package "Public API" as pub {
+  POST /auth/login
+  POST /auth/register
+}
+
+package "Authenticated API" as auth_api {
+  package "Auth" as auth_pkg {
+    GET /auth/me
+    POST /auth/logout
+  }
+
+  package "Employee Management" as emp_pkg {
+    GET /employees
+    POST /employees **<<HRD, SA>>**
+    PUT /employees/:id **<<HRD, SA>>**
+    DELETE /employees/:id **<<HRD, SA>>**
+    GET /employees/me
+    PUT /employees/me
+  }
+
+  package "Attendance" as att_pkg {
+    POST /attendance/clockin
+    POST /attendance/clockout
+    GET /attendance/my
+    GET /attendance/my-status
+    GET /attendance/today **<<HRD, FIN, SA>>**
+  }
+
+  package "Leave Management" as leave_pkg {
+    POST /leave
+    PUT /leave/approve **<<MGR, HRD, SA>>**
+    GET /leave **<<HRD, MGR, FIN, SA>>**
+    GET /leave/my
+  }
+
+  package "Salary Components" as sal_comp_pkg {
+    GET /salary-components
+    POST /salary-components **<<HRD, SA>>**
+    PUT /salary-components/:id **<<HRD, SA>>**
+    DELETE /salary-components/:id **<<HRD, SA>>**
+  }
+
+  package "Salary Profiles" as sal_prof_pkg {
+    GET /salary-profiles **<<HRD, FIN, SA>>**
+    GET /salary-profiles/:employeeId **<<HRD, FIN, SA>>**
+    POST /salary-profiles **<<HRD, SA>>**
+    PUT /salary-profiles/:employeeId **<<HRD, SA>>**
+    DELETE /salary-profiles/:employeeId **<<HRD, SA>>**
+  }
+
+  package "Payroll Runs" as pay_pkg {
+    POST /payroll/runs/generate **<<HRD, FIN, SA>>**
+    GET /payroll/runs **<<HRD, FIN, SA>>**
+    GET /payroll/runs/:runId **<<HRD, FIN, SA>>**
+    GET /payroll/runs/:runId/validate **<<HRD, FIN, SA>>**
+    POST /payroll/runs/:runId/review **<<HRD, SA>>**
+    POST /payroll/runs/:runId/approve **<<FIN, SA>>**
+    POST /payroll/runs/:runId/reject **<<FIN, HRD, SA>>**
+    POST /payroll/runs/:runId/finalize **<<FIN, SA>>**
+    GET /payroll/my
+    GET /payroll/my-runs
+    GET /payroll/audit-logs **<<HRD, FIN, SA>>**
+    GET /payroll/approvals/:runId **<<HRD, FIN, SA>>**
+  }
+
+  package "Reports" as rpt_pkg {
+    GET /reports/dashboard
+    GET /reports/salary-distribution
+    GET /reports/leave-stats
+    GET /payslip/:id
+  }
+
+  package "Mobile API" as mob_pkg {
+    GET /dashboard/mobile
+    POST /expenses
+    GET /expenses/my
+    GET /assets/my
+    POST /tasks
+    GET /tasks/my
+    PUT /tasks/:id
+  }
+}
+
+@enduml

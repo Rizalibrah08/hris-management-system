@@ -1,0 +1,123 @@
+@startuml HRIS_Component_Diagram
+
+skinparam componentStyle uml2
+skinparam nodesep 60
+skinparam ranksep 40
+
+package "Client Layer" {
+  component "Web Dashboard\n(React + Vite)" as WEB {
+    [AuthContext]
+    [Sidebar + TopBar]
+    [Dashboard Page]
+    [Karyawan Page]
+    [Absensi Page]
+    [Cuti Page]
+    [Payroll Page]
+    [Laporan Page]
+    [RoleManagement Page]
+  }
+
+  component "Mobile App\n(React Native + Expo)" as MOB {
+    [AuthContext]
+    [Dashboard Screen]
+    [Attendance Screen]
+    [Leave Screen]
+    [Payroll Screen]
+    [Profile Screen]
+    [Camera Screen]
+    [Expense Screen]
+    [Task Screen]
+  }
+}
+
+package "API Gateway / Server" {
+  component "Express.js Server" as API {
+    [Auth Middleware\n(JWT + Role)]
+    [Error Handler]
+    [Validator]
+  }
+
+  package "Route Modules" as ROUTES {
+    [/auth]
+    [/employees]
+    [/attendance]
+    [/leave]
+    [/salary-components]
+    [/salary-profiles]
+    [/payroll/runs]
+    [/reports]
+    [/expenses]
+    [/tasks]
+    [/assets]
+    [/dashboard]
+  }
+}
+
+package "Service Layer" {
+  component "AuthService" as AUTH_SVC
+  component "EmployeeService" as EMP_SVC
+  component "AttendanceService" as ATT_SVC
+  component "LeaveService" as LEAVE_SVC
+  component "PayrollService" as PAY_SVC
+  component "ReportService" as RPT_SVC
+  component "ExpenseService" as EXP_SVC
+  component "TaskService" as TASK_SVC
+}
+
+package "Data Layer" {
+  database "MySQL 8" as DB {
+    [roles]
+    [departments]
+    [positions]
+    [employees]
+    [users]
+    [attendance]
+    [leave_request]
+    [payroll_components]
+    [employee_salary_profiles]
+    [employee_salary_component_values]
+    [payroll_variable_inputs]
+    [payroll_runs]
+    [payroll_run_items]
+    [payroll_run_item_components]
+    [payroll_approvals]
+    [payroll_audit_logs]
+    [expenses]
+    [office_assets]
+    [tasks]
+  }
+}
+
+package "Infrastructure" {
+  component "Docker" as DOCKER
+  component "Nginx\n(Reverse Proxy)" as NGINX
+  component "GitHub Actions\n(CI/CD)" as CI
+}
+
+WEB --> API : HTTPS\n(Axios)
+MOB --> API : HTTPS\n(Fetch/API Service)
+API --> AUTH_SVC : routes →
+API --> EMP_SVC : routes →
+API --> ATT_SVC : routes →
+API --> LEAVE_SVC : routes →
+API --> PAY_SVC : routes →
+API --> RPT_SVC : routes →
+API --> EXP_SVC : routes →
+API --> TASK_SVC : routes →
+
+AUTH_SVC --> DB : SQL queries
+EMP_SVC --> DB : SQL queries
+ATT_SVC --> DB : SQL queries
+LEAVE_SVC --> DB : SQL queries
+PAY_SVC --> DB : SQL queries
+RPT_SVC --> DB : SQL queries
+EXP_SVC --> DB : SQL queries
+TASK_SVC --> DB : SQL queries
+
+NGINX --> WEB : :80/443
+NGINX --> API : :5000
+DOCKER ..> DB : :3306
+DOCKER ..> API : :5000
+CI ..> DOCKER : deploy
+
+@enduml

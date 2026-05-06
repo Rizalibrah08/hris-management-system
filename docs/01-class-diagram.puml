@@ -1,0 +1,292 @@
+@startuml HRIS_Class_Diagram
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam linewidth 1.5
+
+class User {
+  + id : int
+  + nik : string
+  + email : string
+  + phone : string
+  + password : string
+  + role_id : int
+  + employee_id : int
+  + is_active : boolean
+  + created_at : datetime
+  --
+  + login(nik, password) : token
+  + logout() : void
+  + getProfile() : User
+  + register(data) : User
+}
+
+class Role {
+  + id : int
+  + name : string
+  --
+  + getPermissions() : Permission[]
+}
+
+class Employee {
+  + id : int
+  + name : string
+  + department_id : int
+  + position_id : int
+  + contract_end : date
+  + is_active : boolean
+  + email : string
+  + phone : string
+  --
+  + create(data) : Employee
+  + update(id, data) : Employee
+  + delete(id) : void
+  + getOwnData() : Employee
+  + updateOwnProfile(data) : Employee
+}
+
+class Department {
+  + id : int
+  + name : string
+  --
+  + getAll() : Department[]
+}
+
+class Position {
+  + id : int
+  + name : string
+  --
+  + getAll() : Position[]
+}
+
+class Attendance {
+  + id : int
+  + employee_id : int
+  + clock_in : datetime
+  + clock_out : datetime
+  + gps_location : string
+  + selfie : string
+  + status : string
+  --
+  + clockIn(data) : Attendance
+  + clockOut(id) : Attendance
+  + getMyHistory() : Attendance[]
+  + getTodayAll() : Attendance[]
+}
+
+class LeaveRequest {
+  + id : int
+  + employee_id : int
+  + leave_type : string
+  + start_date : date
+  + end_date : date
+  + reason : string
+  + status : string
+  + created_at : datetime
+  --
+  + submit(data) : LeaveRequest
+  + approve(id, status) : LeaveRequest
+  + getMyLeaves() : LeaveRequest[]
+  + getAllLeaves() : LeaveRequest[]
+}
+
+class PayrollComponent {
+  + id : int
+  + code : string
+  + name : string
+  + type : string
+  + taxable : boolean
+  + is_active : boolean
+  + created_at : datetime
+  + updated_at : datetime
+  --
+  + create(data) : PayrollComponent
+  + update(id, data) : PayrollComponent
+  + deactivate(id) : void
+  + getAll() : PayrollComponent[]
+}
+
+class EmployeeSalaryProfile {
+  + id : int
+  + employee_id : int
+  + effective_date : date
+  + base_salary : bigint
+  + payment_method : string
+  + bank_name : string
+  + bank_account_name : string
+  + bank_account_number : string
+  + tax_profile_id : int
+  + bpjs_profile_id : int
+  + is_active : boolean
+  + created_at : datetime
+  + updated_at : datetime
+  --
+  + create(data) : EmployeeSalaryProfile
+  + getByEmployee(id) : EmployeeSalaryProfile
+  + update(id, data) : EmployeeSalaryProfile
+  + deactivate(id) : void
+}
+
+class SalaryComponentValue {
+  + id : int
+  + salary_profile_id : int
+  + component_id : int
+  + amount : bigint
+  + is_percentage : boolean
+  + percentage_value : decimal
+  + created_at : datetime
+  + updated_at : datetime
+}
+
+class PayrollRun {
+  + id : int
+  + period_month : date
+  + status : string
+  + employee_count : int
+  + total_gross : bigint
+  + total_deduction : bigint
+  + total_net : bigint
+  + created_by : int
+  + approved_by : int
+  + finalized_by : int
+  + finalized_at : datetime
+  + created_at : datetime
+  + updated_at : datetime
+  --
+  + generate(period) : PayrollRun
+  + review(runId) : PayrollRun
+  + approve(runId) : PayrollRun
+  + reject(runId) : PayrollRun
+  + finalize(runId) : PayrollRun
+  + validate(runId) : ValidationResult
+}
+
+class PayrollRunItem {
+  + id : int
+  + payroll_run_id : int
+  + employee_id : int
+  + gross_amount : bigint
+  + deduction_amount : bigint
+  + net_amount : bigint
+  + tax_amount : bigint
+  + bpjs_amount : bigint
+  + notes : string
+  + created_at : datetime
+  + updated_at : datetime
+}
+
+class PayrollRunItemComponent {
+  + id : int
+  + payroll_run_item_id : int
+  + component_id : int
+  + component_name_snapshot : string
+  + component_type : string
+  + amount : bigint
+  + calculation_meta : json
+  + created_at : datetime
+}
+
+class PayrollVariableInput {
+  + id : int
+  + employee_id : int
+  + period_month : date
+  + input_type : string
+  + amount : bigint
+  + description : string
+  + source_ref : string
+  + approval_status : string
+  + created_by : int
+  + approved_by : int
+  + created_at : datetime
+  + updated_at : datetime
+}
+
+class PayrollApproval {
+  + id : int
+  + payroll_run_id : int
+  + approval_level : int
+  + approver_user_id : int
+  + status : string
+  + comment : string
+  + approved_at : datetime
+}
+
+class PayrollAuditLog {
+  + id : int
+  + payroll_run_id : int
+  + actor_user_id : int
+  + action : string
+  + before_data : json
+  + after_data : json
+  + ip_address : string
+  + created_at : datetime
+}
+
+class Expense {
+  + id : int
+  + employee_id : int
+  + title : string
+  + amount : bigint
+  + category : string
+  + description : string
+  + receipt_url : string
+  + status : string
+  + created_at : datetime
+  --
+  + create(data) : Expense
+  + getMyExpenses() : Expense[]
+}
+
+class OfficeAsset {
+  + id : int
+  + employee_id : int
+  + asset_name : string
+  + brand : string
+  + serial_number : string
+  + condition_status : string
+  + purchase_date : date
+  + received_date : date
+  + warranty_status : boolean
+  + image_url : string
+  + created_at : datetime
+  --
+  + getMyAssets() : OfficeAsset[]
+}
+
+class Task {
+  + id : int
+  + employee_id : int
+  + title : string
+  + description : string
+  + status : string
+  + priority : string
+  + due_date : date
+  + created_at : datetime
+  + updated_at : datetime
+  --
+  + create(data) : Task
+  + getMyTasks() : Task[]
+  + updateStatus(id, status) : Task
+}
+
+User "1" -- "1" Role : has >
+User "1" -- "1" Employee : belongs to >
+Employee "1" -- "1" Department : works in >
+Employee "1" -- "1" Position : holds >
+Employee "1" -- "*" Attendance : logs >
+Employee "1" -- "*" LeaveRequest : submits >
+Employee "1" -- "1" EmployeeSalaryProfile : has >
+Employee "1" -- "*" Expense : claims >
+Employee "1" -- "*" OfficeAsset : owns >
+Employee "1" -- "*" Task : assigned >
+Employee "1" -- "*" PayrollVariableInput : receives >
+EmployeeSalaryProfile "1" -- "*" SalaryComponentValue : contains >
+PayrollComponent "1" -- "*" SalaryComponentValue : defines >
+PayrollRun "1" -- "*" PayrollRunItem : contains >
+PayrollRunItem "1" -- "*" PayrollRunItemComponent : breaks down into >
+PayrollComponent "1" -- "*" PayrollRunItemComponent : snapshots >
+PayrollRun "1" -- "*" PayrollApproval : requires >
+PayrollRun "1" -- "*" PayrollAuditLog : records >
+User "1" -- "*" PayrollApproval : approves >
+
+@enduml

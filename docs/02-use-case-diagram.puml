@@ -1,0 +1,148 @@
+@startuml HRIS_UseCase_Diagram
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Super Admin" as SA
+actor "HRD" as HRD
+actor "Finance" as FIN
+actor "Manager" as MGR
+actor "Employee" as EMP
+
+rectangle "HRIS System" {
+  package "Authentication" {
+    usecase "Login" as UC_LOGIN
+    usecase "Logout" as UC_LOGOUT
+    usecase "Register" as UC_REGISTER
+    usecase "View Profile" as UC_PROFILE
+  }
+
+  package "Employee Management" {
+    usecase "View Employees" as UC_VIEW_EMP
+    usecase "Create Employee" as UC_CREATE_EMP
+    usecase "Update Employee" as UC_UPDATE_EMP
+    usecase "Delete Employee" as UC_DELETE_EMP
+    usecase "Update Own Profile" as UC_UPDATE_OWN
+  }
+
+  package "Attendance" {
+    usecase "Clock In" as UC_CLOCKIN
+    usecase "Clock Out" as UC_CLOCKOUT
+    usecase "View Own Attendance" as UC_ATT_MY
+    usecase "View Today's Attendance" as UC_ATT_TODAY
+  }
+
+  package "Leave Management" {
+    usecase "Submit Leave Request" as UC_LEAVE_SUBMIT
+    usecase "Approve/Reject Leave" as UC_LEAVE_APPROVE
+    usecase "View Own Leaves" as UC_LEAVE_MY
+    usecase "View All Leaves" as UC_LEAVE_ALL
+  }
+
+  package "Payroll" {
+    usecase "Manage Salary Components" as UC_SAL_COMP
+    usecase "Manage Salary Profiles" as UC_SAL_PROF
+    usecase "Generate Payroll Run" as UC_PAY_GEN
+    usecase "Review Payroll Run" as UC_PAY_REVIEW
+    usecase "Approve Payroll Run" as UC_PAY_APPROVE
+    usecase "Finalize Payroll Run" as UC_PAY_FINALIZE
+    usecase "View Own Payslip" as UC_PAY_MY
+    usecase "View Payroll Audit Logs" as UC_PAY_AUDIT
+  }
+
+  package "Reports" {
+    usecase "View Dashboard" as UC_DASHBOARD
+    usecase "Salary Distribution Report" as UC_RPT_SAL
+    usecase "Leave Statistics Report" as UC_RPT_LEAVE
+    usecase "Export PDF Report" as UC_RPT_PDF
+  }
+
+  package "Role Management" {
+    usecase "View Roles & Permissions" as UC_ROLES
+  }
+
+  package "Mobile-Specific" {
+    usecase "View Mobile Dashboard" as UC_MOB_DASH
+    usecase "Submit Expense Claim" as UC_EXPENSE
+    usecase "View Office Assets" as UC_ASSETS
+    usecase "Manage Tasks" as UC_TASKS
+  }
+}
+
+SA --> UC_LOGIN
+SA --> UC_CREATE_EMP
+SA --> UC_UPDATE_EMP
+SA --> UC_DELETE_EMP
+SA --> UC_VIEW_EMP
+SA --> UC_SAL_COMP
+SA --> UC_SAL_PROF
+SA --> UC_PAY_GEN
+SA --> UC_PAY_REVIEW
+SA --> UC_PAY_APPROVE
+SA --> UC_PAY_FINALIZE
+SA --> UC_LEAVE_APPROVE
+SA --> UC_LEAVE_ALL
+SA --> UC_PAY_AUDIT
+SA --> UC_ROLES
+SA --> UC_DASHBOARD
+SA --> UC_RPT_SAL
+SA --> UC_RPT_LEAVE
+
+HRD --> UC_LOGIN
+HRD --> UC_VIEW_EMP
+HRD --> UC_CREATE_EMP
+HRD --> UC_UPDATE_EMP
+HRD --> UC_DELETE_EMP
+HRD --> UC_SAL_COMP
+HRD --> UC_SAL_PROF
+HRD --> UC_PAY_GEN
+HRD --> UC_PAY_REVIEW
+HRD --> UC_LEAVE_APPROVE
+HRD --> UC_LEAVE_ALL
+HRD --> UC_PAY_AUDIT
+HRD --> UC_DASHBOARD
+HRD --> UC_RPT_SAL
+HRD --> UC_RPT_LEAVE
+HRD --> UC_ATT_TODAY
+
+FIN --> UC_LOGIN
+FIN --> UC_VIEW_EMP
+FIN --> UC_SAL_PROF
+FIN --> UC_PAY_GEN
+FIN --> UC_PAY_APPROVE
+FIN --> UC_PAY_FINALIZE
+FIN --> UC_LEAVE_ALL
+FIN --> UC_PAY_AUDIT
+FIN --> UC_DASHBOARD
+FIN --> UC_RPT_SAL
+FIN --> UC_RPT_LEAVE
+FIN --> UC_ATT_TODAY
+
+MGR --> UC_LOGIN
+MGR --> UC_VIEW_EMP
+MGR --> UC_LEAVE_APPROVE
+MGR --> UC_LEAVE_ALL
+MGR --> UC_DASHBOARD
+
+EMP --> UC_LOGIN
+EMP --> UC_PROFILE
+EMP --> UC_UPDATE_OWN
+EMP --> UC_CLOCKIN
+EMP --> UC_CLOCKOUT
+EMP --> UC_ATT_MY
+EMP --> UC_LEAVE_SUBMIT
+EMP --> UC_LEAVE_MY
+EMP --> UC_PAY_MY
+EMP --> UC_MOB_DASH
+EMP --> UC_EXPENSE
+EMP --> UC_ASSETS
+EMP --> UC_TASKS
+
+UC_LOGIN .> UC_LOGOUT : <<extend>>
+UC_PAY_GEN .> UC_PAY_REVIEW : <<include>>
+UC_PAY_REVIEW .> UC_PAY_APPROVE : <<include>>
+UC_PAY_APPROVE .> UC_PAY_FINALIZE : <<include>>
+UC_RPT_SAL .> UC_RPT_PDF : <<extend>>
+
+@enduml
