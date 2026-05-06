@@ -6,7 +6,7 @@ import morgan from 'morgan'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { query } from './db.js'
-import { authRequired, roleRequired } from './middleware.js'
+import { authRequired, roleRequired, webPortalGuard } from './middleware.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -52,7 +52,31 @@ app.post('/auth/login', async (req, res) => {
   const token = jwt.sign({ sub: user.id, nik: user.nik, role: user.role, employeeId: user.employee_id }, process.env.JWT_SECRET, {
     expiresIn: '1d',
   })
-  return res.json({ token, role: user.role, employeeId: user.employee_id })
+
+  const webRoles = ['Super Admin', 'HRD', 'Finance', 'Manager']
+  const allowedPortals = webRoles.includes(user.role) ? ['web', 'mobile'] : ['mobile']
+
+  let employeeName = null
+  let department = null
+  if (user.employee_id) {
+    const empRows = await query(
+      `SELECT e.name, d.name AS department FROM employees e LEFT JOIN departments d ON d.id = e.department_id WHERE e.id = ?`,
+      [user.employee_id],
+    )
+    if (empRows.length > 0) {
+      employeeName = empRows[0].name
+      department = empRows[0].department
+    }
+  }
+
+  return res.json({
+    token,
+    role: user.role,
+    employeeId: user.employee_id,
+    employeeName,
+    department,
+    allowedPortals,
+  })
 })
 
 app.post('/auth/register', async (req, res) => {
@@ -136,7 +160,7 @@ app.put('/employees/me', authRequired, async (req, res) => {
   res.json(updated[0])
 })
 
-app.get('/employees', authRequired, async (_, res) => {
+app.get('/employees', authRequired, roleRequired('HRD', 'Super Admin'), async (_, res) => {
   const rows = await query(
     `SELECT e.id, e.name, d.name department, p.name position, e.contract_end
      FROM employees e
@@ -179,6 +203,10 @@ app.post('/attendance/clockin', authRequired, async (req, res) => {
   const { employee_id, gps_location, selfie } = req.body
   const empId = employee_id || req.user.employeeId
   if (!empId) return res.status(400).json({ message: 'employee_id wajib diisi' })
+
+  if (req.user.role === 'Employee' && employee_id && employee_id !== req.user.employeeId) {
+    return res.status(403).json({ message: 'Tidak dapat clock in untuk karyawan lain' })
+  }
   const active = await query(
     "SELECT id FROM attendance WHERE employee_id = ? AND DATE(clock_in) = CURDATE() AND clock_out IS NULL",
     [empId],
@@ -272,7 +300,7 @@ app.put('/leave/approve', authRequired, roleRequired('Manager', 'HRD', 'Super Ad
   res.json(updated[0] || null)
 })
 
-app.get('/attendance/today', authRequired, async (_, res) => {
+app.get('/attendance/today', authRequired, roleRequired('HRD', 'Super Admin'), async (_, res) => {
   const rows = await query(
     `SELECT a.id, a.employee_id, e.name AS employee_name, d.name AS department,
             a.clock_in, a.clock_out, a.status
@@ -1152,7 +1180,7 @@ app.get('/payslip/:id', authRequired, async (req, res) => {
   res.json(rows[0] || null)
 })
 
-app.get('/reports/dashboard', authRequired, async (_, res) => {
+app.get('/reports/dashboard', authRequired, roleRequired('HRD', 'Finance', 'Super Admin'), async (_, res) => {
   const [employees, pendingLeave, attendanceToday, payrollTotal, payrollCostBreakdown, attendanceTrend] = await Promise.all([
     query('SELECT COUNT(*) AS total FROM employees'),
     query("SELECT COUNT(*) AS total FROM leave_request WHERE status='Pending'"),
@@ -1198,7 +1226,7 @@ app.get('/reports/dashboard', authRequired, async (_, res) => {
   })
 })
 
-app.get('/reports/salary-distribution', authRequired, async (_, res) => {
+app.get('/reports/salary-distribution', authRequired, roleRequired('HRD', 'Finance', 'Super Admin'), async (_, res) => {
   const [byDepartment, byPosition, byRole] = await Promise.all([
     query(
       `SELECT 
@@ -1248,7 +1276,7 @@ app.get('/reports/salary-distribution', authRequired, async (_, res) => {
   })
 })
 
-app.get('/reports/leave-stats', authRequired, async (_, res) => {
+app.get('/reports/leave-stats', authRequired, roleRequired('HRD', 'Finance', 'Manager', 'Super Admin'), async (_, res) => {
   const [byType, byStatus, monthlySummary] = await Promise.all([
     query(
       `SELECT 
@@ -1287,6 +1315,109 @@ app.get('/reports/leave-stats', authRequired, async (_, res) => {
     byStatus: byStatus || [],
     monthlySummary: monthlySummary || [],
   })
+})
+
+// =============================
+// Reference Data
+// =============================
+
+app.get('/departments', authRequired, async (_, res) => {
+  const rows = await query('SELECT id, name FROM departments ORDER BY name')
+  res.json(rows)
+})
+
+app.get('/positions', authRequired, async (_, res) => {
+  const rows = await query('SELECT id, name FROM positions ORDER BY name')
+  res.json(rows)
+})
+
+app.get('/roles', authRequired, async (_, res) => {
+  const rows = await query('SELECT id, name FROM roles ORDER BY id')
+  res.json(rows)
+})
+
+// =============================
+// User Management (Super Admin only)
+// =============================
+
+app.get('/users', authRequired, roleRequired('Super Admin'), async (_, res) => {
+  const rows = await query(
+    `SELECT u.id, u.nik, u.email, u.phone, u.role_id, r.name AS role,
+            u.employee_id, e.name AS employee_name, d.name AS department,
+            u.is_active, u.created_at
+     FROM users u
+     JOIN roles r ON r.id = u.role_id
+     LEFT JOIN employees e ON e.id = u.employee_id
+     LEFT JOIN departments d ON d.id = e.department_id
+     ORDER BY u.id`,
+  )
+  res.json(rows)
+})
+
+app.post('/users', authRequired, roleRequired('Super Admin'), async (req, res) => {
+  const { nik, password, role_id, employee_id, email, phone } = req.body
+  if (!nik || !password || !role_id) {
+    return res.status(400).json({ message: 'NIK, password, dan role_id wajib diisi' })
+  }
+  const hash = await bcrypt.hash(password, 10)
+  try {
+    const inserted = await query(
+      `INSERT INTO users(nik, password, role_id, employee_id, email, phone) VALUES (?,?,?,?,?,?)`,
+      [nik, hash, role_id, employee_id || null, email || null, phone || null],
+    )
+    const created = await query('SELECT id, nik, role_id, employee_id, email, phone, is_active FROM users WHERE id = ?', [inserted.insertId])
+    res.status(201).json(created[0])
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: `User dengan NIK "${nik}" sudah ada` })
+    }
+    throw err
+  }
+})
+
+app.put('/users/:id', authRequired, roleRequired('Super Admin'), async (req, res) => {
+  const { id } = req.params
+  const { role_id, employee_id, email, phone, is_active } = req.body
+  const existing = await query('SELECT * FROM users WHERE id = ?', [id])
+  if (existing.length === 0) return res.status(404).json({ message: 'User tidak ditemukan' })
+  await query(
+    `UPDATE users SET role_id=COALESCE(?,role_id), employee_id=COALESCE(?,employee_id),
+     email=COALESCE(?,email), phone=COALESCE(?,phone), is_active=COALESCE(?,is_active)
+     WHERE id=?`,
+    [role_id ?? null, employee_id ?? null, email ?? null, phone ?? null, is_active ?? null, id],
+  )
+  const updated = await query(
+    `SELECT u.id, u.nik, u.role_id, r.name AS role, u.employee_id, e.name AS employee_name, u.email, u.phone, u.is_active
+     FROM users u JOIN roles r ON r.id = u.role_id LEFT JOIN employees e ON e.id = u.employee_id WHERE u.id = ?`,
+    [id],
+  )
+  res.json(updated[0])
+})
+
+app.put('/users/:id/password', authRequired, async (req, res) => {
+  const { id } = req.params
+  const { oldPassword, newPassword } = req.body
+
+  if (req.user.sub !== Number(id) && req.user.role !== 'Super Admin') {
+    return res.status(403).json({ message: 'Anda hanya dapat mengubah password sendiri' })
+  }
+
+  if (!oldPassword || !newPassword) {
+    return res.status(400).json({ message: 'Password lama dan baru wajib diisi' })
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ message: 'Password minimal 6 karakter' })
+  }
+
+  const users = await query('SELECT * FROM users WHERE id = ?', [id])
+  if (users.length === 0) return res.status(404).json({ message: 'User tidak ditemukan' })
+
+  const valid = await bcrypt.compare(oldPassword, users[0].password)
+  if (!valid) return res.status(400).json({ message: 'Password lama salah' })
+
+  const hash = await bcrypt.hash(newPassword, 10)
+  await query('UPDATE users SET password = ? WHERE id = ?', [hash, id])
+  res.json({ message: 'Password berhasil diubah' })
 })
 
 app.use((err, _req, res, _next) => {

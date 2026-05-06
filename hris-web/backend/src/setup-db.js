@@ -62,13 +62,13 @@ async function run() {
   }
 
   // Seed departments
-  const departments = ['Engineering', 'HRD', 'Finance', 'Marketing', 'Operations', 'Product', 'Legal']
+  const departments = ['Engineering', 'HRD', 'Finance', 'Marketing', 'Operations', 'Product', 'Legal', 'IT Support']
   for (const name of departments) {
     await conn.execute('INSERT INTO departments(name) VALUES (?)', [name])
   }
 
   // Seed positions
-  const positions = ['Software Engineer', 'Senior Software Engineer', 'Engineering Manager', 'HR Specialist', 'HR Manager', 'Payroll Analyst', 'Finance Manager', 'Marketing Lead', 'Digital Marketing Specialist', 'Operations Manager', 'Data Analyst', 'Product Manager', 'Legal Counsel', 'UI/UX Designer', 'DevOps Engineer']
+  const positions = ['Software Engineer', 'Senior Software Engineer', 'Engineering Manager', 'HR Specialist', 'HR Manager', 'Payroll Analyst', 'Finance Manager', 'Marketing Lead', 'Digital Marketing Specialist', 'Operations Manager', 'Data Analyst', 'Product Manager', 'Legal Counsel', 'UI/UX Designer', 'DevOps Engineer', 'HR Admin', 'Recruitment Specialist', 'Accountant', 'Tax Specialist', 'Content Writer', 'SEO Specialist', 'Admin Staff', 'IT Support Specialist', 'Junior Software Engineer', 'Graphic Designer']
   for (const name of positions) {
     await conn.execute('INSERT INTO positions(name) VALUES (?)', [name])
   }
@@ -94,6 +94,20 @@ async function run() {
     ['Ratna Dewi',        await getDeptId('Legal'),         await getPosId('Legal Counsel'),                 '2027-06-30'],
     ['Dimas Prasetyo',   await getDeptId('Engineering'), await getPosId('Senior Software Engineer'),     '2028-05-31'],
     ['Lina Marlina',      await getDeptId('Finance'),      await getPosId('Payroll Analyst'),                '2027-12-31'],
+    ['Rudi Hermawan',     await getDeptId('Engineering'), await getPosId('Junior Software Engineer'),        '2027-11-30'],
+    ['Sinta Rahayu',      await getDeptId('HRD'),         await getPosId('HR Admin'),                        '2028-03-31'],
+    ['Bayu Setiawan',     await getDeptId('IT Support'),  await getPosId('IT Support Specialist'),           '2028-02-28'],
+    ['Tina Anggraini',    await getDeptId('Marketing'),   await getPosId('Content Writer'),                   '2027-09-30'],
+    ['Doni Kusuma',       await getDeptId('Engineering'), await getPosId('DevOps Engineer'),                  '2028-06-30'],
+    ['Rina Oktaviani',    await getDeptId('Finance'),     await getPosId('Accountant'),                       '2027-12-31'],
+    ['Hendra Gunawan',    await getDeptId('Operations'),  await getPosId('Admin Staff'),                      '2027-10-31'],
+    ['Yuni Puspita',      await getDeptId('HRD'),         await getPosId('Recruitment Specialist'),           '2028-01-31'],
+    ['Galih Prasetya',    await getDeptId('Product'),     await getPosId('Data Analyst'),                     '2027-08-31'],
+    ['Anisa Putri',       await getDeptId('Marketing'),   await getPosId('SEO Specialist'),                    '2027-11-15'],
+    ['Eko Saputra',       await getDeptId('Finance'),     await getPosId('Tax Specialist'),                   '2028-04-30'],
+    ['Lia Agustina',      await getDeptId('Legal'),       await getPosId('Legal Counsel'),                     '2027-07-31'],
+    ['Rama Aditya',       await getDeptId('Engineering'), await getPosId('Software Engineer'),                 '2027-12-31'],
+    ['Winda Permata',     await getDeptId('Marketing'),   await getPosId('Graphic Designer'),                  '2028-02-28'],
   ]
   for (const [name, deptId, posId, contractEnd] of employees) {
     await conn.execute('INSERT INTO employees(name, department_id, position_id, contract_end) VALUES (?,?,?,?)', [name, deptId, posId, contractEnd])
@@ -125,9 +139,20 @@ async function run() {
   const userSeeds = [
     ['ADM001', 'Super Admin', null],
     ['HRD001', 'HRD', await getEmpId('Nadia Putri')],
+    ['HRD002', 'HRD', await getEmpId('Dini Prameswari')],
     ['FIN001', 'Finance', await getEmpId('Rizky Maulana')],
+    ['FIN002', 'Finance', await getEmpId('Maya Sari')],
     ['MGR001', 'Manager', await getEmpId('Budi Santoso')],
     ['EMP001', 'Employee', await getEmpId('Aditia Pratama')],
+    ['EMP002', 'Employee', await getEmpId('Intan Lestari')],
+    ['EMP003', 'Employee', await getEmpId('Salsa Wijaya')],
+    ['EMP004', 'Employee', await getEmpId('Fajar Hidayat')],
+    ['EMP005', 'Employee', await getEmpId('Putri Ayu')],
+    ['EMP006', 'Employee', await getEmpId('Rudi Hermawan')],
+    ['EMP007', 'Employee', await getEmpId('Sinta Rahayu')],
+    ['EMP008', 'Employee', await getEmpId('Bayu Setiawan')],
+    ['EMP009', 'Employee', await getEmpId('Tina Anggraini')],
+    ['EMP010', 'Employee', await getEmpId('Doni Kusuma')],
   ]
   for (const [nik, roleName, empId] of userSeeds) {
     await conn.execute('INSERT INTO users(nik, password, role_id, employee_id) VALUES (?,?,?,?)', [nik, hash, await getRoleId(roleName), empId])
@@ -150,6 +175,20 @@ async function run() {
     ['Ratna Dewi',      14000000,   'bank_transfer', 'BCA',     'Ratna Dewi',        '2233445567'],
     ['Dimas Prasetyo',  9800000,    'bank_transfer', 'Mandiri', 'Dimas Prasetyo',    '3344556678'],
     ['Lina Marlina',     8700000,   'bank_transfer', 'BNI',     'Lina Marlina',      '4455667789'],
+    ['Rudi Hermawan',   7200000,   'bank_transfer', 'Mandiri', 'Rudi Hermawan',    '5566778800'],
+    ['Sinta Rahayu',    7800000,   'bank_transfer', 'BCA',     'Sinta Rahayu',     '6677889911'],
+    ['Bayu Setiawan',   8500000,   'bank_transfer', 'BNI',     'Bayu Setiawan',    '7788990022'],
+    ['Tina Anggraini',  6500000,   'bank_transfer', 'BRI',     'Tina Anggraini',   '8899001133'],
+    ['Doni Kusuma',    11000000,   'bank_transfer', 'BCA',     'Doni Kusuma',      '9900112244'],
+    ['Rina Oktaviani',  9000000,   'bank_transfer', 'Mandiri', 'Rina Oktaviani',   '0011223355'],
+    ['Hendra Gunawan',  6800000,   'cash',          null,      null,               null],
+    ['Yuni Puspita',    8800000,   'bank_transfer', 'BCA',     'Yuni Puspita',     '1122334466'],
+    ['Galih Prasetya',  9500000,   'bank_transfer', 'BNI',     'Galih Prasetya',   '2233445577'],
+    ['Anisa Putri',     7000000,   'bank_transfer', 'BRI',     'Anisa Putri',      '3344556688'],
+    ['Eko Saputra',     9200000,   'bank_transfer', 'Mandiri', 'Eko Saputra',      '4455667799'],
+    ['Lia Agustina',   10000000,   'bank_transfer', 'BCA',     'Lia Agustina',     '5566778800'],
+    ['Rama Aditya',     7600000,   'bank_transfer', 'BNI',     'Rama Aditya',      '6677889911'],
+    ['Winda Permata',   7700000,   'bank_transfer', 'BRI',     'Winda Permata',    '7788990022'],
   ]
   const profileIds = {}
   for (const [name, salary, method, bank, acctName, acctNo] of salaryProfiles) {
@@ -163,13 +202,13 @@ async function run() {
 
   // Seed salary component values
   const compValues = {
-    'TUNJ':        [2000000,1500000,1800000,1200000,1900000,1000000,2200000,900000,1700000,1600000,800000,1100000,2500000,1400000,1300000],
-    'TJ_TRANSPORT': [500000,400000,450000,350000,500000,350000,600000,350000,500000,450000,300000,350000,600000,400000,350000],
-    'TJ_MAKAN':     [750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000],
-    'POT':          [200000,100000,150000,50000,0,250000,0,300000,0,100000,150000,200000,0,100000,50000],
-    'BPJS_TK':      [240000,190000,200000,170000,220000,160000,260000,150000,230000,210000,140000,164000,280000,196000,174000],
-    'BPJS_KES':     [150000,120000,130000,110000,140000,100000,160000,95000,145000,135000,90000,102500,175000,122500,108750],
-    'PPH21':        [950000,580000,710000,420000,820000,350000,1120000,280000,880000,720000,200000,405000,1300000,630000,460000],
+    'TUNJ':        [2000000,1500000,1800000,1200000,1900000,1000000,2200000,900000,1700000,1600000,800000,1100000,2500000,1400000,1300000,800000,1000000,1100000,700000,1600000,1200000,900000,800000,1300000,600000,1100000,1500000,1300000,900000,1000000],
+    'TJ_TRANSPORT': [500000,400000,450000,350000,500000,350000,600000,350000,500000,450000,300000,350000,600000,400000,350000,300000,350000,400000,300000,500000,400000,300000,350000,450000,250000,400000,500000,350000,350000,300000],
+    'TJ_MAKAN':    [750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000,750000],
+    'POT':         [200000,100000,150000,50000,0,250000,0,300000,0,100000,150000,200000,0,100000,50000,150000,100000,0,200000,0,50000,100000,150000,0,200000,50000,100000,0,150000,100000],
+    'BPJS_TK':     [240000,190000,200000,170000,220000,160000,260000,150000,230000,210000,140000,164000,280000,196000,174000,144000,156000,170000,130000,220000,180000,136000,160000,190000,140000,184000,200000,152000,176000,154000],
+    'BPJS_KES':    [150000,120000,130000,110000,140000,100000,160000,95000,145000,135000,90000,102500,175000,122500,108750,90000,97500,106000,85000,137000,112000,85000,100000,118000,87500,115000,125000,95000,110000,96000],
+    'PPH21':       [950000,580000,710000,420000,820000,350000,1120000,280000,880000,720000,200000,405000,1300000,630000,460000,180000,250000,520000,200000,900000,480000,160000,200000,650000,140000,500000,780000,600000,300000,250000],
   }
   const empNames = salaryProfiles.map(s => s[0])
   for (const [code, amounts] of Object.entries(compValues)) {
@@ -185,30 +224,55 @@ async function run() {
     }
   }
 
-  // Seed attendance
-  const attendanceData = [
-    ['Aditia Pratama',  '2026-04-26 07:55:00', '2026-04-26 17:05:00', 'Aktif'],
-    ['Nadia Putri',     '2026-04-26 08:10:00', '2026-04-26 17:20:00', 'Aktif'],
-    ['Rizky Maulana',   '2026-04-26 08:22:00', '2026-04-26 17:15:00', 'Aktif'],
-    ['Salsa Wijaya',    '2026-04-26 09:01:00', '2026-04-26 17:30:00', 'Terlambat'],
-    ['Budi Santoso',    '2026-04-26 07:50:00', '2026-04-26 17:00:00', 'Aktif'],
-    ['Intan Lestari',    '2026-04-26 08:05:00', null,                    'Aktif'],
-    ['Dini Prameswari','2026-04-26 08:00:00', '2026-04-26 17:10:00', 'Aktif'],
-    ['Fajar Hidayat',  '2026-04-26 08:35:00', '2026-04-26 17:45:00', 'Terlambat'],
-    ['Maya Sari',       '2026-04-26 07:45:00', '2026-04-26 17:00:00', 'Aktif'],
-    ['Arif Rahman',     '2026-04-26 08:00:00', '2026-04-26 17:05:00', 'Aktif'],
-    ['Putri Ayu',       '2026-04-26 09:15:00', '2026-04-26 17:45:00', 'Terlambat'],
-    ['Hendra Wijaya',  '2026-04-26 08:15:00', '2026-04-26 17:10:00', 'Aktif'],
-    ['Ratna Dewi',      '2026-04-26 07:30:00', '2026-04-26 17:00:00', 'Aktif'],
-    ['Dimas Prasetyo', '2026-04-26 08:20:00', '2026-04-26 17:25:00', 'Aktif'],
-    ['Lina Marlina',    '2026-04-26 08:00:00', null,                    'Aktif'],
-  ]
-  for (const [name, clockIn, clockOut, status] of attendanceData) {
-    const empId = await getEmpId(name)
-    await conn.execute('INSERT INTO attendance(employee_id, clock_in, clock_out, status) VALUES (?,?,?,?)', [empId, clockIn, clockOut, status])
+  // Seed attendance — 30 hari (April 2026) untuk semua 30 karyawan
+  const allEmpNames = salaryProfiles.map(s => s[0])
+  // Senin-Jumat saja (skip weekend) untuk April 2026
+  const workDays = []
+  for (let d = 1; d <= 30; d++) {
+    const date = new Date(2026, 3, d)
+    const dayOfWeek = date.getDay()
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) workDays.push(d)
   }
 
-  // Seed leave requests
+  for (const day of workDays) {
+    for (const name of allEmpNames) {
+      const empId = await getEmpId(name)
+      if (!empId) continue
+      const r = Math.random()
+      let status, clockIn, clockOut
+      if (r < 0.70) {
+        status = 'Aktif'
+        const h = 8 + Math.floor(Math.random() * 1)
+        const m = String(Math.floor(Math.random() * 30)).padStart(2, '0')
+        clockIn = `2026-04-${String(day).padStart(2, '0')} 0${h}:${m}:00`
+        const oh = 17 + Math.floor(Math.random() * 1)
+        const om = String(Math.floor(Math.random() * 30)).padStart(2, '0')
+        clockOut = `2026-04-${String(day).padStart(2, '0')} ${oh}:${om}:00`
+      } else if (r < 0.85) {
+        status = 'Terlambat'
+        const h = 9 + Math.floor(Math.random() * 1)
+        const m = String(Math.floor(Math.random() * 30)).padStart(2, '0')
+        clockIn = `2026-04-${String(day).padStart(2, '0')} 0${h}:${m}:00`
+        const oh = 17 + Math.floor(Math.random() * 1)
+        const om = String(Math.floor(Math.random() * 30)).padStart(2, '0')
+        clockOut = `2026-04-${String(day).padStart(2, '0')} ${oh}:${om}:00`
+      } else if (r < 0.93) {
+        status = 'Izin'
+        clockIn = null
+        clockOut = null
+      } else {
+        status = 'Alpha'
+        clockIn = null
+        clockOut = null
+      }
+      await conn.execute(
+        'INSERT INTO attendance(employee_id, clock_in, clock_out, status) VALUES (?,?,?,?)',
+        [empId, clockIn, clockOut, status]
+      )
+    }
+  }
+
+  // Seed leave requests (20 records)
   const leaveData = [
     ['Aditia Pratama',  'Cuti Tahunan', '2026-05-10', '2026-05-12', 'Liburan keluarga ke Bali', 'Pending'],
     ['Salsa Wijaya',    'Izin Sakit',    '2026-04-28', '2026-04-28', 'Demam tinggi', 'Pending'],
@@ -220,13 +284,23 @@ async function run() {
     ['Maya Sari',       'Izin',          '2026-05-02', '2026-05-02', 'Pindah rumah', 'Approved'],
     ['Hendra Wijaya',  'Izin Sakit',    '2026-04-27', '2026-04-28', 'Flu berat', 'Pending'],
     ['Lina Marlina',    'Cuti Tahunan',  '2026-05-20', '2026-05-22', 'Liburan akhir bulan', 'Pending'],
+    ['Nadia Putri',     'Cuti Tahunan',  '2026-06-10', '2026-06-12', 'Family gathering', 'Approved'],
+    ['Arif Rahman',     'Izin',          '2026-05-08', '2026-05-08', 'Seminar industry', 'Approved'],
+    ['Ratna Dewi',      'Cuti Melahirkan','2026-06-15','2026-08-15', 'Maternity leave', 'Approved'],
+    ['Rudi Hermawan',   'Izin Sakit',    '2026-05-03', '2026-05-04', 'Covid symptoms', 'Pending'],
+    ['Sinta Rahayu',    'Cuti Tahunan',  '2026-05-25', '2026-05-27', 'Family wedding', 'Pending'],
+    ['Bayu Setiawan',   'Izin',          '2026-05-12', '2026-05-12', 'Perpanjangan SIM', 'Approved'],
+    ['Tina Anggraini',  'Cuti Tahunan',  '2026-06-20', '2026-06-22', 'Personal trip', 'Pending'],
+    ['Doni Kusuma',     'Izin Sakit',    '2026-05-01', '2026-05-01', 'Migraine', 'Rejected'],
+    ['Rina Oktaviani',  'Cuti Tahunan',  '2026-07-01', '2026-07-03', 'Anniversary vacation', 'Pending'],
+    ['Galih Prasetya',  'Izin',          '2026-05-18', '2026-05-18', 'Parent teacher meeting', 'Approved'],
   ]
   for (const [name, type, start, end, reason, status] of leaveData) {
     const empId = await getEmpId(name)
     await conn.execute('INSERT INTO leave_request(employee_id, leave_type, start_date, end_date, reason, status) VALUES (?,?,?,?,?,?)', [empId, type, start, end, reason, status])
   }
 
-  // Seed payroll runs
+  // Seed payroll runs (4 periods: Jan-Apr 2026)
   const hrdRoleId = await getRoleId('HRD')
   const finRoleId = await getRoleId('Finance')
   const hrdUserRes = hrdRoleId ? await conn.execute("SELECT id FROM users WHERE role_id=?", [hrdRoleId]) : [[], []]
@@ -234,94 +308,123 @@ async function run() {
   const hrdUserId = hrdUserRes[0][0]?.id || 1
   const finUserId = finUserRes[0][0]?.id || 1
 
-  // Run 1: March finalized
-  const [run1Result] = await conn.execute('INSERT INTO payroll_runs(period_month, status, employee_count, total_gross, total_deduction, total_net, created_by, approved_by, finalized_by, finalized_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
-    ['2026-03-01', 'finalized', 15, 167500000, 25890000, 141610000, hrdUserId, finUserId, finUserId, '2026-04-01 10:30:00'])
-  const run1Id = run1Result.insertId
-
-  // Run 2: April approved
-  const [run2Result] = await conn.execute('INSERT INTO payroll_runs(period_month, status, employee_count, total_gross, total_deduction, total_net, created_by, approved_by) VALUES (?,?,?,?,?,?,?,?)',
-    ['2026-04-01', 'approved', 15, 169250000, 26145000, 143105000, hrdUserId, finUserId])
-  const run2Id = run2Result.insertId
-
-  // Run 1 items (March)
-  const run1Items = [
-    ['Aditia Pratama',15250000,1540000,13710000,950000,390000], ['Nadia Putri',11750000,990000,10760000,580000,310000],
-    ['Rizky Maulana',13000000,1080000,11920000,710000,330000], ['Salsa Wijaya',10800000,630000,10170000,420000,280000],
-    ['Budi Santoso',14150000,360000,13790000,820000,360000], ['Intan Lestari',10100000,710000,9390000,350000,260000],
-    ['Dini Prameswari',16850000,1380000,15470000,1120000,420000], ['Fajar Hidayat',9500000,725000,8775000,280000,245000],
-    ['Maya Sari',14650000,375000,14275000,880000,375000], ['Arif Rahman',12800000,1035000,11765000,720000,345000],
-    ['Putri Ayu',8850000,440000,8410000,200000,230000], ['Hendra Wijaya',10050000,866500,9183500,405000,266500],
-    ['Ratna Dewi',17850000,1475000,16375000,1300000,455000], ['Dimas Prasetyo',12200000,818500,11381500,630000,318500],
-    ['Lina Marlina',10750000,628750,10121250,460000,282750],
+  const payrollPeriods = [
+    { month: '2026-01-01', status: 'finalized', finalized: '2026-02-01 10:00:00' },
+    { month: '2026-02-01', status: 'finalized', finalized: '2026-02-28 10:00:00' },
+    { month: '2026-03-01', status: 'finalized', finalized: '2026-04-01 10:30:00' },
+    { month: '2026-04-01', status: 'approved',  finalized: null },
   ]
-  const run1ItemIds = []
-  for (const [name, gross, ded, net, tax, bpjs] of run1Items) {
-    const empId = await getEmpId(name)
-    const [res] = await conn.execute('INSERT INTO payroll_run_items(payroll_run_id, employee_id, gross_amount, deduction_amount, net_amount, tax_amount, bpjs_amount) VALUES (?,?,?,?,?,?,?)',
-      [run1Id, empId, gross, ded, net, tax, bpjs])
-    run1ItemIds.push(res.insertId)
+
+  const allRunIds = []
+  for (const period of payrollPeriods) {
+    const [runResult] = await conn.execute(
+      'INSERT INTO payroll_runs(period_month, status, employee_count, total_gross, total_deduction, total_net, created_by, approved_by, finalized_by, finalized_at) VALUES (?,?,0,0,0,0,?,?,?,?)',
+      [period.month, period.status, hrdUserId, finUserId, finUserId, period.finalized]
+    )
+    allRunIds.push(runResult.insertId)
+  }
+  const [runJanId, runFebId, runMarId, runAprId] = allRunIds
+
+  // Generate payroll items from salary profiles
+  async function seedPayrollItems(runId) {
+    let totalGross = 0, totalDed = 0, totalNet = 0
+    const entries = []
+    for (const [name, salary] of salaryProfiles.map(s => [s[0], s[1]])) {
+      const empId = await getEmpId(name)
+      const i = empNames.indexOf(name)
+      const tunj = compValues['TUNJ'][i] || 0
+      const transport = compValues['TJ_TRANSPORT'][i] || 0
+      const makan = compValues['TJ_MAKAN'][i] || 0
+      const pot = compValues['POT'][i] || 0
+      const bpjsTk = compValues['BPJS_TK'][i] || 0
+      const bpjsKes = compValues['BPJS_KES'][i] || 0
+      const pph21 = compValues['PPH21'][i] || 0
+      const gross = salary + tunj + transport + makan
+      const ded = pot + bpjsTk + bpjsKes + pph21
+      const net = gross - ded
+      totalGross += gross; totalDed += ded; totalNet += net
+      const [itemRes] = await conn.execute(
+        'INSERT INTO payroll_run_items(payroll_run_id, employee_id, gross_amount, deduction_amount, net_amount, tax_amount, bpjs_amount) VALUES (?,?,?,?,?,?,?)',
+        [runId, empId, gross, ded, net, pph21, bpjsTk + bpjsKes]
+      )
+      entries.push({ itemId: itemRes.insertId, name, salary, tunj, transport, makan, pot, bpjsTk, bpjsKes, pph21, empId })
+    }
+    await conn.execute('UPDATE payroll_runs SET employee_count=?, total_gross=?, total_deduction=?, total_net=? WHERE id=?',
+      [entries.length, totalGross, totalDed, totalNet, runId])
+    return entries
   }
 
-  // Run 2 items (April)
-  const run2ItemIds = []
-  for (const [name, gross, ded, net, tax, bpjs] of run1Items) {
-    const empId = await getEmpId(name)
-    const [res] = await conn.execute('INSERT INTO payroll_run_items(payroll_run_id, employee_id, gross_amount, deduction_amount, net_amount, tax_amount, bpjs_amount) VALUES (?,?,?,?,?,?,?)',
-      [run2Id, empId, gross, ded, net, tax, bpjs])
-    run2ItemIds.push(res.insertId)
-  }
+  const entriesMar = await seedPayrollItems(runMarId)
+  const entriesApr = await seedPayrollItems(runAprId)
+  await seedPayrollItems(runJanId)
+  await seedPayrollItems(runFebId)
 
-  // Seed component snapshots for first 2 items of run 1
+  // Seed component snapshots for first 3 employees of March run
   const gapokId = await getCompId('GAPOK')
   const tunjId = await getCompId('TUNJ')
   const transportId = await getCompId('TJ_TRANSPORT')
   const makanId = await getCompId('TJ_MAKAN')
   const potId = await getCompId('POT')
-  for (let idx = 0; idx < 2 && idx < run1ItemIds.length; idx++) {
-    const itemId = run1ItemIds[idx]
-    const baseSal = idx === 0 ? 12000000 : 9500000
-    const tunj = idx === 0 ? 2000000 : 1500000
-    const transport = idx === 0 ? 500000 : 400000
-    const makan = 750000
-    const bpjsTk = idx === 0 ? 240000 : 190000
-    const bpjsKes = idx === 0 ? 150000 : 120000
-    const pph = idx === 0 ? 950000 : 580000
-    for (const [cid, snap, type, amt] of [[gapokId,'Gaji Pokok','earning',baseSal],[tunjId,'Tunjangan Tetap','earning',tunj],[transportId,'Tunjangan Transport','earning',transport],[makanId,'Tunjangan Makan','earning',makan],[potId,'Potongan Absensi','deduction',0],[null,'BPJS Ketenagakerjaan','deduction',bpjsTk],[null,'BPJS Kesehatan','deduction',bpjsKes],[null,'PPh 21','deduction',pph]]) {
+  for (let idx = 0; idx < 3 && idx < entriesMar.length; idx++) {
+    const e = entriesMar[idx]
+    const components = [
+      [gapokId, 'Gaji Pokok', 'earning', e.salary],
+      [tunjId, 'Tunjangan Tetap', 'earning', e.tunj],
+      [transportId, 'Tunjangan Transport', 'earning', e.transport],
+      [makanId, 'Tunjangan Makan', 'earning', e.makan],
+      [potId, 'Potongan Absensi', 'deduction', e.pot],
+      [null, 'BPJS Ketenagakerjaan', 'deduction', e.bpjsTk],
+      [null, 'BPJS Kesehatan', 'deduction', e.bpjsKes],
+      [null, 'PPh 21', 'deduction', e.pph21],
+    ]
+    for (const [cid, snap, type, amt] of components) {
       await conn.execute('INSERT INTO payroll_run_item_components(payroll_run_item_id, component_id, component_name_snapshot, component_type, amount) VALUES (?,?,?,?,?)',
-        [itemId, cid, snap, type, amt])
+        [e.itemId, cid, snap, type, amt])
     }
   }
 
-  // Payroll approvals
-  await conn.execute('INSERT INTO payroll_approvals(payroll_run_id, approval_level, approver_user_id, status, comment, approved_at) VALUES (?,1,?,?,"Draft direview HRD","2026-04-01 09:00:00")', [run1Id, hrdUserId, 'approved'])
-  await conn.execute('INSERT INTO payroll_approvals(payroll_run_id, approval_level, approver_user_id, status, comment, approved_at) VALUES (?,2,?,?,"Disetujui Finance","2026-04-01 09:30:00")', [run1Id, finUserId, 'approved'])
-  await conn.execute('INSERT INTO payroll_approvals(payroll_run_id, approval_level, approver_user_id, status, comment, approved_at) VALUES (?,3,?,?,"Finalized","2026-04-01 10:30:00")', [run1Id, finUserId, 'approved'])
-  await conn.execute('INSERT INTO payroll_approvals(payroll_run_id, approval_level, approver_user_id, status, comment, approved_at) VALUES (?,1,?,?,"Draft direview April","2026-04-25 14:00:00")', [run2Id, hrdUserId, 'approved'])
-  await conn.execute('INSERT INTO payroll_approvals(payroll_run_id, approval_level, approver_user_id, status, comment, approved_at) VALUES (?,2,?,?,"Disetujui Finance April","2026-04-26 09:00:00")', [run2Id, finUserId, 'approved'])
+  // Payroll approvals for all runs
+  const approvalLevels = [1, 2, 3]
+  const approvalComments = ['Draft direview HRD', 'Disetujui Finance', 'Finalized']
+  // Jan run approvals
+  for (let lvl = 0; lvl < 3; lvl++) {
+    const approver = lvl < 1 ? hrdUserId : finUserId
+    const date = new Date(2026, 1, 1 + lvl * 15)
+    await conn.execute('INSERT INTO payroll_approvals(payroll_run_id, approval_level, approver_user_id, status, comment, approved_at) VALUES (?,?,?,?,"Disetujui HRD",?)',
+      [runJanId, lvl + 1, approver, 'approved', date.toISOString().slice(0, 19).replace('T', ' ')])
+  }
+  // Feb run approvals
+  for (let lvl = 0; lvl < 3; lvl++) {
+    const approver = lvl < 1 ? hrdUserId : finUserId
+    const date = new Date(2026, 2, 1 + lvl * 14)
+    await conn.execute('INSERT INTO payroll_approvals(payroll_run_id, approval_level, approver_user_id, status, comment, approved_at) VALUES (?,?,?,?,"Disetujui HRD",?)',
+      [runFebId, lvl + 1, approver, 'approved', date.toISOString().slice(0, 19).replace('T', ' ')])
+  }
+  // Mar & Apr run approvals (keep existing pattern)
+  await conn.execute('INSERT INTO payroll_approvals(payroll_run_id, approval_level, approver_user_id, status, comment, approved_at) VALUES (?,1,?,?,"Draft direview HRD","2026-04-01 09:00:00")', [runMarId, hrdUserId, 'approved'])
+  await conn.execute('INSERT INTO payroll_approvals(payroll_run_id, approval_level, approver_user_id, status, comment, approved_at) VALUES (?,2,?,?,"Disetujui Finance","2026-04-01 09:30:00")', [runMarId, finUserId, 'approved'])
+  await conn.execute('INSERT INTO payroll_approvals(payroll_run_id, approval_level, approver_user_id, status, comment, approved_at) VALUES (?,3,?,?,"Finalized","2026-04-01 10:30:00")', [runMarId, finUserId, 'approved'])
+  await conn.execute('INSERT INTO payroll_approvals(payroll_run_id, approval_level, approver_user_id, status, comment, approved_at) VALUES (?,1,?,?,"Draft direview April","2026-04-25 14:00:00")', [runAprId, hrdUserId, 'approved'])
+  await conn.execute('INSERT INTO payroll_approvals(payroll_run_id, approval_level, approver_user_id, status, comment, approved_at) VALUES (?,2,?,?,"Disetujui Finance April","2026-04-26 09:00:00")', [runAprId, finUserId, 'approved'])
 
-  // Audit logs
-  await conn.execute('INSERT INTO payroll_audit_logs(payroll_run_id, actor_user_id, action, ip_address) VALUES (?,?,"GENERATE_PAYROLL_RUN","127.0.0.1")', [run1Id, hrdUserId])
-  await conn.execute('INSERT INTO payroll_audit_logs(payroll_run_id, actor_user_id, action, ip_address) VALUES (?,?,"REVIEW_PAYROLL_RUN","127.0.0.1")', [run1Id, hrdUserId])
-  await conn.execute('INSERT INTO payroll_audit_logs(payroll_run_id, actor_user_id, action, ip_address) VALUES (?,?,"APPROVE_PAYROLL_RUN","127.0.0.1")', [run1Id, finUserId])
-  await conn.execute('INSERT INTO payroll_audit_logs(payroll_run_id, actor_user_id, action, ip_address) VALUES (?,?,"FINALIZE_PAYROLL_RUN","127.0.0.1")', [run1Id, finUserId])
-  await conn.execute('INSERT INTO payroll_audit_logs(payroll_run_id, actor_user_id, action, ip_address) VALUES (?,?,"GENERATE_PAYROLL_RUN","127.0.0.1")', [run2Id, hrdUserId])
-  await conn.execute('INSERT INTO payroll_audit_logs(payroll_run_id, actor_user_id, action, ip_address) VALUES (?,?,"REVIEW_PAYROLL_RUN","127.0.0.1")', [run2Id, hrdUserId])
-  await conn.execute('INSERT INTO payroll_audit_logs(payroll_run_id, actor_user_id, action, ip_address) VALUES (?,?,"APPROVE_PAYROLL_RUN","127.0.0.1")', [run2Id, finUserId])
+  // Audit logs for Mar & Apr
+  for (const [runId, action, actor] of [[runMarId, 'GENERATE_PAYROLL_RUN', hrdUserId], [runMarId, 'REVIEW_PAYROLL_RUN', hrdUserId], [runMarId, 'APPROVE_PAYROLL_RUN', finUserId], [runMarId, 'FINALIZE_PAYROLL_RUN', finUserId], [runAprId, 'GENERATE_PAYROLL_RUN', hrdUserId], [runAprId, 'REVIEW_PAYROLL_RUN', hrdUserId], [runAprId, 'APPROVE_PAYROLL_RUN', finUserId]]) {
+    await conn.execute('INSERT INTO payroll_audit_logs(payroll_run_id, actor_user_id, action, ip_address) VALUES (?,?,?,"127.0.0.1")', [runId, actor, action])
+  }
 
-  // Old payroll table (for dashboard compatibility)
-  const payrollData = [
-    ['Aditia Pratama',12000000,3250000,1540000],['Nadia Putri',9500000,2250000,990000],
-    ['Rizky Maulana',10000000,3000000,1080000],['Salsa Wijaya',8500000,2300000,630000],
-    ['Budi Santoso',11000000,3150000,360000],['Intan Lestari',8000000,2100000,710000],
-    ['Dini Prameswari',13000000,3550000,1380000],['Fajar Hidayat',7500000,2000000,725000],
-    ['Maya Sari',11500000,2950000,375000],['Arif Rahman',10500000,2800000,1035000],
-    ['Putri Ayu',7000000,1850000,440000],['Hendra Wijaya',8200000,1850000,866500],
-    ['Ratna Dewi',14000000,3850000,1475000],['Dimas Prasetyo',9800000,2250000,818500],
-    ['Lina Marlina',8700000,2400000,628750],
-  ]
-  for (const [name, salary, allowance, deduction] of payrollData) {
+  // Old payroll table entries (for all 30 employees, latest period)
+  for (const [name, salary] of salaryProfiles.map(s => [s[0], s[1]])) {
     const empId = await getEmpId(name)
+    const i = empNames.indexOf(name)
+    const tunj = compValues['TUNJ'][i] || 0
+    const transport = compValues['TJ_TRANSPORT'][i] || 0
+    const makan = compValues['TJ_MAKAN'][i] || 0
+    const pot = compValues['POT'][i] || 0
+    const bpjsTk = compValues['BPJS_TK'][i] || 0
+    const bpjsKes = compValues['BPJS_KES'][i] || 0
+    const pph21 = compValues['PPH21'][i] || 0
+    const allowance = tunj + transport + makan
+    const deduction = pot + bpjsTk + bpjsKes + pph21
     const total = salary + allowance - deduction
     await conn.execute('INSERT INTO payroll(employee_id, salary, allowance, deduction, total, period_month) VALUES (?,?,?,?,?,?)',
       [empId, salary, allowance, deduction, total, '2026-04-01'])

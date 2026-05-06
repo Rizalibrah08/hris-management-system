@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard'
 import Karyawan from './pages/Karyawan'
 import Absensi from './pages/Absensi'
 import Cuti from './pages/Cuti'
+import RoleManagement from './pages/RoleManagement'
 import { useAuth } from './contexts/AuthContext'
 // Payroll page is still handled by FeaturePages component
 
@@ -42,7 +43,18 @@ async function api(path, opts = {}) {
 }
 
 function App() {
-  const { token, role, logout } = useAuth()
+  const { token, role, employeeName, department, logout } = useAuth()
+
+  const roleMenus = (() => {
+    const base = menus.filter(m => m.key !== 'role' && m.key !== 'laporan')
+    if (['HRD', 'Finance', 'Super Admin'].includes(role)) {
+      base.push(menus.find(m => m.key === 'laporan'))
+    }
+    if (role === 'Super Admin') {
+      base.push(menus.find(m => m.key === 'role'))
+    }
+    return base.sort((a, b) => menus.indexOf(a) - menus.indexOf(b))
+  })()
   const [activePage, setActivePage] = useState('dashboard')
   const [employees, setEmployees] = useState([])
   const [runningPayroll, setRunningPayroll] = useState(false)
@@ -425,7 +437,7 @@ useEffect(() => {
           <p>Workspace Console</p>
         </div>
         <nav className="menu">
-          {menus.map((menu) => (
+          {roleMenus.map((menu) => (
             <button
               key={menu.key}
               className={`menu-item ${activePage === menu.key ? 'active' : ''}`}
@@ -436,8 +448,8 @@ useEffect(() => {
           ))}
         </nav>
         <div className="user-card">
-          <strong>Rani Amelia</strong>
-          <p>{role || 'HR Administrator'}</p>
+          <strong>{employeeName || 'Administrator'}</strong>
+          <p>{role || 'Administrator'}{department ? ` — ${department}` : ''}</p>
           <button type="button" className="logout-btn" onClick={handleLogout}>
             Logout
           </button>
@@ -447,7 +459,7 @@ useEffect(() => {
       <main className="content">
         <header className="topbar">
           <div>
-            <p className="section-label">{menus.find((menu) => menu.key === activePage)?.label}</p>
+            <p className="section-label">{roleMenus.find((menu) => menu.key === activePage)?.label}</p>
             <h2>Human Resource Information System (HRIS) Terpadu Berbasis Cloud</h2>
           </div>
           <input placeholder="Cari karyawan, payroll, atau approval..." />
@@ -457,7 +469,8 @@ useEffect(() => {
         {activePage === 'karyawan' && <Karyawan />}
         {activePage === 'absensi' && <Absensi />}
         {activePage === 'cuti' && <Cuti />}
-        {['payroll', 'laporan', 'role'].includes(activePage) && (
+        {activePage === 'role' && role === 'Super Admin' && <RoleManagement />}
+        {['payroll', 'laporan'].includes(activePage) && (
           <FeaturePages
             activePage={activePage}
             employees={employees}

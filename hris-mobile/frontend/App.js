@@ -27,6 +27,16 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
+  const { user } = useAuth()
+  const isEmployee = user?.role === 'Employee'
+
+  const tabs = [
+    { name: 'Home', component: DashboardScreen, iconFocused: 'home', iconOutline: 'home-outline' },
+    { name: 'Attendance', component: AttendanceScreen, iconFocused: 'calendar', iconOutline: 'calendar-outline' },
+    { name: 'Payroll', component: PayrollTaxScreen, iconFocused: 'wallet', iconOutline: 'wallet-outline', hide: isEmployee },
+    { name: 'Leave', component: LeaveScreen, iconFocused: 'layers', iconOutline: 'layers-outline' },
+  ]
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -40,11 +50,8 @@ function MainTabs() {
           paddingTop: 10,
         },
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-          if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
-          else if (route.name === 'Attendance') iconName = focused ? 'calendar' : 'calendar-outline';
-          else if (route.name === 'Payroll') iconName = focused ? 'wallet' : 'wallet-outline';
-          else if (route.name === 'Leave') iconName = focused ? 'layers' : 'layers-outline';
+          const tab = tabs.find(t => t.name === route.name)
+          const iconName = focused ? tab?.iconFocused : tab?.iconOutline
           return (
             <View style={styles.iconContainer}>
               <Ionicons name={iconName} size={24} color={focused ? '#FFFFFF' : '#A3A3A3'} />
@@ -54,10 +61,9 @@ function MainTabs() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={DashboardScreen} />
-      <Tab.Screen name="Attendance" component={AttendanceScreen} />
-      <Tab.Screen name="Payroll" component={PayrollTaxScreen} />
-      <Tab.Screen name="Leave" component={LeaveScreen} />
+      {tabs.filter(t => !t.hide).map(tab => (
+        <Tab.Screen key={tab.name} name={tab.name} component={tab.component} />
+      ))}
     </Tab.Navigator>
   );
 }

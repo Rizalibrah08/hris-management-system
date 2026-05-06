@@ -23,3 +23,12 @@ export function roleRequired(...roles) {
     return next()
   }
 }
+
+export function webPortalGuard(req, res, next) {
+  if (req.user.role === 'Employee') {
+    return res.status(403).json({
+      message: 'Akun karyawan hanya untuk akses mobile. Silakan gunakan aplikasi Workmate.',
+    })
+  }
+  next()
+}
