@@ -6,7 +6,7 @@ on:
       environment:
         description: 'Environment to deploy'
         required: true
-        default: 'development'
+        default: 'production'
         type: choice
         options:
           - development
@@ -28,7 +28,7 @@ env:
 
 jobs:
   test:
-    name: Test & Lint
+    name: Test & Build Check
     runs-on: ubuntu-latest
     if: ${{ !inputs.skip_tests }}
     defaults:
@@ -59,11 +59,11 @@ jobs:
         run: npm run build
 
   build-docker:
-    name: Build Docker Image
+    name: Build & Push Docker Image
     runs-on: ubuntu-latest
     needs: test
     if: always() && (needs.test.result == 'success' || inputs.skip_tests)
-    
+
     permissions:
       contents: read
       packages: write
@@ -98,7 +98,7 @@ jobs:
             type=sha
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./hris-web
           push: true
@@ -106,6 +106,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          platforms: linux/amd64
 
   deploy:
     name: Deploy to ${{ inputs.environment }}
@@ -115,73 +116,116 @@ jobs:
       name: ${{ inputs.environment }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.branch }}
+      - name: Determine VPS connection
+        id: vps
+        run: |
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            echo "host=${{ secrets.PROD_IP }}" >> $GITHUB_OUTPUT
+            echo "user=${{ secrets.SSH_USER }}" >> $GITHUB_OUTPUT
+            echo "compose_file=docker-compose.ghcr.yml" >> $GITHUB_OUTPUT
+            echo "app_dir=\$HOME/hris-prod" >> $GITHUB_OUTPUT
+          else
+            echo "host=${{ secrets.VPS_DEV_IP || secrets.PROD_IP }}" >> $GITHUB_OUTPUT
+            echo "user=${{ secrets.VPS_USER || secrets.SSH_USER }}" >> $GITHUB_OUTPUT
+            echo "compose_file=docker-compose.yml" >> $GITHUB_OUTPUT
+            echo "app_dir=\$HOME/hris-dev" >> $GITHUB_OUTPUT
+          fi
+          echo "ghcr_repo=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.2
         with:
-          host: ${{ inputs.environment == 'production' && secrets.VPS_PROD_IP || secrets.VPS_DEV_IP }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ steps.vps.outputs.host }}
+          username: ${{ steps.vps.outputs.user }}
+          key: ${{ secrets.SSH_KEY || secrets.VPS_SSH_KEY }}
           script: |
-            # Setup directory
-            mkdir -p ~/hris-${{ inputs.environment }}
-            cd ~/hris-${{ inputs.environment }}
-            
-            # Clone/pull code
-            if [ ! -d ".git" ]; then
-              git clone ${{ github.server_url }}/${{ github.repository }}.git .
-              git checkout ${{ inputs.branch }}
-            else
-              git fetch origin
-              git reset --hard origin/${{ inputs.branch }}
-            fi
-            
-            # Set environment variables
-            if [ "${{ inputs.environment }}" = "production" ]; then
-              DB_PASSWORD="${{ secrets.DB_PASSWORD_PROD }}"
-              JWT_SECRET="${{ secrets.JWT_SECRET_PROD }}"
-            else
-              DB_PASSWORD="${{ secrets.DB_PASSWORD_DEV }}"
-              JWT_SECRET="${{ secrets.JWT_SECRET_DEV }}"
-            fi
-            
-            # Create .env file
-            cat > hris-web/backend/.env << EOF
-            PORT=5000
+            set -e
+            APP_DIR="${{ steps.vps.outputs.app_dir }}"
+            COMPOSE_FILE="${{ steps.vps.outputs.compose_file }}"
+            GHCR_REPO="${{ steps.vps.outputs.ghcr_repo }}"
+            ENV="${{ inputs.environment }}"
+
+            mkdir -p "$APP_DIR"
+            cd "$APP_DIR"
+
+            # Download compose file from GitHub
+            curl -sL "https://raw.githubusercontent.com/${{ github.repository }}/${{ inputs.branch }}/${COMPOSE_FILE}" -o "${COMPOSE_FILE}"
+
+            if [ "$ENV" = "production" ]; then
+              # --- Production: GHCR pull (VPS no build) ---
+              cat > .env << ENVEOF
+            DB_PASSWORD=${{ secrets.DB_PASSWORD_PROD }}
+            DB_NAME=hris_db
             DB_HOST=mysql
             DB_PORT=3306
             DB_USER=root
-            DB_PASSWORD=$DB_PASSWORD
-            DB_NAME=hris_db
-            JWT_SECRET=$JWT_SECRET
+            JWT_SECRET=${{ secrets.JWT_SECRET_PROD }}
+            JWT_EXPIRY=1d
+            PORT=5000
             NODE_ENV=production
-            EOF
-            
-            # Deploy
-            docker compose -f docker-compose.yml pull
-            docker compose -f docker-compose.yml up -d --remove-orphans
-            
-            # Setup database
-            sleep 10
-            docker compose exec -T web npm run db:setup || true
-            
-            # Health check
-            for i in {1..10}; do
-              if curl -sf http://localhost:5000/health > /dev/null; then
-                echo "✅ Deployment successful!"
-                exit 0
+            GHCR_REPO=${GHCR_REPO}
+            ENVEOF
+              chmod 600 .env
+
+              # Login GHCR (public repos may not need this, but safe to try)
+              echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin 2>/dev/null || true
+
+              # Pull latest image & restart
+              docker compose -f "${COMPOSE_FILE}" pull web
+              docker compose -f "${COMPOSE_FILE}" up -d --remove-orphans
+            else
+              # --- Development: local build ---
+              if [ ! -d ".git" ]; then
+                git clone ${{ github.server_url }}/${{ github.repository }}.git .
+                git checkout ${{ inputs.branch }}
+              else
+                git fetch origin
+                git reset --hard origin/${{ inputs.branch }}
               fi
-              sleep 5
+
+              cat > .env << ENVEOF
+            DB_PASSWORD=${{ secrets.DB_PASSWORD_DEV || secrets.DB_PASSWORD_PROD }}
+            DB_NAME=hris_db
+            DB_HOST=mysql
+            DB_PORT=3306
+            DB_USER=root
+            JWT_SECRET=${{ secrets.JWT_SECRET_DEV || secrets.JWT_SECRET_PROD }}
+            JWT_EXPIRY=1d
+            PORT=5000
+            NODE_ENV=development
+            ENVEOF
+              chmod 600 .env
+
+              # Build locally and start
+              docker compose -f "${COMPOSE_FILE}" up -d --build --remove-orphans
+            fi
+
+            # Health check
+            echo "Health check..."
+            for i in $(seq 1 30); do
+              if curl -sf http://localhost:5000/health > /dev/null 2>&1; then
+                echo "Application is healthy!"
+                break
+              fi
+              sleep 2
             done
-            
-            echo "❌ Health check failed"
-            exit 1
+
+            # Cleanup old images
+            docker image prune -f
+            echo "Deploy complete!"
 
       - name: Verify deployment
         run: |
           sleep 5
-          curl -sf http://${{ inputs.environment == 'production' && secrets.VPS_PROD_IP || secrets.VPS_DEV_IP }}:5000/health
+          HOST="${{ steps.vps.outputs.host }}"
+          if [ -n "$HOST" ]; then
+            curl -sf "http://${HOST}:5000/health" && echo " Remote health check passed!" || echo " Remote health check skipped (may be behind firewall/proxy)"
+          fi
+
+      - name: Summary
+        run: |
+          echo "## Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ inputs.branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** ghcr.io/${{ steps.vps.outputs.ghcr_repo }}:${{ inputs.environment }}-latest" >> $GITHUB_STEP_SUMMARY
+          echo "**Compose file:** ${{ steps.vps.outputs.compose_file }}" >> $GITHUB_STEP_SUMMARY

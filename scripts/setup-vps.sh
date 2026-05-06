@@ -169,13 +169,14 @@ if [ -n "${DOMAIN}" ] && [ -n "${CF_API_TOKEN}" ]; then
 
     # Login & create tunnel
     cloudflared tunnel login
-    cloudflared tunnel create hris-tunnel
+    TUNNEL_ID=$(cloudflared tunnel create hris-tunnel 2>&1 | grep -oP 'Created tunnel \K[a-f0-9-]+' || echo "")
 
-    # Config
-    mkdir -p ~/.cloudflared
-    cat > ~/.cloudflared/config.yml << YML
-tunnel: $(cloudflared tunnel list --name hris-tunnel -o json | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
-credentials-file: ~/.cloudflared/hris-tunnel.json
+    if [ -n "$TUNNEL_ID" ]; then
+        # Config
+        mkdir -p ~/.cloudflared
+        cat > ~/.cloudflared/config.yml << YML
+tunnel: ${TUNNEL_ID}
+credentials-file: ~/.cloudflared/${TUNNEL_ID}.json
 
 ingress:
   - hostname: ${DOMAIN}
@@ -183,15 +184,20 @@ ingress:
   - service: http_status:404
 YML
 
-    # DNS record
-    cloudflared tunnel route dns hris-tunnel "${DOMAIN}"
+        # DNS record
+        cloudflared tunnel route dns "${TUNNEL_ID}" "${DOMAIN}"
 
-    # Run as service
-    cloudflared service install
-    systemctl start cloudflared
-    systemctl enable cloudflared
+        # Run as service
+        cloudflared service install
+        systemctl start cloudflared
+        systemctl enable cloudflared
 
-    echo -e "${GREEN}✅ Cloudflare Tunnel active — ${DOMAIN}${NC}"
+        echo -e "${GREEN}✅ Cloudflare Tunnel active — ${DOMAIN}${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Tunnel creation failed. Setup manually:${NC}"
+        echo "   cloudflared tunnel create hris-tunnel"
+        echo "   Then update ~/.cloudflared/config.yml with the tunnel ID"
+    fi
 fi
 
 # =============================================================================
