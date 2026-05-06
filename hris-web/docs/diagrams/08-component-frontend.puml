@@ -1,0 +1,172 @@
+@startuml HRIS_ComponentFrontend
+title Diagram Komponen - Frontend React
+
+skinparam componentStyle rectangle
+skinparam linetype ortho
+
+package "Aplikasi React (src/)" as App {
+    
+    package "Halaman (pages/)" as Pages {
+        [LoginPage] as LoginPage
+        [DashboardPage] as DashboardPage
+        [EmployeesPage] as EmployeesPage
+        [AttendancePage] as AttendancePage
+        [LeavePage] as LeavePage
+        [PayrollPage] as PayrollPage
+        [ReportsPage] as ReportsPage
+        [RoleManagementPage] as RolePage
+    }
+    
+    package "Tata Letak (components/layout/)" as Layout {
+        [Sidebar] as Sidebar
+        [Topbar] as Topbar
+        [MainLayout] as MainLayout
+    }
+    
+    package "Komponen Bersama (components/shared/)" as Shared {
+        [DataTable] as DataTable
+        [Modal] as Modal
+        [ConfirmDialog] as ConfirmDialog
+        [StatusBadge] as StatusBadge
+        [PrimaryButton] as PrimaryButton
+        [Spinner] as Spinner
+    }
+    
+    package "Hooks Kustom (hooks/)" as Hooks {
+        [useAuth] as useAuth
+        [useApi] as useApi
+        [useEmployees] as useEmployees
+        [useAttendance] as useAttendance
+        [useLeave] as useLeave
+        [usePayroll] as usePayroll
+        [useReports] as useReports
+        [usePagination] as usePagination
+        [useLocalStorage] as useLocalStorage
+    }
+    
+    package "Konteks (contexts/)" as Contexts {
+        [AuthContext] as AuthContext
+        [AuthProvider] as AuthProvider
+    }
+    
+    package "Klien API (api/)" as APIClient {
+        [apiClient] as apiClient
+        [endpoints] as endpoints
+    }
+    
+    package "Utilitas (utils/)" as Utils {
+        [formatters] as formatters
+        [validators] as validators
+        [constants] as constants
+        [pdfExport] as pdfExport
+    }
+    
+    package "Gaya (styles/)" as Styles {
+        [variables.css] as varsCss
+        [base.css] as baseCss
+        [animations.css] as animCss
+    }
+    
+    package "Router (App.jsx)" as Router {
+        [React Router] as ReactRouter
+        [ProtectedRoute] as ProtectedRoute
+        [RoleBasedRoute] as RoleBasedRoute
+    }
+}
+
+package "Pustaka Eksternal" as External {
+    [React 19] as React
+    [React Router DOM] as ReactRouterLib
+    [Recharts] as RechartsLib
+    [jsPDF] as jsPDFLib
+}
+
+package "Browser API" as Browser {
+    [localStorage] as localStorage
+    [Fetch API] as FetchAPI
+}
+
+' === RELASI HALAMAN ===
+LoginPage --> AuthContext : gunakan
+DashboardPage --> useAuth : gunakan
+DashboardPage --> useReports : gunakan
+EmployeesPage --> useEmployees : gunakan
+EmployeesPage --> usePagination : gunakan
+AttendancePage --> useAttendance : gunakan
+LeavePage --> useLeave : gunakan
+PayrollPage --> usePayroll : gunakan
+ReportsPage --> useReports : gunakan
+ReportsPage --> RechartsLib : render chart
+RolePage --> useAuth : periksa peran
+
+' === RELASI LAYOUT ===
+MainLayout --> Sidebar : render
+MainLayout --> Topbar : render
+MainLayout --> Pages : bungkus
+
+' === RELASI ROUTER ===
+ReactRouter --> LoginPage : route /login
+ReactRouter --> ProtectedRoute : route terlindungi
+ProtectedRoute --> AuthContext : periksa auth
+ProtectedRoute --> MainLayout : render
+RoleBasedRoute --> AuthContext : periksa peran
+
+' === RELASI HOOKS ===
+useAuth --> AuthContext : konsumsi
+useAuth --> localStorage : simpan token
+useApi --> apiClient : request
+useApi --> endpoints : URL
+useEmployees --> useApi : fetch
+useAttendance --> useApi : fetch
+useLeave --> useApi : fetch
+usePayroll --> useApi : fetch
+useReports --> useApi : fetch
+usePagination --> useLocalStorage : simpan state
+
+' === RELASI KOMPONEN ===
+DataTable --> Spinner : loading state
+DataTable --> StatusBadge : render status
+Modal --> PrimaryButton : tombol aksi
+ConfirmDialog --> Modal : extends
+
+' === RELASI UTILITAS ===
+formatters --> constants : gunakan
+validators --> constants : gunakan
+pdfExport --> jsPDFLib : generate
+ReportsPage --> pdfExport : unduh laporan
+
+' === RELASI GAYA ===
+varsCss --> baseCss : import
+baseCss --> animCss : import
+
+' === RELASI API ===
+apiClient --> FetchAPI : HTTP request
+apiClient --> localStorage : ambil token
+
+' === RELASI KONTEKS ===
+AuthProvider --> apiClient : verifikasi token
+AuthContext --> AuthProvider : provider
+
+note right of Hooks
+  **Hooks Kustom**
+  mengenkapsulasi logika
+  bisnis & state
+  management
+end note
+
+note right of Shared
+  **Komponen Bersama**
+  reusable di semua
+  halaman & modul
+end note
+
+note bottom of APIClient
+  **apiClient**
+  menangani:
+  - base URL
+  - header Authorization
+  - error handling
+  - request/response interceptors
+end note
+
+@enduml

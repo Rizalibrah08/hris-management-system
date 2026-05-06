@@ -1,0 +1,173 @@
+@startuml HRIS_SequencePayroll
+title Diagram Sekuen - Alur Payroll Run & Approval
+
+actor "Finance / HRD" as Finance
+actor "Approver\n(Manajemen)" as Approver
+participant "Frontend\n(React)" as FE
+participant "Payroll API\n(Express)" as API
+participant "Payroll\nService" as Svc
+participant "Kalkulasi\nService" as Calc
+participant "Audit\nLogger" as Audit
+participant "Database\n(MySQL)" as DB
+
+== 1. Inisiasi Payroll Run ==
+Finance -> FE : Pilih periode & klik "Jalankan Payroll"
+activate FE
+FE -> FE : Konfirmasi periode
+FE -> API : POST /payroll/run\n{ period_month, created_by }
+activate API
+
+API -> Svc : createPayrollRun(period, creator)
+activate Svc
+
+Svc -> DB : INSERT INTO payroll_runs\n(period_month, status, created_by)\nVALUES (?, 'draft', ?)
+activate DB
+DB --> Svc : run_id
+activate DB
+
+Svc -> DB : SELECT employee_id FROM employees\nWHERE is_active = 1
+DB --> Svc : Daftar karyawan aktif [1..N]
+
+loop Untuk setiap karyawan
+    Svc -> Calc : hitungGaji(employee_id, period)
+    activate Calc
+    
+    Calc -> DB : SELECT base_salary FROM\n  employee_salary_profiles\n  WHERE employee_id = ? AND is_active = 1
+    DB --> Calc : base_salary
+    
+    Calc -> DB : SELECT * FROM\n  employee_salary_component_values\n  WHERE salary_profile_id = ?
+    DB --> Calc : komponen gaji
+    
+    Calc -> DB : SELECT * FROM\n  payroll_variable_inputs\n  WHERE employee_id = ? AND period = ?\n  AND approval_status = 'approved'
+    DB --> Calc : variabel periode
+    
+    Calc -> Calc : gross = base + earnings + variables
+    Calc -> Calc : deductions = sum(deductions)
+    Calc -> Calc : tax = hitungPPh21(gross)
+    Calc -> Calc : bpjs = hitungBPJS(gross)
+    Calc -> Calc : net = gross - deductions - tax - bpjs
+    
+    Calc --> Svc : { gross, deductions, tax, bpjs, net }
+    deactivate Calc
+    
+    Svc -> DB : INSERT INTO payroll_run_items\n(run_id, employee_id, gross,\n deduction, net, tax, bpjs)
+    DB --> Svc : item_id
+    
+    Svc -> DB : INSERT INTO payroll_run_item_components\n(item_id, component_id, name, type, amount)
+    DB --> Svc : OK
+end
+
+Svc -> DB : UPDATE payroll_runs\nSET status = 'draft',\n  employee_count = ?,\n  total_gross = ?,\n  total_deduction = ?,\n  total_net = ?\nWHERE id = ?
+DB --> Svc : Updated
+activate DB
+
+Svc --> API : PayrollRun berhasil dibuat
+activate Svc
+API --> FE : 201 Created\n{ run_id, status: "draft", summary }
+activate API
+FE --> Finance : Tampil preview payroll run
+deactivate FE
+
+== 2. Review & Approval ==
+Finance -> FE : Klik "Kirim untuk Review"
+activate FE
+FE -> API : PUT /payroll/run/:id/review
+activate API
+
+API -> Svc : updateStatus(run_id, 'reviewed')
+activate Svc
+Svc -> DB : UPDATE payroll_runs SET status = 'reviewed'
+activate DB
+DB --> Svc : OK
+deactivate DB
+
+Svc -> Audit : logPayrollChange(run_id, 'draft', 'reviewed')
+activate Audit
+Audit -> DB : INSERT INTO payroll_audit_logs
+Audit --> Svc : OK
+deactivate Audit
+
+Svc --> API : Status terupdate
+activate Svc
+API --> FE : 200 OK
+activate API
+FE --> Finance : Tampil status "Reviewed"
+deactivate FE
+
+Approver -> FE : Buka daftar payroll pending
+activate FE
+FE -> API : GET /payroll/runs?status=reviewed
+activate API
+API --> FE : Daftar payroll run
+activate API
+FE --> Approver : Tampil detail & summary
+
+Approver -> FE : Klik "Setujui"
+FE -> API : PUT /payroll/run/:id/approve\n{ approver_id, comment }
+activate API
+
+API -> Svc : approveRun(run_id, approver, comment)
+activate Svc
+Svc -> DB : UPDATE payroll_runs\nSET status = 'approved',\n  approved_by = ?,\n  approved_at = NOW()
+activate DB
+DB --> Svc : OK
+deactivate DB
+
+Svc -> DB : INSERT INTO payroll_approvals\n(run_id, level, approver, status, comment)
+activate DB
+DB --> Svc : OK
+deactivate DB
+
+Svc -> Audit : logPayrollChange(run_id, 'reviewed', 'approved')
+activate Audit
+Audit --> Svc : OK
+deactivate Audit
+
+Svc --> API : Approval berhasil
+activate Svc
+API --> FE : 200 OK
+activate API
+FE --> Approver : Tampil konfirmasi
+deactivate FE
+
+== 3. Finalisasi & Publish ==
+Finance -> FE : Klik "Finalisasi & Publish"
+activate FE
+FE -> API : PUT /payroll/run/:id/finalize
+activate API
+
+API -> Svc : finalizeRun(run_id)
+activate Svc
+Svc -> DB : UPDATE payroll_runs\nSET status = 'finalized',\n  finalized_at = NOW(),\n  finalized_by = ?
+activate DB
+DB --> Svc : OK
+deactivate DB
+
+loop Untuk setiap item
+    Svc -> DB : INSERT INTO payslip\n(payroll_id, generated_at)
+    DB --> Svc : payslip_id
+end
+activate DB
+
+Svc -> DB : UPDATE payroll_runs\nSET status = 'published'
+DB --> Svc : OK
+deactivate DB
+
+Svc -> Audit : logPayrollChange(run_id, 'approved', 'published')
+activate Audit
+Audit --> Svc : OK
+deactivate Audit
+
+Svc --> API : Finalisasi selesai
+activate Svc
+API -> Notif : kirimEmailPayslip(run_id)
+activate Notif
+Notif --> API : OK
+deactivate Notif
+
+API --> FE : 200 OK\n{ status: "published", payslip_count }
+activate API
+FE --> Finance : Tampil status "Published"
+deactivate FE
+
+@enduml

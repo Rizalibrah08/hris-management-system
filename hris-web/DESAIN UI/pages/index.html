@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Curated HR - Halaman Design System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8f9fd;
+            color: #191c1f;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+        .brand {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .brand h1 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #5341cd 0%, #6c5ce7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+        .brand p {
+            font-size: 14px;
+            color: #474554;
+            margin-top: 8px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 24px;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 32px 24px;
+            box-shadow: 8px 8px 32px rgba(25, 28, 31, 0.03);
+            decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 8px 16px 48px rgba(83, 65, 205, 0.12);
+        }
+        a { text-decoration: none; color: inherit; }
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            font-size: 20px;
+            color: #ffffff;
+        }
+        .card-icon.purple { background: linear-gradient(135deg, #5341cd, #6c5ce7); }
+        .card-icon.blue { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+        .card-icon.green { background: linear-gradient(135deg, #22c55e, #4ade80); }
+        .card-icon.orange { background: linear-gradient(135deg, #884800, #f59e0b); }
+        .card-icon.indigo { background: linear-gradient(135deg, #5952af, #a19afd); }
+        .card-icon.teal { background: linear-gradient(135deg, #0d9488, #2dd4bf); }
+        .card-icon.red { background: linear-gradient(135deg, #dc2626, #f87171); }
+        .card h3 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: #191c1f;
+        }
+        .card p {
+            font-size: 13px;
+            color: #474554;
+            line-height: 1.5;
+        }
+        .card .badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            width: fit-content;
+        }
+        .badge.ready { background: #e4dfff; color: #5341cd; }
+        .footer {
+            margin-top: 64px;
+            text-align: center;
+            font-size: 12px;
+            color: #787586;
+        }
+        .footer a { color: #5341cd; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="brand">
+            <h1>Curated HR</h1>
+            <p>Design System — Semua Halaman UI</p>
+        </div>
+        <div class="grid">
+            <a href="login.html" class="card">
+                <div class="card-icon purple">LG</div>
+                <span class="badge ready">Siap</span>
+                <h3>Masuk</h3>
+                <p>Halaman masuk dengan kartu glassmorphic, input NIK & kata sandi, dan tombol gradien.</p>
+            </a>
+            <a href="dashboard.html" class="card">
+                <div class="card-icon purple">DB</div>
+                <span class="badge ready">Siap</span>
+                <h3>Dasbor</h3>
+                <p>Ikhtisar workspace dengan kartu metrik, tabel kehadiran, perayaan, dan snapshot kesehatan.</p>
+            </a>
+            <a href="employees.html" class="card">
+                <div class="card-icon blue">EM</div>
+                <span class="badge ready">Siap</span>
+                <h3>Direktori Karyawan</h3>
+                <p>Direktori karyawan dengan bilah filter, tabel data, paginasi, dan footer statistik.</p>
+            </a>
+            <a href="attendance.html" class="card">
+                <div class="card-icon green">AT</div>
+                <span class="badge ready">Siap</span>
+                <h3>Absensi</h3>
+                <p>Manajemen kehadiran dengan metrik utama, manajer shift, log karyawan, dan kalender samping.</p>
+            </a>
+            <a href="leave.html" class="card">
+                <div class="card-icon orange">LV</div>
+                <span class="badge ready">Siap</span>
+                <h3>Pengajuan Cuti</h3>
+                <p>Pengajuan cuti dengan persetujuan tertunda, tabel permintaan, timeline siapa yang pergi, dan ringkasan saldo.</p>
+            </a>
+            <a href="payroll.html" class="card">
+                <div class="card-icon indigo">PY</div>
+                <span class="badge ready">Siap</span>
+                <h3>Penggajian</h3>
+                <p>Manajemen penggajian dengan kartu ringkasan, tabel karyawan, kartu jalankan penggajian, dan pengeluaran departemen.</p>
+            </a>
+            <a href="reports.html" class="card">
+                <div class="card-icon teal">RP</div>
+                <span class="badge ready">Siap</span>
+                <h3>Laporan & Analitik</h3>
+                <p>Laporan dan analitik dengan kartu ringkasan, grid diagram, dan detail distribusi gaji.</p>
+            </a>
+            <a href="dashboard.html" class="card">
+                <div class="card-icon purple">DB</div>
+                <span class="badge ready">Ready</span>
+                <h3>Dashboard</h3>
+                <p>Workspace overview dengan metric cards, presence table, celebrations, dan health snapshot.</p>
+            </a>
+            <a href="employees.html" class="card">
+                <div class="card-icon blue">EM</div>
+                <span class="badge ready">Ready</span>
+                <h3>Employee Directory</h3>
+                <p>Directory karyawan dengan filter bar, data table, pagination, dan stats footer.</p>
+            </a>
+            <a href="attendance.html" class="card">
+                <div class="card-icon green">AT</div>
+                <span class="badge ready">Ready</span>
+                <h3>Attendance</h3>
+                <p>Management kehadiran dengan hero metric, shift manager card, employee logs, dan calendar sidebar.</p>
+            </a>
+            <a href="leave.html" class="card">
+                <div class="card-icon orange">LV</div>
+                <span class="badge ready">Ready</span>
+                <h3>Leave Requests</h3>
+                <p>Pengajuan cuti dengan pending approvals, request table, who's away timeline, dan balance recap.</p>
+            </a>
+            <a href="payroll.html" class="card">
+                <div class="card-icon indigo">PY</div>
+                <span class="badge ready">Ready</span>
+                <h3>Payroll</h3>
+                <p>Management payroll dengan summary cards, employee table, run payroll card, dan department spend.</p>
+            </a>
+            <a href="reports.html" class="card">
+                <div class="card-icon teal">RP</div>
+                <span class="badge ready">Ready</span>
+                <h3>Reports & Analytics</h3>
+                <p>Laporan dan analitik dengan summary cards, chart grid, dan detail distribusi gaji.</p>
+            </a>
+        </div>
+        <div class="footer">
+            <p>Curated HR Design System &middot; "The Curated Workspace" &middot; <a href="https://fonts.google.com/specimen/Manrope" target="_blank">Manrope</a> + <a href="https://fonts.google.com/specimen/Inter" target="_blank">Inter</a></p>
+        </div>
+    </div>
+</body>
+</html>

@@ -10,7 +10,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 import OnboardingScreen from './screens/OnboardingScreen';
 import LoginScreen from './screens/LoginScreen';
-import SignUpScreen from './screens/SignUpScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import AttendanceScreen from './screens/AttendanceScreen';
 import ClockInScreen from './screens/ClockInScreen';
@@ -79,7 +78,6 @@ function AppContent() {
       <Stack.Navigator initialRouteName={user ? 'Main' : 'Onboarding'}>
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="ClockIn" component={ClockInScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Camera" component={CameraScreen} options={{ headerShown: false }} />

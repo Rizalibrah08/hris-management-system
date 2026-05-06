@@ -1412,6 +1412,7 @@ app.get('/{*splat}', (req, res) => {
 })
 
 const port = process.env.PORT || 5000
-app.listen(port, () => {
-  console.log(`HRIS API running on http://localhost:${port}`)
+app.listen(port, '0.0.0.0', () => {
+  console.log(`HRIS API running on http://0.0.0.0:${port}`)
+  console.log(`For mobile access, use ngrok: ngrok http ${port}`)
 })

@@ -1,0 +1,211 @@
+@startuml HRIS_ERD
+!define table(x) class x << (T,#FFAAAA) >>
+!define primary_key(x) <u>x</u>
+!define foreign_key(x) #x#
+
+title ERD - Sistem HRIS Cloud\n(Entity Relationship Diagram)
+
+' =============== MASTER DATA ===============
+table(roles) {
+  primary_key(id): INT
+  name: VARCHAR(50)
+}
+
+table(departments) {
+  primary_key(id): INT
+  name: VARCHAR(80)
+}
+
+table(positions) {
+  primary_key(id): INT
+  name: VARCHAR(80)
+}
+
+table(payroll_components) {
+  primary_key(id): INT
+  code: VARCHAR(50)
+  name: VARCHAR(100)
+  type: ENUM('earning', 'deduction')
+  taxable: TINYINT
+  is_active: TINYINT
+}
+
+' =============== KARYAWAN ===============
+table(employees) {
+  primary_key(id): INT
+  name: VARCHAR(120)
+  foreign_key(department_id): INT
+  foreign_key(position_id): INT
+  contract_end: DATE
+  is_active: TINYINT
+  email: VARCHAR(100)
+  phone: VARCHAR(30)
+}
+
+' =============== PENGGUNA & OTENTIKASI ===============
+table(users) {
+  primary_key(id): INT
+  nik: VARCHAR(30)
+  email: VARCHAR(100)
+  password: VARCHAR(255)
+  foreign_key(role_id): INT
+  foreign_key(employee_id): INT
+  is_active: TINYINT
+  created_at: DATETIME
+}
+
+' =============== ABSENSI ===============
+table(attendance) {
+  primary_key(id): INT
+  foreign_key(employee_id): INT
+  clock_in: DATETIME
+  clock_out: DATETIME
+  gps_location: TEXT
+  selfie: TEXT
+  status: VARCHAR(30)
+}
+
+' =============== CUTI ===============
+table(leave_request) {
+  primary_key(id): INT
+  foreign_key(employee_id): INT
+  leave_type: VARCHAR(50)
+  start_date: DATE
+  end_date: DATE
+  reason: TEXT
+  status: VARCHAR(30)
+  created_at: DATETIME
+}
+
+' =============== PENGGAJIAN - MASTER ===============
+table(employee_salary_profiles) {
+  primary_key(id): INT
+  foreign_key(employee_id): INT
+  effective_date: DATE
+  base_salary: BIGINT
+  payment_method: ENUM
+  bank_name: VARCHAR(100)
+  bank_account_number: VARCHAR(50)
+  is_active: TINYINT
+}
+
+table(employee_salary_component_values) {
+  primary_key(id): INT
+  foreign_key(salary_profile_id): INT
+  foreign_key(component_id): INT
+  amount: BIGINT
+  is_percentage: TINYINT
+  percentage_value: DECIMAL
+}
+
+' =============== PENGGAJIAN - VARIABEL ===============
+table(payroll_variable_inputs) {
+  primary_key(id): INT
+  foreign_key(employee_id): INT
+  period_month: DATE
+  input_type: ENUM
+  amount: BIGINT
+  approval_status: ENUM
+}
+
+' =============== PENGGAJIAN - RUN ===============
+table(payroll_runs) {
+  primary_key(id): INT
+  period_month: DATE
+  status: ENUM
+  employee_count: INT
+  total_gross: BIGINT
+  total_deduction: BIGINT
+  total_net: BIGINT
+}
+
+table(payroll_run_items) {
+  primary_key(id): INT
+  foreign_key(payroll_run_id): INT
+  foreign_key(employee_id): INT
+  gross_amount: BIGINT
+  deduction_amount: BIGINT
+  net_amount: BIGINT
+  tax_amount: BIGINT
+  bpjs_amount: BIGINT
+}
+
+table(payroll_run_item_components) {
+  primary_key(id): INT
+  foreign_key(payroll_run_item_id): INT
+  foreign_key(component_id): INT
+  component_name_snapshot: VARCHAR(100)
+  component_type: ENUM
+  amount: BIGINT
+}
+
+' =============== PENGGAJIAN - APPROVAL & AUDIT ===============
+table(payroll_approvals) {
+  primary_key(id): INT
+  foreign_key(payroll_run_id): INT
+  approval_level: INT
+  approver_user_id: INT
+  status: ENUM
+  comment: TEXT
+}
+
+table(payroll_audit_logs) {
+  primary_key(id): INT
+  foreign_key(payroll_run_id): INT
+  actor_user_id: INT
+  action: VARCHAR(80)
+  before_data: JSON
+  after_data: JSON
+}
+
+' =============== LAINNYA ===============
+table(expenses) {
+  primary_key(id): INT
+  foreign_key(employee_id): INT
+  title: VARCHAR(200)
+  amount: BIGINT
+  category: VARCHAR(50)
+  status: VARCHAR(30)
+}
+
+table(office_assets) {
+  primary_key(id): INT
+  foreign_key(employee_id): INT
+  asset_name: VARCHAR(200)
+  brand: VARCHAR(100)
+  condition_status: VARCHAR(30)
+}
+
+table(tasks) {
+  primary_key(id): INT
+  foreign_key(employee_id): INT
+  title: VARCHAR(200)
+  status: ENUM
+  priority: ENUM
+  due_date: DATE
+}
+
+' =============== RELASI ===============
+roles "1" -- "0..*" users : memiliki
+employees "1" -- "0..*" users : dipetakan ke
+departments "1" -- "0..*" employees : berada di
+positions "1" -- "0..*" employees : memegang
+employees "1" -- "0..*" attendance : mencatat
+employees "1" -- "0..*" leave_request : mengajukan
+employees "1" -- "0..*" employee_salary_profiles : memiliki profil
+employees "1" -- "0..*" payroll_variable_inputs : memiliki input
+employees "1" -- "0..*" payroll_run_items : termasuk dalam
+employees "1" -- "0..*" expenses : mengajukan
+employees "1" -- "0..*" office_assets : memegang
+employees "1" -- "0..*" tasks : diberikan
+
+payroll_components "1" -- "0..*" employee_salary_component_values : digunakan oleh
+employee_salary_profiles "1" -- "0..*" employee_salary_component_values : memiliki
+
+payroll_runs "1" -- "0..*" payroll_run_items : berisi
+payroll_runs "1" -- "0..*" payroll_approvals : memerlukan
+payroll_runs "1" -- "0..*" payroll_audit_logs : dilacak oleh
+payroll_run_items "1" -- "0..*" payroll_run_item_components : terdiri dari
+payroll_components "1" -- "0..*" payroll_run_item_components : mereferensi
+
+@enduml

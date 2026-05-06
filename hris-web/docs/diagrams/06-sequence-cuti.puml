@@ -1,0 +1,107 @@
+@startuml HRIS_SequenceCuti
+title Diagram Sekuen - Alur Pengajuan & Persetujuan Cuti
+
+actor "Karyawan" as Karyawan
+actor "Manajer / HRD" as Approver
+participant "Frontend\n(React)" as FE
+participant "Cuti API\n(Express)" as API
+participant "Cuti\nService" as Svc
+participant "Notifikasi\nService" as Notif
+participant "Database\n(MySQL)" as DB
+
+== 1. Pengajuan Cuti ==
+Karyawan -> FE : Buka form pengajuan cuti
+activate FE
+FE --> Karyawan : Tampil form (jenis, tanggal, alasan)
+Karyawan -> FE : Isi & submit form
+
+FE -> FE : Validasi tanggal\n(start_date <= end_date)
+alt Tanggal tidak valid
+    FE --> Karyawan : Tampil error
+else Tanggal valid
+    FE -> API : POST /leave\n{ employee_id, type, start, end, reason }
+    activate API
+    
+    API -> Svc : createRequest(data)
+    activate Svc
+    
+    Svc -> DB : INSERT INTO leave_request\n(employee_id, type, start, end, reason)\nVALUES (?, ?, ?, ?, ?)
+    activate DB
+    DB --> Svc : InsertResult (id)
+    deactivate DB
+    
+    Svc --> API : LeaveRequest berhasil dibuat
+    deactivate Svc
+    
+    API -> Notif : kirimNotifikasi(\n  "Pengajuan cuti baru",\n  approver_list)
+    activate Notif
+    Notif --> API : OK
+    deactivate Notif
+    
+    API --> FE : 201 Created\n{ id, status: "Pending", ... }
+    deactivate API
+    
+    FE --> Karyawan : Tampil konfirmasi sukses
+end
+deactivate FE
+
+== 2. Persetujuan Cuti ==
+Approver -> FE : Buka daftar cuti pending
+activate FE
+FE -> API : GET /leave/pending
+activate API
+API -> Svc : getPendingApprovals()
+activate Svc
+Svc -> DB : SELECT * FROM leave_request\nWHERE status = 'Pending'
+activate DB
+DB --> Svc : ResultSet
+activate DB
+Svc --> API : LeaveRequest[]
+deactivate Svc
+API --> FE : 200 OK\n[ { id, employee, type, dates, reason } ]
+deactivate API
+FE --> Approver : Tampil daftar pending
+
+Approver -> FE : Pilih & klik Setujui / Tolak
+FE -> API : PUT /leave/approve\n{ id, status, approver_id, comment }
+activate API
+
+API -> Svc : processApproval(id, status, approver)
+activate Svc
+
+Svc -> DB : UPDATE leave_request\nSET status = ?,\n  approved_by = ?,\n  approved_at = NOW()\nWHERE id = ?
+activate DB
+DB --> Svc : UpdateResult
+activate DB
+
+alt Status = "Disetujui"
+    Svc -> DB : UPDATE employees\n  SET leave_balance = balance - days\n  WHERE id = employee_id
+    DB --> Svc : UpdateResult
+else Status = "Ditolak"
+    Svc -> Svc : Tidak kurangi saldo
+end
+deactivate DB
+
+Svc --> API : LeaveRequest terupdate
+activate Svc
+API -> Notif : kirimNotifikasi(\n  "Cuti " + status,\n  employee_id)
+activate Notif
+Notif --> API : OK
+deactivate Notif
+
+API --> FE : 200 OK\n{ id, status, approved_by, ... }
+activate API
+FE --> Approver : Tampil status terupdate
+deactivate FE
+
+== 3. Karyawan Menerima Notifikasi ==
+Karyawan -> FE : Buka notifikasi
+activate FE
+FE -> API : GET /leave/:id
+activate API
+API --> FE : Detail cuti dengan status
+deactivate API
+FE --> Karyawan : Tampil hasil persetujuan
+deactivate FE
+
+@enduml

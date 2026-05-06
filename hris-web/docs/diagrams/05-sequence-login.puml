@@ -1,0 +1,79 @@
+@startuml HRIS_SequenceLogin
+title Diagram Sekuen - Proses Login
+
+actor "Pengguna" as User
+participant "Frontend\n(React)" as FE
+participant "Auth API\n(Express)" as API
+participant "Auth\nService" as Svc
+participant "JWT\n(jsonwebtoken)" as JWT
+participant "Database\n(MySQL)" as DB
+
+== Input Kredensial ==
+User -> FE : Masukkan NIK & Password
+activate FE
+
+FE -> FE : Validasi input
+alt Input tidak valid
+    FE --> User : Tampil error validasi
+else Input valid
+    FE -> API : POST /auth/login\n{ nik, password }
+    activate API
+    
+    == Verifikasi Kredensial ==
+    API -> Svc : validateCredentials(nik, password)
+    activate Svc
+    
+    Svc -> DB : SELECT u.id, u.nik, u.password, r.name\nFROM users u JOIN roles r\nWHERE u.nik = ?
+    activate DB
+    DB --> Svc : ResultSet (user data)
+    deactivate DB
+    
+    alt NIK tidak ditemukan
+        Svc --> API : Error: NIK tidak ditemukan
+        API --> FE : 401 Unauthorized\n{ message: "NIK tidak ditemukan" }
+        FE --> User : Tampil pesan error
+    else NIK ditemukan
+        Svc -> Svc : bcrypt.compare(password, hash)
+        
+        alt Password salah
+            Svc --> API : Error: Password salah
+            API --> FE : 401 Unauthorized\n{ message: "Password salah" }
+            FE --> User : Tampil pesan error
+        else Password cocok
+            Svc --> API : User valid
+            deactivate Svc
+            
+            == Generate Token ==
+            API -> JWT : jwt.sign(payload, secret, { expiresIn: '1d' })
+            activate JWT
+            JWT --> API : token (JWT string)
+            deactivate JWT
+            
+            == Respon Sukses ==
+            API --> FE : 200 OK\n{ token, role, employeeId }
+            deactivate API
+            
+            FE -> FE : Simpan token di localStorage
+            FE -> FE : Redirect ke Dashboard
+            FE --> User : Tampil Dashboard
+        end
+    end
+end
+deactivate FE
+
+== Akses Route Terlindungi ==
+User -> FE : Akses halaman terlindungi
+activate FE
+FE -> FE : Ambil token dari localStorage
+FE -> API : Request dengan header\nAuthorization: Bearer <token>
+activate API
+API -> JWT : jwt.verify(token, secret)
+activate JWT
+JWT --> API : Payload (decoded)
+deactivate JWT
+API --> FE : 200 OK + Data
+FE --> User : Tampil halaman
+deactivate API
+deactivate FE
+
+@enduml

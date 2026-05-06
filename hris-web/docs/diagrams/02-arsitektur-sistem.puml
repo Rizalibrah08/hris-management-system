@@ -1,0 +1,124 @@
+@startuml HRIS_ArsitekturSistem
+title Arsitektur Sistem HRIS Cloud
+
+skinparam componentStyle rectangle
+skinparam linetype ortho
+
+package "Klien (Browser)" as Client {
+    [React SPA] as React
+    [React Router] as Router
+    [Recharts] as Charts
+}
+
+package "Frontend (Vite DevServer / Nginx)" as Frontend {
+    [Aset Statis] as Static
+    [Proxy API] as Proxy
+}
+
+package "Backend API (Node.js + Express)" as Backend {
+    package "Middleware" {
+        [CORS] as CORS
+        [Helmet] as Helmet
+        [Morgan Logger] as Logger
+        [JWT Auth] as JWT
+        [Role Check] as RoleCheck
+    }
+    
+    package "Modul API" {
+        [Auth API] as AuthAPI
+        [Karyawan API] as EmpAPI
+        [Absensi API] as AttAPI
+        [Cuti API] as LeaveAPI
+        [Penggajian API] as PayrollAPI
+        [Laporan API] as ReportAPI
+    }
+    
+    package "Layanan (Services)" {
+        [Auth Service] as AuthSvc
+        [Karyawan Service] as EmpSvc
+        [Absensi Service] as AttSvc
+        [Cuti Service] as LeaveSvc
+        [Penggajian Service] as PayrollSvc
+        [Laporan Service] as ReportSvc
+    }
+}
+
+package "Database" as DB {
+    [MySQL 8.x] as MySQL
+    database "hris_db" as DBName {
+        [Tabel Master] as MasterTables
+        [Tabel Transaksi] as TransTables
+        [Tabel Payroll] as PayrollTables
+    }
+}
+
+package "Infrastruktur" as Infra {
+    [PM2 / systemd] as PM2
+    [Docker (opsional)] as Docker
+}
+
+' === ALIRAN DATA ===
+React --> Router : navigasi
+React --> Charts : visualisasi data
+React --> Proxy : HTTP /api/*
+Proxy --> AuthAPI : /auth/*
+Proxy --> EmpAPI : /employees/*
+Proxy --> AttAPI : /attendance/*
+Proxy --> LeaveAPI : /leave/*
+Proxy --> PayrollAPI : /payroll/*
+Proxy --> ReportAPI : /reports/*
+
+AuthAPI --> AuthSvc : delegasi
+EmpAPI --> EmpSvc : delegasi
+AttAPI --> AttSvc : delegasi
+LeaveAPI --> LeaveSvc : delegasi
+PayrollAPI --> PayrollSvc : delegasi
+ReportAPI --> ReportSvc : delegasi
+
+' Middleware
+Proxy --> CORS : setiap request
+CORS --> Helmet : setiap request
+Helmet --> Logger : setiap request
+Logger --> JWT : route terlindungi
+JWT --> RoleCheck : aksi sensitif
+
+' Database
+AuthSvc --> MySQL : query
+EmpSvc --> MySQL : query
+AttSvc --> MySQL : query
+LeaveSvc --> MySQL : query
+PayrollSvc --> MySQL : query
+ReportSvc --> MySQL : query
+
+MySQL --> MasterTables : DDL/DML
+MySQL --> TransTables : DDL/DML
+MySQL --> PayrollTables : DDL/DML
+
+' Deployment
+Backend --> PM2 : deployment
+Backend --> Docker : containerisasi
+
+note right of React
+  **Teknologi Frontend:**
+  - React 19 + Vite
+  - React Router DOM
+  - Recharts (chart)
+  - CSS Modules
+end note
+
+note right of Backend
+  **Teknologi Backend:**
+  - Node.js + Express 5
+  - JWT (jsonwebtoken)
+  - bcryptjs (hashing)
+  - mysql2 (driver)
+end note
+
+note bottom of MySQL
+  **Skema:**
+  - schema.sql (inti)
+  - payroll-schema.sql (ekstensi)
+  - seed.sql (data awal)
+end note
+
+@enduml

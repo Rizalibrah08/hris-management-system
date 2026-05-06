@@ -1,0 +1,144 @@
+@startuml HRIS_UseCase
+title Diagram Use Case - Sistem HRIS Cloud
+left to right direction
+
+skinparam packageStyle rectangle
+skinparam usecase {
+    BackgroundColor<<core>> LightBlue
+    BorderColor<<core>> DarkBlue
+}
+
+' ============== AKTOR ==============
+actor "Karyawan" as Karyawan
+actor "Manajer" as Manajer
+actor "HRD / Admin" as HRD
+actor "Finance" as Finance
+actor "Super Admin" as SuperAdmin
+
+' ============== PAKET USE CASE ==============
+package "Otentikasi" as AuthPkg {
+    usecase (Login) as UC_Login
+    usecase (Logout) as UC_Logout
+    usecase (Ganti Password) as UC_GantiPass
+}
+
+package "Manajemen Karyawan" as EmpPkg {
+    usecase (Lihat Data Karyawan) as UC_LihatKaryawan
+    usecase (Tambah Karyawan) as UC_TambahKaryawan <<core>>
+    usecase (Edit Karyawan) as UC_EditKaryawan <<core>>
+    usecase (Hapus Karyawan) as UC_HapusKaryawan <<core>>
+    usecase (Atur Departemen) as UC_Departemen
+    usecase (Atur Jabatan) as UC_Jabatan
+}
+
+package "Absensi" as AttPkg {
+    usecase (Clock In) as UC_ClockIn
+    usecase (Clock Out) as UC_ClockOut
+    usecase (Lihat Riwayat Absensi) as UC_RiwayatAbsen
+    usecase (Kelola Absensi) as UC_KelolaAbsen <<core>>
+    usecase (Laporan Absensi) as UC_LapAbsen
+}
+
+package "Cuti & Izin" as LeavePkg {
+    usecase (Ajukan Cuti) as UC_AjukanCuti
+    usecase (Setujui/Tolak Cuti) as UC_ApproveCuti <<core>>
+    usecase (Lihat Saldo Cuti) as UC_SaldoCuti
+    usecase (Riwayat Cuti) as UC_RiwayatCuti
+}
+
+package "Penggajian" as PayrollPkg {
+    usecase (Lihat Slip Gaji) as UC_SlipGaji
+    usecase (Jalankan Payroll) as UC_RunPayroll <<core>>
+    usecase (Atur Struktur Gaji) as UC_StrukturGaji <<core>>
+    usecase (Approval Payroll) as UC_ApprovePayroll <<core>>
+    usecase (Lihat Laporan Penggajian) as UC_LapPayroll
+}
+
+package "Laporan & Analitik" as ReportPkg {
+    usecase (Dasbor Metrik) as UC_Dasbor
+    usecase (Laporan Kehadiran) as UC_RepAbsen
+    usecase (Laporan Cuti) as UC_RepCuti
+    usecase (Laporan Penggajian) as UC_RepPayroll
+    usecase (Ekspor PDF) as UC_ExportPDF
+}
+
+package "Manajemen Peran" as RolePkg {
+    usecase (Atur Hak Akses) as UC_HakAkses <<core>>
+    usecase (Kelola Peran) as UC_KelolaPeran <<core>>
+}
+
+' ============== RELASI AKTOR - USE CASE ==============
+' Semua aktor bisa login
+Karyawan --> UC_Login
+Manajer --> UC_Login
+HRD --> UC_Login
+Finance --> UC_Login
+SuperAdmin --> UC_Login
+
+' Karyawan
+Karyawan --> UC_LihatKaryawan
+Karyawan --> UC_ClockIn
+Karyawan --> UC_ClockOut
+Karyawan --> UC_RiwayatAbsen
+Karyawan --> UC_AjukanCuti
+Karyawan --> UC_SaldoCuti
+Karyawan --> UC_RiwayatCuti
+Karyawan --> UC_SlipGaji
+Karyawan --> UC_Dasbor
+
+' Manajer
+Manajer --> UC_ApproveCuti
+Manajer --> UC_LihatKaryawan
+Manajer --> UC_LapAbsen
+Manajer --> UC_LapCuti
+Manajer --> UC_RepPayroll
+
+' HRD
+HRD --> UC_TambahKaryawan
+HRD --> UC_EditKaryawan
+HRD --> UC_HapusKaryawan
+HRD --> UC_Departemen
+HRD --> UC_Jabatan
+HRD --> UC_KelolaAbsen
+HRD --> UC_LapAbsen
+HRD --> UC_LapCuti
+HRD --> UC_Dasbor
+HRD --> UC_ExportPDF
+
+' Finance
+Finance --> UC_RunPayroll
+Finance --> UC_ApprovePayroll
+Finance --> UC_LapPayroll
+Finance --> UC_RepPayroll
+Finance --> UC_ExportPDF
+
+' Super Admin
+SuperAdmin --> UC_HakAkses
+SuperAdmin --> UC_KelolaPeran
+SuperAdmin --> UC_StrukturGaji
+SuperAdmin --> UC_TambahKaryawan
+SuperAdmin --> UC_EditKaryawan
+SuperAdmin --> UC_HapusKaryawan
+SuperAdmin --> UC_RunPayroll
+SuperAdmin --> UC_ApprovePayroll
+
+' ============== RELASI INCLUDE / EXTEND ==============
+UC_AjukanCuti ..> UC_RiwayatCuti : <<include>>
+UC_RunPayroll ..> UC_ApprovePayroll : <<include>>
+UC_Dasbor ..> UC_ExportPDF : <<extend>>
+UC_LapAbsen ..> UC_ExportPDF : <<extend>>
+UC_LapPayroll ..> UC_ExportPDF : <<extend>>
+
+note right of UC_RunPayroll
+  **Alur Payroll:**
+  Draft -> Reviewed
+  -> Approved -> Finalized
+  -> Published
+end note
+
+note bottom of UC_ApproveCuti
+  **Status Cuti:**
+  Pending -> Disetujui/Ditolak
+end note
+
+@enduml

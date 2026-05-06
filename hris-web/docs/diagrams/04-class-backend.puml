@@ -1,0 +1,258 @@
+@startuml HRIS_ClassDiagram
+title Diagram Kelas - Backend API (Node.js + Express)
+
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor White
+    ArrowColor #5341cd
+    BorderColor #474554
+}
+
+' ============== KONTROLER ==============
+package "Kontroler (Controllers)" as Controllers {
+    class AuthController {
+        +login(req, res): Promise
+        +register(req, res): Promise
+        +logout(req, res): Promise
+        +refreshToken(req, res): Promise
+    }
+    
+    class EmployeeController {
+        +getAll(req, res): Promise
+        +getById(req, res): Promise
+        +create(req, res): Promise
+        +update(req, res): Promise
+        +delete(req, res): Promise
+    }
+    
+    class AttendanceController {
+        +clockIn(req, res): Promise
+        +clockOut(req, res): Promise
+        +getByEmployee(req, res): Promise
+        +getDailyReport(req, res): Promise
+    }
+    
+    class LeaveController {
+        +createRequest(req, res): Promise
+        +approveRequest(req, res): Promise
+        +rejectRequest(req, res): Promise
+        +getByEmployee(req, res): Promise
+        +getPending(req, res): Promise
+    }
+    
+    class PayrollController {
+        +createRun(req, res): Promise
+        +getRuns(req, res): Promise
+        +getRunDetail(req, res): Promise
+        +approveRun(req, res): Promise
+        +finalizeRun(req, res): Promise
+        +generatePayslip(req, res): Promise
+    }
+    
+    class ReportController {
+        +getDashboardMetrics(req, res): Promise
+        +getSalaryDistribution(req, res): Promise
+        +getLeaveStats(req, res): Promise
+        +getAttendanceTrend(req, res): Promise
+        +exportPDF(req, res): Promise
+    }
+}
+
+' ============== LAYANAN ==============
+package "Layanan (Services)" as Services {
+    class AuthService {
+        +validateCredentials(nik, password): User
+        +generateToken(user): String
+        +hashPassword(password): String
+        +verifyToken(token): Payload
+    }
+    
+    class EmployeeService {
+        +findAll(filters): Employee[]
+        +findById(id): Employee
+        +create(data): Employee
+        +update(id, data): Employee
+        +remove(id): Boolean
+    }
+    
+    class AttendanceService {
+        +recordClockIn(employeeId, data): Attendance
+        +recordClockOut(employeeId, data): Attendance
+        +calculateHours(clockIn, clockOut): Number
+        +getDailySummary(date): Summary
+    }
+    
+    class LeaveService {
+        +createRequest(data): LeaveRequest
+        +processApproval(id, status, approver): LeaveRequest
+        +calculateBalance(employeeId): Number
+        +getPendingApprovals(): LeaveRequest[]
+    }
+    
+    class PayrollService {
+        +createPayrollRun(period, inputs): PayrollRun
+        +calculateGross(employeeId, period): Number
+        +calculateDeductions(employeeId, period): Number
+        +calculateNet(gross, deductions): Number
+        +generateRunItems(runId): PayrollRunItem[]
+        +approveRun(runId, approver): PayrollRun
+        +finalizeRun(runId): PayrollRun
+    }
+    
+    class ReportService {
+        +getHeadcount(): Number
+        +getAttendanceRate(period): Percentage
+        +getLeaveStats(period): Object
+        +getPayrollSummary(period): Object
+        +generatePDF(data): Buffer
+    }
+}
+
+' ============== REPOSITORI / DB ==============
+package "Akses Data (Data Access)" as DataAccess {
+    class Database {
+        +query(sql, params): Promise
+        +transaction(callback): Promise
+        +pool: ConnectionPool
+    }
+    
+    class QueryBuilder {
+        +select(columns): QueryBuilder
+        +from(table): QueryBuilder
+        +where(condition): QueryBuilder
+        +join(table, on): QueryBuilder
+        +build(): String
+    }
+}
+
+' ============== MODEL / ENTITY ==============
+package "Entitas (Models)" as Models {
+    class User {
+        +id: INT
+        +nik: String
+        +email: String
+        +password: String
+        +role: String
+        +employeeId: INT
+        +isActive: Boolean
+    }
+    
+    class Employee {
+        +id: INT
+        +name: String
+        +departmentId: INT
+        +positionId: INT
+        +contractEnd: Date
+        +isActive: Boolean
+    }
+    
+    class Attendance {
+        +id: INT
+        +employeeId: INT
+        +clockIn: DateTime
+        +clockOut: DateTime
+        +status: String
+        +gpsLocation: String
+    }
+    
+    class LeaveRequest {
+        +id: INT
+        +employeeId: INT
+        +leaveType: String
+        +startDate: Date
+        +endDate: Date
+        +reason: String
+        +status: String
+    }
+    
+    class PayrollRun {
+        +id: INT
+        +periodMonth: Date
+        +status: String
+        +employeeCount: INT
+        +totalGross: BIGINT
+        +totalDeduction: BIGINT
+        +totalNet: BIGINT
+    }
+    
+    class PayrollRunItem {
+        +id: INT
+        +payrollRunId: INT
+        +employeeId: INT
+        +grossAmount: BIGINT
+        +deductionAmount: BIGINT
+        +netAmount: BIGINT
+    }
+}
+
+' ============== MIDDLEWARE ==============
+package "Middleware" as Middleware {
+    class AuthMiddleware {
+        +verifyToken(req, res, next): void
+        +requireAuth(req, res, next): void
+    }
+    
+    class RoleMiddleware {
+        +requireRole(...roles): void
+        +requireHR(req, res, next): void
+        +requireFinance(req, res, next): void
+    }
+    
+    class ErrorHandler {
+        +handleError(err, req, res, next): void
+        +notFound(req, res): void
+    }
+}
+
+' ============== UTILITAS ==============
+package "Utilitas" as Utils {
+    class Validator {
+        +validateNIK(nik): Boolean
+        +validateEmail(email): Boolean
+        +validateDateRange(start, end): Boolean
+    }
+    
+    class Formatter {
+        +formatRupiah(amount): String
+        +formatDate(date): String
+        +formatPeriod(month, year): String
+    }
+    
+    class AuditLogger {
+        +log(action, actor, data): void
+        +logPayrollChange(runId, before, after): void
+    }
+}
+
+' ============== RELASI ==============
+AuthController --> AuthService : menggunakan
+EmployeeController --> EmployeeService : menggunakan
+AttendanceController --> AttendanceService : menggunakan
+LeaveController --> LeaveService : menggunakan
+PayrollController --> PayrollService : menggunakan
+ReportController --> ReportService : menggunakan
+
+AuthService --> Database : query
+EmployeeService --> Database : query
+AttendanceService --> Database : query
+LeaveService --> Database : query
+PayrollService --> Database : query
+ReportService --> Database : query
+
+AuthService --> User : mengelola
+EmployeeService --> Employee : mengelola
+AttendanceService --> Attendance : mengelola
+LeaveService --> LeaveRequest : mengelola
+PayrollService --> PayrollRun : mengelola
+PayrollService --> PayrollRunItem : mengelola
+
+AuthMiddleware --> AuthService : memverifikasi
+RoleMiddleware --> User : memeriksa peran
+
+PayrollService --> AuditLogger : mencatat audit
+ReportService --> Formatter : memformat
+EmployeeService --> Validator : memvalidasi
+
+Database --> QueryBuilder : menggunakan
+
+@enduml
