@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as NavigationBar from 'expo-navigation-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -35,6 +36,7 @@ function MainTabs() {
     { name: 'Attendance', component: AttendanceScreen, iconFocused: 'calendar', iconOutline: 'calendar-outline' },
     { name: 'Payroll', component: PayrollTaxScreen, iconFocused: 'wallet', iconOutline: 'wallet-outline', hide: isEmployee },
     { name: 'Leave', component: LeaveScreen, iconFocused: 'layers', iconOutline: 'layers-outline' },
+    { name: 'Profile', component: ProfileScreen, iconFocused: 'person', iconOutline: 'person-outline' },
   ]
 
   return (
@@ -73,8 +75,9 @@ function AppContent() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F3F4F6' }}>
+      <View style={styles.loadingScreen}>
         <ActivityIndicator size="large" color="#8B5CF6" />
+        <Text style={styles.loadingText}>Memulihkan sesi...</Text>
       </View>
     );
   }
@@ -105,13 +108,17 @@ export default function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  loadingScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F3F4F6' },
+  loadingText: { marginTop: 12, fontSize: 14, color: '#6B7280' },
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',

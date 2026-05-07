@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  StyleSheet, Text, View, TouchableOpacity, SafeAreaView,
+  StyleSheet, Text, View, TouchableOpacity,
   TextInput, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,6 +16,14 @@ export default function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [remember, setRemember] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const savedNik = await AsyncStorage.getItem('hris_saved_nik');
+      if (savedNik) setNik(savedNik);
+    })();
+  }, []);
 
   const handleLogin = async () => {
     if (!nik || !password) {
@@ -24,6 +34,11 @@ export default function LoginScreen({ navigation }) {
     setError('');
     try {
       await login(nik, password);
+      if (remember) {
+        await AsyncStorage.setItem('hris_saved_nik', nik);
+      } else {
+        await AsyncStorage.removeItem('hris_saved_nik');
+      }
     } catch (err) {
       setError(err.message || 'Login gagal. Periksa NIK dan password.');
     } finally {
@@ -86,6 +101,11 @@ export default function LoginScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           </View>
+
+          <TouchableOpacity style={styles.rememberRow} onPress={() => setRemember(!remember)}>
+            <Ionicons name={remember ? 'checkbox' : 'square-outline'} size={22} color="#5341cd" />
+            <Text style={styles.rememberLabel}>Simpan login</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.btnPrimary, loading && styles.btnDisabled]}

@@ -7,6 +7,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sessionError, setSessionError] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -18,6 +19,7 @@ export function AuthProvider({ children }) {
           setUser(me);
         }
       } catch {
+        setSessionError(true);
         await AsyncStorage.removeItem('auth_token');
         clearApiToken();
       } finally {
@@ -50,7 +52,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, sessionError, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

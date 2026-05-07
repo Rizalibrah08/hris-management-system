@@ -14,7 +14,7 @@
 // ============================================================
 
 // URL ngrok Anda (GANTI INI setiap kali jalankan ngrok)
-const NGROK_URL = 'https://YOUR_NGROK_URL_HERE.ngrok-free.app';
+const NGROK_URL = 'https://reformer-flagman-urologist.ngrok-free.dev';
 
 // URL production (ganti saat deploy)
 const PROD_URL = 'https://your-production-api.com';
@@ -40,6 +40,7 @@ async function request(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   const headers = {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
     ...(options.headers || {}),
   };
   if (authToken) {

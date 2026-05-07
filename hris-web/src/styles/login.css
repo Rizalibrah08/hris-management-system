@@ -46,3 +46,24 @@
   color: #fff;
   cursor: pointer;
 }
+
+.remember-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.remember-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #4b3ac3;
+  cursor: pointer;
+}
+
+.remember-label {
+  font-size: 13px;
+  color: #4b5587 !important;
+  cursor: pointer;
+  user-select: none;
+}
