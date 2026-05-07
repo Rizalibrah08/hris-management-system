@@ -126,3 +126,24 @@ CREATE TABLE IF NOT EXISTS payroll_audit_logs (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (payroll_run_id) REFERENCES payroll_runs(id)
 );
+
+CREATE TABLE IF NOT EXISTS payslips (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  employee_id INT NOT NULL,
+  payroll_run_id INT NOT NULL,
+  payroll_run_item_id INT NOT NULL,
+  slip_number VARCHAR(30) UNIQUE NOT NULL,
+  period_month DATE NOT NULL,
+  gross_amount BIGINT NOT NULL DEFAULT 0,
+  allowance_amount BIGINT NOT NULL DEFAULT 0,
+  deduction_amount BIGINT NOT NULL DEFAULT 0,
+  net_amount BIGINT NOT NULL DEFAULT 0,
+  tax_amount BIGINT NOT NULL DEFAULT 0,
+  bpjs_amount BIGINT NOT NULL DEFAULT 0,
+  pdf_url TEXT NULL,
+  published_at DATETIME NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (employee_id) REFERENCES employees(id),
+  FOREIGN KEY (payroll_run_id) REFERENCES payroll_runs(id),
+  FOREIGN KEY (payroll_run_item_id) REFERENCES payroll_run_items(id)
+);

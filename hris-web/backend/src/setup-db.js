@@ -24,7 +24,7 @@ async function run() {
   await conn.query('SET FOREIGN_KEY_CHECKS = 0')
   const tablesToDrop = [
     'expenses', 'office_assets', 'tasks',
-    'payslip', 'payroll',
+    'payslips', 'payslip', 'payroll',
     'attendance', 'leave_request', 'users',
     'payroll_audit_logs', 'payroll_approvals', 'payroll_run_item_components',
     'payroll_run_items', 'payroll_runs', 'payroll_variable_inputs',
@@ -46,7 +46,7 @@ async function run() {
     'payroll_audit_logs', 'payroll_approvals', 'payroll_run_item_components',
     'payroll_run_items', 'payroll_runs', 'payroll_variable_inputs',
     'employee_salary_component_values', 'employee_salary_profiles',
-    'payroll_components', 'payslip', 'payroll',
+    'payroll_components', 'payslips', 'payslip', 'payroll',
     'attendance', 'leave_request', 'expenses', 'office_assets', 'tasks',
     'users', 'employees', 'positions', 'departments', 'roles',
   ]

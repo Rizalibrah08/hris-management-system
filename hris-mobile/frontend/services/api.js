@@ -136,6 +136,12 @@ export const api = {
     myRunDetail: (id) => request(`/payroll/my-runs/${id}`),
   },
 
+  payslips: {
+    my: () => request('/payslips/my'),
+    detail: (id) => request(`/payslips/${id}`),
+    pdf: (id) => request(`/payslips/${id}/pdf`),
+  },
+
   dashboard: {
     mobile: () => request('/dashboard/mobile'),
   },

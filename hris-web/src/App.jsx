@@ -11,6 +11,7 @@ import Karyawan from './pages/Karyawan'
 import Absensi from './pages/Absensi'
 import Cuti from './pages/Cuti'
 import RoleManagement from './pages/RoleManagement'
+import SlipGaji from './pages/SlipGaji'
 import { useAuth } from './contexts/AuthContext'
 // Payroll page is still handled by FeaturePages component
 
@@ -20,6 +21,7 @@ const menus = [
   { key: 'absensi', label: 'Absensi' },
   { key: 'cuti', label: 'Cuti & Izin' },
   { key: 'payroll', label: 'Payroll' },
+  { key: 'slipgaji', label: 'Slip Gaji' },
   { key: 'laporan', label: 'Laporan' },
   { key: 'role', label: 'Role Management' },
 ]
@@ -326,6 +328,7 @@ function App() {
         {activePage === 'absensi' && <Absensi />}
         {activePage === 'cuti' && <Cuti />}
         {activePage === 'role' && role === 'Super Admin' && <RoleManagement />}
+        {activePage === 'slipgaji' && <SlipGaji />}
         {['payroll', 'laporan'].includes(activePage) && (
           <FeaturePages
             activePage={activePage}

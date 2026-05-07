@@ -1272,15 +1272,138 @@ app.get('/dashboard/mobile', authRequired, async (req, res) => {
   })
 })
 
-app.get('/payslip/:id', authRequired, async (req, res) => {
-  const rows = await query(
-    `SELECT p.*, py.salary, py.allowance, py.deduction, py.total
-     FROM payslip p
-     JOIN payroll py ON py.id = p.payroll_id
-     WHERE p.id = ?`,
-    [req.params.id],
+function generateSlipNumber(runId, empId) {
+  const d = new Date()
+  return `SLIP-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}-${String(runId).padStart(4, '0')}-${String(empId).padStart(4, '0')}`
+}
+
+app.post('/payroll/runs/:runId/payslips/generate', authRequired, roleRequired('HRD', 'Finance', 'Super Admin'), async (req, res) => {
+  const runId = Number(req.params.runId)
+  const run = await query('SELECT * FROM payroll_runs WHERE id = ?', [runId])
+  if (!run.length) return res.status(404).json({ message: 'Payroll run tidak ditemukan' })
+  if (run[0].status !== 'finalized') return res.status(400).json({ message: 'Hanya run yang sudah finalized yang bisa generate payslip' })
+
+  const existing = await query('SELECT COUNT(*) AS cnt FROM payslips WHERE payroll_run_id = ?', [runId])
+  if (existing[0].cnt > 0) return res.status(400).json({ message: 'Payslip untuk run ini sudah digenerate' })
+
+  const items = await query(
+    `SELECT pri.*, e.name AS employee_name
+     FROM payroll_run_items pri
+     JOIN employees e ON e.id = pri.employee_id
+     WHERE pri.payroll_run_id = ?
+     ORDER BY pri.id`,
+    [runId],
   )
-  res.json(rows[0] || null)
+
+  let count = 0
+  for (const item of items) {
+    const slipNumber = generateSlipNumber(runId, item.employee_id)
+    await query(
+      `INSERT INTO payslips(employee_id, payroll_run_id, payroll_run_item_id, slip_number, period_month, gross_amount, allowance_amount, deduction_amount, net_amount, tax_amount, bpjs_amount, published_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [item.employee_id, runId, item.id, slipNumber, run[0].period_month, item.gross_amount, item.gross_amount - (item.deduction_amount + item.tax_amount + item.bpjs_amount), item.deduction_amount, item.net_amount, item.tax_amount, item.bpjs_amount],
+    )
+    count++
+  }
+
+  await query("UPDATE payroll_runs SET status='published', updated_at=NOW() WHERE id=?", [runId])
+  res.json({ message: `${count} payslip berhasil digenerate`, count, runId: Number(runId) })
+})
+
+app.get('/payslips', authRequired, roleRequired('HRD', 'Finance', 'Super Admin'), async (req, res) => {
+  const { runId, employeeId } = req.query
+  let sql = `SELECT ps.*, e.name AS employee_name, d.name AS department, p.name AS position
+     FROM payslips ps
+     JOIN employees e ON e.id = ps.employee_id
+     LEFT JOIN departments d ON d.id = e.department_id
+     LEFT JOIN positions p ON p.id = e.position_id`
+  const params = []
+  const conditions = []
+  if (runId) { conditions.push('ps.payroll_run_id = ?'); params.push(Number(runId)) }
+  if (employeeId) { conditions.push('ps.employee_id = ?'); params.push(Number(employeeId)) }
+  if (conditions.length) sql += ' WHERE ' + conditions.join(' AND ')
+  sql += ' ORDER BY ps.created_at DESC'
+  const rows = await query(sql, params)
+  res.json(rows)
+})
+
+app.get('/payslips/my', authRequired, async (req, res) => {
+  const empId = req.user.employeeId
+  if (!empId) return res.json([])
+  const rows = await query(
+    `SELECT ps.*, e.name AS employee_name, d.name AS department, p.name AS position
+     FROM payslips ps
+     JOIN employees e ON e.id = ps.employee_id
+     LEFT JOIN departments d ON d.id = e.department_id
+     LEFT JOIN positions p ON p.id = e.position_id
+     WHERE ps.employee_id = ?
+     ORDER BY ps.period_month DESC`,
+    [empId],
+  )
+  res.json(rows)
+})
+
+app.get('/payslips/:id', authRequired, async (req, res) => {
+  const payslipId = Number(req.params.id)
+  const rows = await query(
+    `SELECT ps.*, e.name AS employee_name, e.email, e.phone, d.name AS department, p.name AS position,
+            pr.status AS run_status, pr.period_month AS run_period
+     FROM payslips ps
+     JOIN employees e ON e.id = ps.employee_id
+     LEFT JOIN departments d ON d.id = e.department_id
+     LEFT JOIN positions p ON p.id = e.position_id
+     JOIN payroll_runs pr ON pr.id = ps.payroll_run_id
+     WHERE ps.id = ?`,
+    [payslipId],
+  )
+  if (!rows.length) return res.status(404).json({ message: 'Payslip tidak ditemukan' })
+  const payslip = rows[0]
+
+  if (req.user.role === 'Employee' && payslip.employee_id !== req.user.employeeId) {
+    return res.status(403).json({ message: 'Anda hanya bisa melihat payslip sendiri' })
+  }
+
+  const components = await query(
+    `SELECT pric.component_name_snapshot, pric.component_type, pric.amount
+     FROM payroll_run_item_components pric
+     WHERE pric.payroll_run_item_id = ?
+     ORDER BY pric.component_type, pric.id`,
+    [payslip.payroll_run_item_id],
+  )
+
+  payslip.components = components
+  res.json(payslip)
+})
+
+app.get('/payslips/:id/pdf', authRequired, async (req, res) => {
+  const payslipId = Number(req.params.id)
+  const rows = await query(
+    `SELECT ps.*, e.name AS employee_name, e.email, d.name AS department, p.name AS position,
+            u.nik
+     FROM payslips ps
+     JOIN employees e ON e.id = ps.employee_id
+     LEFT JOIN departments d ON d.id = e.department_id
+     LEFT JOIN positions p ON p.id = e.position_id
+     LEFT JOIN users u ON u.employee_id = e.id
+     WHERE ps.id = ?`,
+    [payslipId],
+  )
+  if (!rows.length) return res.status(404).json({ message: 'Payslip tidak ditemukan' })
+  const payslip = rows[0]
+
+  if (req.user.role === 'Employee' && payslip.employee_id !== req.user.employeeId) {
+    return res.status(403).json({ message: 'Anda hanya bisa mengunduh payslip sendiri' })
+  }
+
+  const components = await query(
+    `SELECT component_name_snapshot, component_type, amount
+     FROM payroll_run_item_components
+     WHERE payroll_run_item_id = ?
+     ORDER BY component_type, id`,
+    [payslip.payroll_run_item_id],
+  )
+
+  res.json({ ...payslip, components })
 })
 
 app.get('/reports/dashboard', authRequired, roleRequired('HRD', 'Finance', 'Super Admin'), async (_, res) => {

@@ -1,0 +1,168 @@
+/* ===== Slip Gaji ===== */
+
+.generate-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.generate-form select {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  min-width: 280px;
+}
+
+.generate-form select:focus {
+  border-color: #4b3ac3;
+}
+
+.amount-cell {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 600;
+}
+
+.amount-cell.earning {
+  color: #065f46;
+}
+
+.amount-cell.deduction {
+  color: #991b1b;
+}
+
+.amount-cell.net {
+  color: #1d2340;
+  font-size: 14px;
+}
+
+/* Detail modal */
+.payslip-detail {
+  max-width: 580px;
+}
+
+.payslip-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.payslip-header h3 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.payslip-header p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.payslip-info {
+  background: #f6f8ff;
+  border-radius: 10px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.info-row span {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.info-row strong {
+  font-size: 13px;
+}
+
+.payslip-components h4 {
+  margin: 12px 0 8px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.payslip-components table {
+  margin-bottom: 8px;
+}
+
+.payslip-components .total-row td {
+  font-weight: 700;
+  border-top: 2px solid #e5e7eb;
+  padding-top: 8px;
+}
+
+.payslip-net {
+  margin-top: 16px;
+  padding: 14px;
+  background: #ecfdf5;
+  border-radius: 10px;
+  border: 1px solid #a7f3d0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.payslip-net span {
+  font-size: 14px;
+  color: #065f46;
+}
+
+.payslip-net strong {
+  font-size: 20px;
+  color: #065f46;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease;
+  max-width: 400px;
+  cursor: pointer;
+}
+
+.toast.success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.toast.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.loading-text,
+.empty-text {
+  text-align: center;
+  padding: 24px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.table-container {
+  overflow-x: auto;
+}

@@ -34,7 +34,7 @@ function MainTabs() {
   const tabs = [
     { name: 'Home', component: DashboardScreen, iconFocused: 'home', iconOutline: 'home-outline' },
     { name: 'Attendance', component: AttendanceScreen, iconFocused: 'calendar', iconOutline: 'calendar-outline' },
-    { name: 'Payroll', component: PayrollTaxScreen, iconFocused: 'wallet', iconOutline: 'wallet-outline', hide: isEmployee },
+    { name: 'Payroll', component: PayrollTaxScreen, iconFocused: 'wallet', iconOutline: 'wallet-outline' },
     { name: 'Leave', component: LeaveScreen, iconFocused: 'layers', iconOutline: 'layers-outline' },
     { name: 'Profile', component: ProfileScreen, iconFocused: 'person', iconOutline: 'person-outline' },
   ]
