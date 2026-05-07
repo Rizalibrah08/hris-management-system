@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
-  StyleSheet, Text, View, TouchableOpacity,
+  StyleSheet, Text, View, TouchableOpacity, Modal,
   TextInput, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
-import * as LocalAuthentication from 'expo-local-authentication';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../contexts/AuthContext';
-
-const BIO_NIK_KEY = 'hris_biometric_nik';
-const BIO_PASS_KEY = 'hris_biometric_pass';
+import { getServerUrl, setServerUrl } from '../services/api';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
@@ -22,25 +18,19 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [remember, setRemember] = useState(true);
-  const [bioAvailable, setBioAvailable] = useState(false);
-  const [bioType, setBioType] = useState(null);
+  const [serverModal, setServerModal] = useState(false);
+  const [serverUrl, setServerUrlState] = useState('');
+  const [serverInput, setServerInput] = useState('');
+  const [serverSaving, setServerSaving] = useState(false);
+  const [serverMsg, setServerMsg] = useState('');
 
   useEffect(() => {
     (async () => {
       const savedNik = await AsyncStorage.getItem('hris_saved_nik');
       if (savedNik) setNik(savedNik);
-      const bioNik = await SecureStore.getItemAsync(BIO_NIK_KEY);
-      if (bioNik) {
-        const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
-        const hasBiometric = await LocalAuthentication.hasHardwareAsync();
-        const enrolled = await LocalAuthentication.isEnrolledAsync();
-        if (hasBiometric && enrolled && types.length > 0) {
-          setBioAvailable(true);
-          setBioType(types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)
-            ? 'Face ID' : 'Sidik Jari');
-          setNik(bioNik);
-        }
-      }
+      const url = await getServerUrl();
+      setServerUrlState(url);
+      setServerInput(url);
     })();
   }, []);
 
@@ -55,12 +45,8 @@ export default function LoginScreen({ navigation }) {
       await login(nik, password);
       if (remember) {
         await AsyncStorage.setItem('hris_saved_nik', nik);
-        await SecureStore.setItemAsync(BIO_NIK_KEY, nik);
-        await SecureStore.setItemAsync(BIO_PASS_KEY, password);
       } else {
         await AsyncStorage.removeItem('hris_saved_nik');
-        await SecureStore.deleteItemAsync(BIO_NIK_KEY);
-        await SecureStore.deleteItemAsync(BIO_PASS_KEY);
       }
     } catch (err) {
       setError(err.message || 'Login gagal. Periksa NIK dan password.');
@@ -69,30 +55,28 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
-  const handleBiometricLogin = async () => {
-    try {
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: `Masuk dengan ${bioType}`,
-        fallbackLabel: 'Gunakan password',
-      });
-      if (result.success) {
-        const savedNik = await SecureStore.getItemAsync(BIO_NIK_KEY);
-        const savedPass = await SecureStore.getItemAsync(BIO_PASS_KEY);
-        if (savedNik && savedPass) {
-          setNik(savedNik);
-          setPassword(savedPass);
-          setLoading(true);
-          try {
-            await login(savedNik, savedPass);
-          } catch (err) {
-            setError(err.message || 'Login gagal dengan biometrik');
-          } finally {
-            setLoading(false);
-          }
-        }
-      }
-    } catch {}
+  const handleSaveServer = async () => {
+    setServerSaving(true);
+    setServerMsg('');
+    const trimmed = serverInput.trim();
+    if (!trimmed) {
+      await setServerUrl(null);
+      const url = await getServerUrl();
+      setServerUrlState(url);
+      setServerInput(url);
+      setServerMsg('URL direset ke auto-detect');
+    } else if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+      setServerMsg('URL harus diawali http:// atau https://');
+    } else {
+      await setServerUrl(trimmed);
+      setServerUrlState(trimmed);
+      setServerInput(trimmed);
+      setServerMsg('URL server disimpan');
+    }
+    setServerSaving(false);
   };
+
+  const isCustomUrl = serverUrl && !serverUrl.includes(':5000') || serverUrl && serverUrl.startsWith('https://');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -155,20 +139,6 @@ export default function LoginScreen({ navigation }) {
             <Text style={styles.rememberLabel}>Simpan login</Text>
           </TouchableOpacity>
 
-          {bioAvailable && (
-            <TouchableOpacity
-              style={[styles.btnBio, loading && styles.btnDisabled]}
-              onPress={handleBiometricLogin}
-              disabled={loading}
-            >
-              <Ionicons
-                name={bioType === 'Face ID' ? 'scan-outline' : 'finger-print-outline'}
-                size={22} color="#5341cd"
-              />
-              <Text style={styles.btnBioText}>Masuk dengan {bioType}</Text>
-            </TouchableOpacity>
-          )}
-
           <TouchableOpacity
             style={[styles.btnPrimary, loading && styles.btnDisabled]}
             onPress={handleLogin}
@@ -180,8 +150,49 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.btnPrimaryText}>Masuk</Text>
             )}
           </TouchableOpacity>
+
+          <TouchableOpacity style={styles.serverRow} onPress={() => setServerModal(true)}>
+            <Ionicons name="server-outline" size={14} color="#9CA3AF" />
+            <Text style={styles.serverLabel} numberOfLines={1}>
+              {isCustomUrl ? serverUrl : 'Auto-detect (LAN)'}
+            </Text>
+            <Ionicons name="settings-outline" size={14} color="#9CA3AF" />
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal visible={serverModal} transparent animationType="fade" onRequestClose={() => setServerModal(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setServerModal(false)}>
+          <TouchableOpacity style={styles.modalContent} activeOpacity={1}>
+            <Text style={styles.modalTitle}>Pengaturan Server</Text>
+            <Text style={styles.modalHint}>
+              Gunakan ngrok jika HP & PC beda WiFi:{'\n'}
+              <Text style={styles.modalCode}>ngrok http 5000</Text>
+              {'\n'}Lalu salin URL https://xxxx.ngrok.io ke sini.
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="https://xxxx.ngrok-free.app"
+              value={serverInput}
+              onChangeText={setServerInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+            />
+            {serverMsg ? (
+              <Text style={[styles.modalMsg, serverMsg.includes('disimpan') ? styles.modalMsgOk : {}]}>{serverMsg}</Text>
+            ) : null}
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalBtnReset} onPress={handleSaveServer} disabled={serverSaving}>
+                <Text style={styles.modalBtnText}>{serverInput.trim() ? 'Simpan URL' : 'Reset ke Auto'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalBtnClose} onPress={() => setServerModal(false)}>
+                <Text style={styles.modalBtnCloseText}>Tutup</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -203,8 +214,21 @@ const styles = StyleSheet.create({
   btnPrimary: { backgroundColor: '#5341cd', paddingVertical: 16, borderRadius: 30, alignItems: 'center', marginBottom: 20, marginTop: 10, shadowColor: '#5341cd', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
   btnPrimaryText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
   btnDisabled: { opacity: 0.5 },
-  btnBio: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#5341cd', paddingVertical: 14, borderRadius: 30, marginBottom: 12, gap: 8 },
-  btnBioText: { color: '#5341cd', fontSize: 15, fontWeight: 'bold' },
   rememberRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 8 },
   rememberLabel: { fontSize: 14, color: '#474554' },
+  serverRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 8 },
+  serverLabel: { fontSize: 11, color: '#9CA3AF', maxWidth: '80%' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', paddingHorizontal: 24 },
+  modalContent: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 24 },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#191c1f', marginBottom: 12 },
+  modalHint: { fontSize: 13, color: '#6B7280', marginBottom: 16, lineHeight: 20 },
+  modalCode: { fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', color: '#5341cd', fontWeight: '600' },
+  modalInput: { borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: '#191c1f', marginBottom: 8 },
+  modalMsg: { fontSize: 12, color: '#EF4444', marginBottom: 8 },
+  modalMsgOk: { color: '#10B981' },
+  modalActions: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  modalBtnReset: { flex: 1, backgroundColor: '#5341cd', paddingVertical: 12, borderRadius: 24, alignItems: 'center' },
+  modalBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
+  modalBtnClose: { flex: 1, paddingVertical: 12, borderRadius: 24, alignItems: 'center', borderWidth: 1, borderColor: '#D1D5DB' },
+  modalBtnCloseText: { color: '#6B7280', fontSize: 14 },
 });

@@ -439,9 +439,6 @@ async function run() {
       [empId, salary, allowance, deduction, total, '2026-04-01'])
   }
 
-  await conn.execute("INSERT IGNORE INTO company_settings(setting_key, setting_value) VALUES ('office_latitude', '-6.2088')")
-  await conn.execute("INSERT IGNORE INTO company_settings(setting_key, setting_value) VALUES ('office_longitude', '106.8456')")
-  await conn.execute("INSERT IGNORE INTO company_settings(setting_key, setting_value) VALUES ('allowed_radius', '500')")
 
   await conn.end()
   console.log(`Database ${database} siap digunakan di ${host}:${port}`)

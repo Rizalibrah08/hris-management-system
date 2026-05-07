@@ -25,8 +25,11 @@ export default function PayrollDetailsScreen() {
     try {
       setLoading(true);
       if (runId) {
-        const data = await api.payroll.myRunDetail(runId);
-        setSalary(data || runItem);
+        const res = await api.payroll.myRunDetail(runId);
+        const item = res?.items?.[0] || {};
+        const run = res?.run || {};
+        const components = res?.components || [];
+        setSalary({ ...item, components, period_month: run.period_month });
       } else {
         const data = await api.payroll.mySalary();
         setSalary(data || runItem);

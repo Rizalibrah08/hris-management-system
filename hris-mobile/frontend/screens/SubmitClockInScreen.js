@@ -19,7 +19,6 @@ export default function SubmitClockInScreen() {
   const photoUri = route.params?.photoUri || '';
   const action = route.params?.action || 'clockin';
   const attendanceId = route.params?.attendanceId;
-  const gpsLocation = route.params?.gpsLocation;
   const isClockOut = action === 'clockout';
   
   const [notes, setNotes] = useState('');
@@ -56,7 +55,7 @@ export default function SubmitClockInScreen() {
           [{ resize: { width: 800 } }],
           { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG },
         );
-        await api.attendance.clockIn(user.employeeId, gpsLocation, compressed.uri);
+        await api.attendance.clockIn(user.employeeId, null, compressed.uri);
         setIsSuccessVisible(true);
       } catch (err) {
         Alert.alert('Gagal', err.message || 'Clock in gagal');
@@ -95,11 +94,6 @@ export default function SubmitClockInScreen() {
               
               {/* Overlay Info */}
               <View style={styles.overlayInfo}>
-                {gpsLocation && (
-                  <Text style={styles.overlayText}>
-                    Lat: {gpsLocation.split(',')[0]?.trim()?.slice(0, 9)} Long: {gpsLocation.split(',')[1]?.trim()?.slice(0, 9)}
-                  </Text>
-                )}
                 <Text style={styles.overlayText}>{currentTime}</Text>
               </View>
 

@@ -12,7 +12,6 @@ import Absensi from './pages/Absensi'
 import Cuti from './pages/Cuti'
 import RoleManagement from './pages/RoleManagement'
 import SlipGaji from './pages/SlipGaji'
-import Lokasi from './pages/Lokasi'
 import MasterData from './pages/MasterData'
 import { useAuth } from './contexts/AuthContext'
 // Payroll page is still handled by FeaturePages component
@@ -25,7 +24,6 @@ const menus = [
   { key: 'payroll', label: 'Payroll' },
   { key: 'slipgaji', label: 'Slip Gaji' },
   { key: 'laporan', label: 'Laporan' },
-  { key: 'lokasi',    label: 'Lokasi Kantor' },
   { key: 'masterdata', label: 'Master Data' },
   { key: 'role',       label: 'Role Management' },
 ]
@@ -390,7 +388,6 @@ function App() {
         {activePage === 'cuti' && <Cuti />}
         {activePage === 'role' && role === 'Super Admin' && <RoleManagement />}
         {activePage === 'slipgaji' && <SlipGaji />}
-        {activePage === 'lokasi' && ['HRD', 'Super Admin'].includes(role) && <Lokasi />}
         {activePage === 'masterdata' && ['HRD', 'Super Admin'].includes(role) && <MasterData />}
         {['payroll', 'laporan'].includes(activePage) && (
           <FeaturePages

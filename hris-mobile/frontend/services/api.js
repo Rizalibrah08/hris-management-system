@@ -129,11 +129,17 @@ async function requestMultipart(endpoint, formData) {
   console.log(`[API Upload] POST ${url}`);
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
     const response = await fetch(url, {
       method: 'POST',
       headers,
       body: formData,
+      signal: controller.signal,
     });
+
+    clearTimeout(timeout);
 
     if (!response.ok) {
       let message = `Upload failed (${response.status})`;
@@ -148,7 +154,20 @@ async function requestMultipart(endpoint, formData) {
 
     return response.json();
   } catch (error) {
+    if (error.name === 'AbortError') {
+      const timeoutError = new Error('Upload timeout. Coba lagi dengan koneksi yang lebih stabil.');
+      console.error(`[API Error] ${timeoutError.message}`);
+      throw timeoutError;
+    }
     console.error(`[API Error] ${error.message}`);
+    if (error.message && error.message.includes('Network request failed')) {
+      throw new Error(
+        'Gagal terhubung ke server. Pastikan:\n' +
+        '1. Server HRIS berjalan\n' +
+        '2. HP & PC di WiFi yang sama\n' +
+        '3. Coba reload aplikasi'
+      );
+    }
     throw error;
   }
 }
@@ -184,22 +203,22 @@ export const api = {
   },
 
   attendance: {
-    clockIn: async (employeeId, gpsLocation, selfieUri) => {
-      const hasFile = selfieUri && (selfieUri.startsWith('file://') || selfieUri.startsWith('content://'));
-      if (hasFile) {
-        const formData = new FormData();
-        formData.append('employee_id', String(employeeId));
-        if (gpsLocation) formData.append('gps_location', gpsLocation);
-        formData.append('selfie', {
-          uri: selfieUri,
-          type: 'image/jpeg',
-          name: `selfie-${Date.now()}.jpg`,
-        });
-        return requestMultipart('/attendance/clockin', formData);
+    clockIn: async (employeeId, _gpsLocation, selfieUri) => {
+      if (selfieUri && (selfieUri.startsWith('file://') || selfieUri.startsWith('content://'))) {
+        try {
+          const blobResponse = await fetch(selfieUri);
+          const blob = await blobResponse.blob();
+          const formData = new FormData();
+          formData.append('employee_id', String(employeeId));
+          formData.append('selfie', blob, `selfie-${Date.now()}.jpg`);
+          return requestMultipart('/attendance/clockin', formData);
+        } catch {
+          // fallback: kirim tanpa selfie jika blob gagal
+        }
       }
       return request('/attendance/clockin', {
         method: 'POST',
-        body: JSON.stringify({ employee_id: employeeId, gps_location: gpsLocation, selfie: selfieUri }),
+        body: JSON.stringify({ employee_id: employeeId }),
       });
     },
 

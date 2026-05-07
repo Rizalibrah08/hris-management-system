@@ -20,7 +20,7 @@ const app = express()
 app.use(cors())
 app.use(helmet())
 app.use(morgan('dev'))
-app.use(express.json())
+app.use(express.json({ limit: '10mb' }))
 
 const uploadsDir = path.join(__dirname, 'uploads')
 const selfieStorage = multer.diskStorage({
@@ -76,72 +76,6 @@ app.use((req, res, next) => {
 })
 
 app.get('/health', (_, res) => res.json({ status: 'ok' }))
-
-function haversineDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371000
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLon = (lon2 - lon1) * Math.PI / 180
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
-
-async function getCompanyLocation() {
-  const rows = await query("SELECT setting_key, setting_value FROM company_settings WHERE setting_key IN ('office_latitude', 'office_longitude', 'allowed_radius')")
-  const map = Object.fromEntries(rows.map((r) => [r.setting_key, r.setting_value]))
-  return {
-    latitude: Number(map.office_latitude) || 0,
-    longitude: Number(map.office_longitude) || 0,
-    radius: Number(map.allowed_radius) || 500,
-  }
-}
-
-function parseGpsLocation(gps) {
-  if (!gps || typeof gps !== 'string') return null
-  const parts = gps.split(',').map((s) => Number(s.trim()))
-  if (parts.length !== 2 || Number.isNaN(parts[0]) || Number.isNaN(parts[1])) return null
-  return { latitude: parts[0], longitude: parts[1] }
-}
-
-async function validateGeofence(gps_location) {
-  const coords = parseGpsLocation(gps_location)
-  if (!coords) return { valid: false, message: 'Format GPS tidak valid (gunakan format: lat,lng)' }
-  const office = await getCompanyLocation()
-  if (!office.latitude || !office.longitude) return { valid: true }
-  const distance = haversineDistance(coords.latitude, coords.longitude, office.latitude, office.longitude)
-  if (distance > office.radius) {
-    return {
-      valid: false,
-      message: `Di luar radius absensi (${Math.round(distance)}m dari kantor, maksimum ${office.radius}m)`,
-      distance: Math.round(distance),
-      maxRadius: office.radius,
-    }
-  }
-  return { valid: true, distance: Math.round(distance), maxRadius: office.radius }
-}
-
-app.get('/company-settings', authRequired, async (_, res) => {
-  const office = await getCompanyLocation()
-  res.json(office)
-})
-
-app.put('/company-settings', authRequired, roleRequired('Super Admin'), async (req, res) => {
-  const { office_latitude, office_longitude, allowed_radius } = req.body
-  if (office_latitude !== undefined) {
-    if (Number.isNaN(Number(office_latitude))) return res.status(400).json({ message: 'Latitude tidak valid' })
-    await query("INSERT INTO company_settings(setting_key, setting_value) VALUES ('office_latitude', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)", [String(office_latitude)])
-  }
-  if (office_longitude !== undefined) {
-    if (Number.isNaN(Number(office_longitude))) return res.status(400).json({ message: 'Longitude tidak valid' })
-    await query("INSERT INTO company_settings(setting_key, setting_value) VALUES ('office_longitude', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)", [String(office_longitude)])
-  }
-  if (allowed_radius !== undefined) {
-    const r = Number(allowed_radius)
-    if (Number.isNaN(r) || r <= 0) return res.status(400).json({ message: 'Radius harus angka positif' })
-    await query("INSERT INTO company_settings(setting_key, setting_value) VALUES ('allowed_radius', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)", [String(r)])
-  }
-  const office = await getCompanyLocation()
-  res.json(office)
-})
 
 app.post('/auth/login', async (req, res) => {
   const { nik, password } = req.body
@@ -315,7 +249,7 @@ app.delete('/employees/:id', authRequired, roleRequired('HRD', 'Super Admin'), a
   res.status(204).end()
 })
 
-app.post('/attendance/clockin', authRequired, optionalMulter(uploadSelfie, 'selfie'), async (req, res) => {
+app.post('/attendance/clockin', authRequired, uploadSelfie.single('selfie'), async (req, res) => {
   const employee_id = req.body.employee_id
   const gps_location = req.body.gps_location
   let selfie = null
@@ -330,13 +264,6 @@ app.post('/attendance/clockin', authRequired, optionalMulter(uploadSelfie, 'self
 
   if (req.user.role === 'Employee' && employee_id && String(employee_id) !== String(req.user.employeeId)) {
     return res.status(403).json({ message: 'Tidak dapat clock in untuk karyawan lain' })
-  }
-
-  if (gps_location) {
-    const geofence = await validateGeofence(gps_location)
-    if (!geofence.valid) {
-      return res.status(400).json({ message: geofence.message, distance: geofence.distance, maxRadius: geofence.maxRadius })
-    }
   }
 
   const active = await query(
@@ -366,13 +293,6 @@ app.post('/attendance/clockout', authRequired, async (req, res) => {
     attId = active[0].id
   }
   if (!attId) return res.status(400).json({ message: 'attendance_id wajib diisi' })
-
-  if (gps_location) {
-    const geofence = await validateGeofence(gps_location)
-    if (!geofence.valid) {
-      return res.status(400).json({ message: geofence.message, distance: geofence.distance, maxRadius: geofence.maxRadius })
-    }
-  }
 
   await query('UPDATE attendance SET clock_out = NOW() WHERE id=?', [attId])
   const updated = await query('SELECT * FROM attendance WHERE id = ?', [attId])
