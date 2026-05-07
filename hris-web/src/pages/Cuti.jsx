@@ -14,12 +14,6 @@ const LEAVE_TYPES = [
   'Lainnya',
 ]
 
-const STATUS_COLORS = {
-  Pending: '#f59e0b',
-  Approved: '#10b981',
-  Rejected: '#ef4444',
-}
-
 export default function Cuti() {
   const { role } = useAuth()
   const [leaveData, setLeaveData] = useState([])
@@ -287,12 +281,7 @@ export default function Cuti() {
                     <td>{l.end_date?.slice(0, 10)}</td>
                     <td>{l.reason || '-'}</td>
                     <td>
-                      <span
-                        className="status-badge"
-                        style={{ background: STATUS_COLORS[l.status] || '#6b7280' }}
-                      >
-                        {l.status}
-                      </span>
+                      <span className={`status ${l.status.toLowerCase()}`}>{l.status}</span>
                     </td>
                     <td className="action-cell">
                       {canApprove && l.status === 'Pending' && (

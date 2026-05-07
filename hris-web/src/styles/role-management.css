@@ -1,206 +1,35 @@
-.role-management {
-  padding: 1rem;
-  max-width: 1200px;
-}
+/* ===== Role Management (shared-modern minimal) ===== */
 
-.rm-alert {
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-}
-.rm-alert-error {
-  background: #FEE2E2;
-  color: #DC2626;
-  border: 1px solid #FCA5A5;
-}
-.rm-alert-success {
-  background: #D1FAE5;
-  color: #059669;
-  border: 1px solid #6EE7B7;
-}
-
-.rm-header {
+.rm-inline-edit {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-}
-.rm-header h3 {
-  font-size: 1.25rem;
-  color: #1D2340;
+  gap: 6px;
 }
 
-.rm-btn {
-  padding: 0.5rem 1rem;
+.rm-inline-edit select {
+  border: 1px solid var(--border-input);
   border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  transition: background 0.15s;
-}
-.rm-btn-primary {
-  background: #1F3171;
-  color: #fff;
-}
-.rm-btn-primary:hover {
-  background: #2A4199;
-}
-.rm-btn-sm {
-  padding: 0.3rem 0.6rem;
-  font-size: 0.75rem;
-}
-.rm-btn-ghost {
-  background: transparent;
-  color: #6B7280;
-}
-.rm-btn-ghost:hover {
-  background: #F3F4F6;
-}
-.rm-btn-warning {
-  background: #FEF3C7;
-  color: #92400E;
-}
-.rm-btn-warning:hover {
-  background: #FDE68A;
-}
-.rm-btn-success {
-  background: #D1FAE5;
-  color: #059669;
-}
-.rm-btn-success:hover {
-  background: #A7F3D0;
-}
-
-.rm-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-}
-.rm-table th,
-.rm-table td {
-  padding: 0.75rem 1rem;
-  text-align: left;
-  font-size: 0.875rem;
-}
-.rm-table th {
-  background: #F8FAFC;
-  color: #64748B;
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-}
-.rm-table td {
-  border-bottom: 1px solid #F1F5F9;
-  color: #334155;
-}
-.rm-table tr:hover td {
-  background: #F8FAFC;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
 }
 
 .rm-role-badge {
   display: inline-block;
-  padding: 0.2rem 0.6rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
   font-weight: 600;
-}
-.rm-role-super-admin { background: #EDE9FE; color: #6D28D9; }
-.rm-role-hrd { background: #DBEAFE; color: #1D4ED8; }
-.rm-role-finance { background: #D1FAE5; color: #059669; }
-.rm-role-manager { background: #FEF3C7; color: #92400E; }
-.rm-role-employee { background: #F3F4F6; color: #6B7280; }
-
-.rm-status-badge {
-  display: inline-block;
-  padding: 0.2rem 0.6rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-.rm-status-active {
-  background: #D1FAE5;
-  color: #059669;
-}
-.rm-status-inactive {
-  background: #FEE2E2;
-  color: #DC2626;
+  background: var(--primary-light);
+  color: var(--blue-text);
 }
 
-.rm-actions {
-  display: flex;
-  gap: 0.5rem;
+.toggle-btn {
+  background: var(--amber-bg) !important;
+  color: var(--amber-text) !important;
 }
 
-.rm-inline-edit {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-.rm-inline-edit select {
-  padding: 0.3rem 0.5rem;
-  border: 1px solid #E5E7EB;
-  border-radius: 4px;
-  font-size: 0.8125rem;
-}
-
-.rm-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.rm-modal {
-  background: #fff;
-  border-radius: 12px;
-  padding: 2rem;
-  width: 100%;
-  max-width: 480px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-.rm-modal h4 {
-  font-size: 1.125rem;
-  color: #1D2340;
-  margin-bottom: 1.5rem;
-}
-.rm-form-group {
-  margin-bottom: 1rem;
-}
-.rm-form-group label {
-  display: block;
-  font-size: 0.8125rem;
-  color: #64748B;
-  margin-bottom: 0.25rem;
-  font-weight: 500;
-}
-.rm-form-group input,
-.rm-form-group select {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #E5E7EB;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  color: #334155;
-  background: #fff;
-}
-.rm-form-group input:focus,
-.rm-form-group select:focus {
-  outline: none;
-  border-color: #1F3171;
-  box-shadow: 0 0 0 3px rgba(31,49,113,0.1);
-}
-.rm-modal-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-  margin-top: 1.5rem;
+.toggle-btn:hover {
+  background: #fde68a !important;
 }
