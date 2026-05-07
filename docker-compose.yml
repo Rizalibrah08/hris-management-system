@@ -39,13 +39,13 @@ services:
     expose:
       - "5000"
     ports:
-      - "5000:5000"              # Direct API access (mobile dev, debugging)
+      - "5000:5000"
     restart: unless-stopped
     networks:
       - internal
 
   nginx:
-    image: nginx:stable-alpine
+    image: nginx:alpine
     container_name: hris-nginx
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
