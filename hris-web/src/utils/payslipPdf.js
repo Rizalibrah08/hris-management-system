@@ -1,13 +1,21 @@
 import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
+import autoTablePlugin from 'jspdf-autotable'
 import { formatRupiah } from './formatters'
+
+const applyAutoTable = (doc, options) => {
+  const fn = autoTablePlugin?.default || autoTablePlugin || autoTablePlugin?.autoTable
+  if (typeof fn === 'function') {
+    fn(doc, options)
+    return doc.lastAutoTable?.finalY ?? 40
+  }
+  return 40
+}
 
 export function generatePayslipPDF(payslip) {
   const doc = new jsPDF()
   const margin = 16
   let y = margin
 
-  // Header
   doc.setFontSize(16)
   doc.setFont(undefined, 'bold')
   doc.text('SLIP GAJI', margin, y)
@@ -22,7 +30,6 @@ export function generatePayslipPDF(payslip) {
   doc.text(`Tanggal: ${new Date(payslip.published_at || payslip.created_at).toLocaleDateString('id-ID')}`, margin, y)
   y += 12
 
-  // Employee info
   doc.setFontSize(12)
   doc.setFont(undefined, 'bold')
   doc.text('Data Karyawan', margin, y)
@@ -36,17 +43,15 @@ export function generatePayslipPDF(payslip) {
     ['Departemen', payslip.department || '-'],
     ['Jabatan', payslip.position || '-'],
   ]
-  autoTable(doc, {
+  y = applyAutoTable(doc, {
     startY: y,
     body: empInfo,
     theme: 'plain',
     columnStyles: { 0: { fontStyle: 'bold', cellWidth: 32 }, 1: { cellWidth: 110 } },
     margin: { left: margin, right: margin },
     styles: { fontSize: 10, cellPadding: 2 },
-  })
-  y = doc.lastAutoTable.finalY + 10
+  }) + 10
 
-  // Earnings
   const components = payslip.components || []
   const earnings = components.filter((c) => c.component_type === 'earning')
   const deductions = components.filter((c) => c.component_type === 'deduction')
@@ -58,7 +63,7 @@ export function generatePayslipPDF(payslip) {
 
   const earningRows = earnings.map((c) => [c.component_name_snapshot, '', formatRupiah(c.amount)])
   earningRows.push(['Total Pendapatan', '', formatRupiah(payslip.gross_amount)])
-  autoTable(doc, {
+  y = applyAutoTable(doc, {
     startY: y,
     head: [['Komponen', '', 'Jumlah']],
     body: earningRows,
@@ -68,10 +73,8 @@ export function generatePayslipPDF(payslip) {
     bodyStyles: { fontSize: 9 },
     columnStyles: { 0: { cellWidth: 80 }, 1: { cellWidth: 10 }, 2: { cellWidth: 62, halign: 'right' } },
     footStyles: { fontStyle: 'bold', fillColor: [240, 243, 249] },
-  })
-  y = doc.lastAutoTable.finalY + 10
+  }) + 10
 
-  // Deductions
   if (deductions.length > 0) {
     doc.setFontSize(12)
     doc.setFont(undefined, 'bold')
@@ -80,7 +83,7 @@ export function generatePayslipPDF(payslip) {
 
     const deductionRows = deductions.map((c) => [c.component_name_snapshot, '', formatRupiah(c.amount)])
     deductionRows.push(['Total Potongan', '', formatRupiah(payslip.deduction_amount)])
-    autoTable(doc, {
+    y = applyAutoTable(doc, {
       startY: y,
       head: [['Komponen', '', 'Jumlah']],
       body: deductionRows,
@@ -90,11 +93,9 @@ export function generatePayslipPDF(payslip) {
       bodyStyles: { fontSize: 9 },
       columnStyles: { 0: { cellWidth: 80 }, 1: { cellWidth: 10 }, 2: { cellWidth: 62, halign: 'right' } },
       footStyles: { fontStyle: 'bold', fillColor: [255, 235, 235] },
-    })
-    y = doc.lastAutoTable.finalY + 12
+    }) + 12
   }
 
-  // Net Pay
   doc.setFontSize(14)
   doc.setFont(undefined, 'bold')
   doc.text('Take Home Pay', margin, y)
@@ -105,7 +106,6 @@ export function generatePayslipPDF(payslip) {
   doc.setTextColor(0, 0, 0)
   y += 14
 
-  // Footer
   doc.setFontSize(8)
   doc.setFont(undefined, 'normal')
   doc.text(`Slip gaji ini dicetak secara digital pada ${new Date().toLocaleString('id-ID')}`, margin, doc.internal.pageSize.getHeight() - 14)

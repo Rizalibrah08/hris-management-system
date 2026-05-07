@@ -79,7 +79,7 @@ export default function SlipGaji() {
   const handleDownloadPDF = async (id) => {
     try {
       const data = await api(`/payslips/${id}/pdf`)
-      generatePayslipPDF(data)
+      await generatePayslipPDF(data)
     } catch (err) {
       setError(err.message || 'Gagal mengunduh PDF')
     }
