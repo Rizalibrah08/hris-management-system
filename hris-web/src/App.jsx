@@ -45,7 +45,18 @@ async function api(path, opts = {}) {
 function App() {
   const { token, role, employeeName, department, logout } = useAuth()
 
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('hris_sidebar')
+    return saved !== null ? saved === '1' : true
+  })
+
+  const toggleSidebar = () => {
+    setSidebarOpen((prev) => {
+      const next = !prev
+      localStorage.setItem('hris_sidebar', next ? '1' : '0')
+      return next
+    })
+  }
 
   const roleMenus = useMemo(() => {
     const base = menus.filter(m => m.key !== 'role' && m.key !== 'laporan')
@@ -58,7 +69,6 @@ function App() {
     return base.sort((a, b) => menus.indexOf(a) - menus.indexOf(b))
   }, [role])
   const [activePage, setActivePage] = useState('dashboard')
-  const [employees, setEmployees] = useState([])
   const [runningPayroll, setRunningPayroll] = useState(false)
   const [finalizingPayroll, setFinalizingPayroll] = useState(false)
   const [payrollMessage, setPayrollMessage] = useState('')
@@ -96,11 +106,6 @@ function App() {
       const reportData = await api('/reports/dashboard')
       setReport(reportData)
     } catch { /* ignore */ }
-
-    try {
-      const employeeData = await api('/employees')
-      setEmployees(employeeData)
-    } catch { /* ignore */ }
   }
 
   useEffect(() => {
@@ -110,10 +115,6 @@ function App() {
       try {
         const reportData = await api('/reports/dashboard', { signal: ctrl.signal })
         setReport(reportData)
-      } catch { /* ignore */ }
-      try {
-        const employeeData = await api('/employees', { signal: ctrl.signal })
-        setEmployees(employeeData)
       } catch { /* ignore */ }
     }
     init()
@@ -275,6 +276,13 @@ function App() {
               <p>Workspace Console</p>
             </div>
           </div>
+          <button
+            className="sidebar-toggle"
+            onClick={toggleSidebar}
+            title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+          >
+            <span className="toggle-icon">{sidebarOpen ? '\u2039' : '\u203A'}</span>
+          </button>
         </div>
 
         <nav className="menu">
@@ -301,13 +309,6 @@ function App() {
               Logout
             </button>
           </div>
-          <button
-            className="sidebar-toggle"
-            onClick={() => setSidebarOpen((prev) => !prev)}
-            title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            <span className="toggle-icon">{sidebarOpen ? '<' : '>'}</span>
-          </button>
         </div>
       </aside>
 
