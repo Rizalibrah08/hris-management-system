@@ -141,4 +141,6 @@ const styles = StyleSheet.create({
   btnPrimary: { backgroundColor: '#5341cd', paddingVertical: 16, borderRadius: 30, alignItems: 'center', marginBottom: 20, marginTop: 10, shadowColor: '#5341cd', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
   btnPrimaryText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
   btnDisabled: { opacity: 0.5 },
+  rememberRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 8 },
+  rememberLabel: { fontSize: 14, color: '#474554' },
 });
