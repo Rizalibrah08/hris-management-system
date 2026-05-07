@@ -4,7 +4,6 @@ import { useAuth } from '../contexts/AuthContext'
 import { api } from '../api/client'
 import { formatRupiah } from '../utils/formatters'
 import MetricsGrid from '../components/MetricsGrid'
-import OfficeLocationPanel from '../components/OfficeLocationPanel'
 import '../styles/global.css'
 import '../styles/dashboard.css'
 
@@ -96,7 +95,7 @@ export default function Dashboard() {
         <article className="panel table-panel">
           <div className="panel-head">
             <h3>Monitoring Kehadiran Real-time</h3>
-            <button>Lihat Semua</button>
+            <button className="small-btn">Lihat Semua</button>
           </div>
           {isLoading ? (
             <p>Memuat data...</p>
@@ -173,11 +172,7 @@ export default function Dashboard() {
         </article>
       </section>
 
-      {isAdmin && (
-        <section className="dashboard-location-section">
-          <OfficeLocationPanel />
-        </section>
-      )}
+
     </div>
   )
 }

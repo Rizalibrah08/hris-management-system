@@ -23,7 +23,9 @@ const menus = [
   { key: 'payroll', label: 'Payroll' },
   { key: 'slipgaji', label: 'Slip Gaji' },
   { key: 'laporan', label: 'Laporan' },
-  { key: 'role', label: 'Role Management' },
+  { key: 'lokasi',    label: 'Lokasi Kantor' },
+  { key: 'masterdata', label: 'Master Data' },
+  { key: 'role',       label: 'Role Management' },
 ]
 
 const API = import.meta.env.VITE_API_URL || '/api'
@@ -139,9 +141,66 @@ function App() {
           api('/reports/salary-distribution'),
           api('/reports/leave-stats'),
         ])
-        setReport(dashboardData)
-        setSalaryDistribution(salaryDistData)
-        setLeaveStats(leaveStatsData)
+
+        const toNum = (val) => (val != null && !isNaN(Number(val)) ? Number(val) : val)
+
+        const normDashboard = {
+          ...dashboardData,
+          payrollCostBreakdown: (dashboardData.payrollCostBreakdown || []).map((r) => ({
+            ...r,
+            total_gross: toNum(r.total_gross),
+            employee_count: toNum(r.employee_count),
+          })),
+          attendanceTrend: (dashboardData.attendanceTrend || []).map((r) => ({
+            ...r,
+            attendance_rate: toNum(r.attendance_rate),
+          })),
+        }
+
+        const normSalary = {
+          byDepartment: (salaryDistData.byDepartment || []).map((r) => ({
+            ...r,
+            count: toNum(r.count),
+            total_salary: toNum(r.total_salary),
+            avg_salary: toNum(r.avg_salary),
+          })),
+          byPosition: (salaryDistData.byPosition || []).map((r) => ({
+            ...r,
+            count: toNum(r.count),
+            total_salary: toNum(r.total_salary),
+            avg_salary: toNum(r.avg_salary),
+          })),
+          byRole: (salaryDistData.byRole || []).map((r) => ({
+            ...r,
+            count: toNum(r.count),
+            total_salary: toNum(r.total_salary),
+            avg_salary: toNum(r.avg_salary),
+          })),
+        }
+
+        const normLeave = {
+          ...leaveStatsData,
+          byType: (leaveStatsData.byType || []).map((r) => ({
+            ...r,
+            total: toNum(r.total),
+            approved: toNum(r.approved),
+            rejected: toNum(r.rejected),
+            pending: toNum(r.pending),
+          })),
+          byStatus: (leaveStatsData.byStatus || []).map((r) => ({
+            ...r,
+            total: toNum(r.total),
+          })),
+          monthlySummary: (leaveStatsData.monthlySummary || []).map((r) => ({
+            ...r,
+            total: toNum(r.total),
+            approved: toNum(r.approved),
+          })),
+        }
+
+        setReport(normDashboard)
+        setSalaryDistribution(normSalary)
+        setLeaveStats(normLeave)
       } catch (err) {
         console.error('Failed to fetch reports:', err)
       } finally {
@@ -320,7 +379,6 @@ function App() {
             <p className="section-label">{roleMenus.find((menu) => menu.key === activePage)?.label}</p>
             <h2>Human Resource Information System (HRIS) Terpadu Berbasis Cloud</h2>
           </div>
-          <input placeholder="Cari karyawan, payroll, atau approval..." />
         </header>
 
         {activePage === 'dashboard' && <Dashboard />}
@@ -729,27 +787,18 @@ function FeaturePages({
                   )}
                 </div>
 
-                {/* Salary by Position - Pie Chart */}
+                {/* Salary by Position - Bar Chart */}
                 <div className="chart-container">
                   <h4>Distribusi Gaji per Posisi</h4>
                   {salaryDistribution.byPosition?.length > 0 ? (
                     <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={salaryDistribution.byPosition}
-                          dataKey="total_salary"
-                          nameKey="label"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          label
-                        >
-                          {salaryDistribution.byPosition.map((_, idx) => (
-                            <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
-                          ))}
-                        </Pie>
+                      <BarChart data={salaryDistribution.byPosition}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="label" />
+                        <YAxis />
                         <Tooltip formatter={(value) => formatRupiah(value)} />
-                      </PieChart>
+                        <Bar dataKey="total_salary" fill="#6C5CE7" name="Total Gaji" />
+                      </BarChart>
                     </ResponsiveContainer>
                   ) : (
                     <p>No data available</p>
