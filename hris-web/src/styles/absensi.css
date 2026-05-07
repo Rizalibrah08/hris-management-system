@@ -1,2 +1,29 @@
 /* ===== Absensi (Attendance) ===== */
-/* Attendance page uses shared styles from global.css */
+
+.gps-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.gps-badge.valid {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.gps-badge.none {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.muted {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.table-container {
+  overflow-x: auto;
+}

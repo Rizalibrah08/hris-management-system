@@ -1,17 +1,22 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useReports } from '../hooks/useReports'
+import { useAuth } from '../contexts/AuthContext'
 import { api } from '../api/client'
 import { formatRupiah } from '../utils/formatters'
 import MetricsGrid from '../components/MetricsGrid'
+import OfficeLocationPanel from '../components/OfficeLocationPanel'
 import '../styles/global.css'
 import '../styles/dashboard.css'
 
 export default function Dashboard() {
+  const { role } = useAuth()
   const { report, loading: loadingReports } = useReports()
   const [attendanceData, setAttendanceData] = useState([])
   const [leaveData, setLeaveData] = useState([])
   const [loadingAttendance, setLoadingAttendance] = useState(false)
   const [loadingLeave, setLoadingLeave] = useState(false)
+
+  const isAdmin = ['HRD', 'Super Admin'].includes(role)
 
   useEffect(() => {
     let ignore = false
@@ -62,7 +67,7 @@ export default function Dashboard() {
         name: a.employee_name,
         dept: a.department || '-',
         clockIn: a.clock_in ? new Date(a.clock_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-',
-        clockOut: a.clock_out ? new Date(a.clock_out).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-',
+        clockOut: a.clock_out ? new Date(a.clock_out).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : 'Belum',
         status: a.status || 'Aktif',
       }))
     }
@@ -72,7 +77,7 @@ export default function Dashboard() {
       { name: 'Rizky Maulana', dept: 'Finance', clockIn: '08:22', clockOut: '17:15', status: 'Aktif' },
       { name: 'Salsa Wijaya', dept: 'Marketing', clockIn: '09:01', clockOut: '17:30', status: 'Terlambat' },
       { name: 'Budi Santoso', dept: 'Operations', clockIn: '07:50', clockOut: '17:00', status: 'Aktif' },
-      { name: 'Intan Lestari', dept: 'Engineering', clockIn: '08:05', clockOut: '-', status: 'Aktif' },
+      { name: 'Intan Lestari', dept: 'Engineering', clockIn: '08:05', clockOut: 'Belum', status: 'Aktif' },
       { name: 'Dini Prameswari', dept: 'HRD', clockIn: '08:00', clockOut: '17:10', status: 'Aktif' },
       { name: 'Maya Sari', dept: 'Finance', clockIn: '07:45', clockOut: '17:00', status: 'Aktif' },
     ]
@@ -102,6 +107,7 @@ export default function Dashboard() {
                   <th>Nama</th>
                   <th>Departemen</th>
                   <th>Clock In</th>
+                  <th>Clock Out</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -111,6 +117,7 @@ export default function Dashboard() {
                     <td>{row.name}</td>
                     <td>{row.dept}</td>
                     <td>{row.clockIn}</td>
+                    <td className={row.clockOut === 'Belum' ? 'muted' : ''}>{row.clockOut}</td>
                     <td>
                       <span className={`status ${row.status.toLowerCase()}`}>{row.status}</span>
                     </td>
@@ -165,6 +172,12 @@ export default function Dashboard() {
           </div>
         </article>
       </section>
+
+      {isAdmin && (
+        <section className="dashboard-location-section">
+          <OfficeLocationPanel />
+        </section>
+      )}
     </div>
   )
 }

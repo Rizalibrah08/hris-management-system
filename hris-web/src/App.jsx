@@ -45,6 +45,8 @@ async function api(path, opts = {}) {
 function App() {
   const { token, role, employeeName, department, logout } = useAuth()
 
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+
   const roleMenus = useMemo(() => {
     const base = menus.filter(m => m.key !== 'role' && m.key !== 'laporan')
     if (['HRD', 'Finance', 'Super Admin'].includes(role)) {
@@ -431,7 +433,7 @@ function App() {
 
   return (
     <div className="dashboard-layout">
-      <aside className="sidebar">
+      <aside className={`sidebar${sidebarOpen ? '' : ' collapsed'}`}>
         <div className="brand">
           <h1>Cloud HRIS</h1>
           <p>Workspace Console</p>
@@ -458,9 +460,18 @@ function App() {
 
       <main className="content">
         <header className="topbar">
-          <div>
-            <p className="section-label">{roleMenus.find((menu) => menu.key === activePage)?.label}</p>
-            <h2>Human Resource Information System (HRIS) Terpadu Berbasis Cloud</h2>
+          <div className="topbar-left">
+            <button
+              className="sidebar-toggle"
+              onClick={() => setSidebarOpen((prev) => !prev)}
+              title={sidebarOpen ? 'Sembunyikan sidebar' : 'Tampilkan sidebar'}
+            >
+              {sidebarOpen ? '\u2630' : '\u2630'}
+            </button>
+            <div>
+              <p className="section-label">{roleMenus.find((menu) => menu.key === activePage)?.label}</p>
+              <h2>Human Resource Information System (HRIS) Terpadu Berbasis Cloud</h2>
+            </div>
           </div>
           <input placeholder="Cari karyawan, payroll, atau approval..." />
         </header>

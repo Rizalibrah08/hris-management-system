@@ -228,11 +228,12 @@ app.put('/employees/me', authRequired, async (req, res) => {
 
 app.get('/employees', authRequired, roleRequired('HRD', 'Super Admin'), async (_, res) => {
   const rows = await query(
-    `SELECT e.id, e.name, d.name department, p.name position, e.contract_end
+    `SELECT e.id, e.name, e.department_id, e.position_id, d.name department, p.name position,
+            e.contract_end, e.email, e.phone, e.is_active
      FROM employees e
      LEFT JOIN departments d ON d.id = e.department_id
      LEFT JOIN positions p ON p.id = e.position_id
-     ORDER BY e.id DESC`,
+     ORDER BY e.name ASC`,
   )
   res.json(rows)
 })
@@ -294,7 +295,7 @@ app.post('/attendance/clockin', authRequired, async (req, res) => {
 })
 
 app.post('/attendance/clockout', authRequired, async (req, res) => {
-  const { attendance_id } = req.body
+  const { attendance_id, gps_location } = req.body
   const empId = req.user.employeeId
   let attId = attendance_id
   if (!attId && empId) {
@@ -306,6 +307,12 @@ app.post('/attendance/clockout', authRequired, async (req, res) => {
     attId = active[0].id
   }
   if (!attId) return res.status(400).json({ message: 'attendance_id wajib diisi' })
+
+  const geofence = await validateGeofence(gps_location)
+  if (!geofence.valid) {
+    return res.status(400).json({ message: geofence.message, distance: geofence.distance, maxRadius: geofence.maxRadius })
+  }
+
   await query('UPDATE attendance SET clock_out = NOW() WHERE id=?', [attId])
   const updated = await query('SELECT * FROM attendance WHERE id = ?', [attId])
   res.json(updated[0] || null)
@@ -397,7 +404,7 @@ app.delete('/leave/:id', authRequired, async (req, res) => {
 app.get('/attendance/today', authRequired, roleRequired('HRD', 'Super Admin'), async (_, res) => {
   const rows = await query(
     `SELECT a.id, a.employee_id, e.name AS employee_name, d.name AS department,
-            a.clock_in, a.clock_out, a.status
+            a.clock_in, a.clock_out, a.status, a.gps_location
      FROM attendance a
      JOIN employees e ON e.id = a.employee_id
      LEFT JOIN departments d ON d.id = e.department_id
