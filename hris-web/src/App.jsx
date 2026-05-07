@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { PieChart, Pie, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -43,17 +43,386 @@ async function api(path, opts = {}) {
 }
 
 function App() {
-  const { token, role, employeeName, department, loading, logout } = useAuth()
+  const { token, role, employeeName, department, logout } = useAuth()
 
-  if (loading) {
-    return (
-      <div className="login-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <div className="login-card" style={{ textAlign: 'center' }}>
-          <h2>Cloud HRIS</h2>
-          <p>Memulihkan sesi...</p>
-        </div>
-      </div>
-    )
+  const roleMenus = useMemo(() => {
+    const base = menus.filter(m => m.key !== 'role' && m.key !== 'laporan')
+    if (['HRD', 'Finance', 'Super Admin'].includes(role)) {
+      base.push(menus.find(m => m.key === 'laporan'))
+    }
+    if (role === 'Super Admin') {
+      base.push(menus.find(m => m.key === 'role'))
+    }
+    return base.sort((a, b) => menus.indexOf(a) - menus.indexOf(b))
+  }, [role])
+  const [activePage, setActivePage] = useState('dashboard')
+  const [employees, setEmployees] = useState([])
+  const [runningPayroll, setRunningPayroll] = useState(false)
+  const [finalizingPayroll, setFinalizingPayroll] = useState(false)
+  const [payrollMessage, setPayrollMessage] = useState('')
+  const [payrollTab, setPayrollTab] = useState('run')
+  const [payrollRuns, setPayrollRuns] = useState([])
+  const [selectedRunId, setSelectedRunId] = useState(null)
+  const [payrollDetail, setPayrollDetail] = useState(null)
+  const [selectedPayrollItemId, setSelectedPayrollItemId] = useState(null)
+  const [payrollDetailSearch, setPayrollDetailSearch] = useState('')
+  const [salaryStructures, setSalaryStructures] = useState([])
+  const [loadingSalary, setLoadingSalary] = useState(false)
+  const [salaryForm, setSalaryForm] = useState({
+    employeeId: '',
+    baseSalary: 8000000,
+    allowance: 1000000,
+    deduction: 250000,
+  })
+  const [editingEmployeeId, setEditingEmployeeId] = useState(null)
+  const [editSalaryModal, setEditSalaryModal] = useState({
+    open: false,
+    employeeId: '',
+    employeeName: '',
+    baseSalary: 0,
+    allowance: 0,
+    deduction: 0,
+  })
+  const [report, setReport] = useState({
+    totalEmployees: 0,
+    attendanceRate: 0,
+    pendingLeave: 0,
+    payrollTotal: 0,
+    payrollCostBreakdown: [],
+    attendanceTrend: [],
+  })
+  const [salaryDistribution, setSalaryDistribution] = useState({
+    byDepartment: [],
+    byPosition: [],
+    byRole: [],
+  })
+  const [leaveStats, setLeaveStats] = useState({
+    byType: [],
+    byStatus: [],
+    monthlySummary: [],
+  })
+  const [loadingReports, setLoadingReports] = useState(false)
+
+  const canRunPayroll = ['HRD', 'Finance', 'Super Admin'].includes(role)
+  const canApproveFinance = ['Finance', 'Super Admin'].includes(role)
+  const canReview = ['HRD', 'Super Admin'].includes(role)
+  const canEditSalary = ['HRD', 'Super Admin'].includes(role)
+
+  async function loadSalaryStructures() {
+    setLoadingSalary(true)
+    try {
+      const data = await api('/salary-profiles')
+      setSalaryStructures(
+        data.map((row) => ({
+          profileId: row.profile_id,
+          employeeId: row.employee_id,
+          employeeName: row.employee_name,
+          department: row.department || '-',
+          baseSalary: Number(row.base_salary),
+          allowance: Number(row.allowance),
+          deduction: Number(row.deduction),
+          paymentMethod: row.payment_method,
+          bankName: row.bank_name,
+          bankAccountName: row.bank_account_name,
+          bankAccountNumber: row.bank_account_number,
+        })),
+      )
+    } catch {
+      setSalaryStructures([])
+    }
+    setLoadingSalary(false)
+  }
+
+  async function loadDashboardData() {
+    try {
+      const reportData = await api('/reports/dashboard')
+      setReport(reportData)
+    } catch { /* ignore */ }
+
+    try {
+      const employeeData = await api('/employees')
+      setEmployees(employeeData)
+      if (!salaryForm.employeeId && employeeData.length > 0) {
+        setSalaryForm((c) => ({ ...c, employeeId: String(employeeData[0].id) }))
+      }
+    } catch { /* ignore */ }
+  }
+
+  useEffect(() => {
+    if (!token) return
+    const ctrl = new AbortController()
+    const init = async () => {
+      try {
+        const reportData = await api('/reports/dashboard', { signal: ctrl.signal })
+        setReport(reportData)
+      } catch { /* ignore */ }
+      try {
+        const employeeData = await api('/employees', { signal: ctrl.signal })
+        setEmployees(employeeData)
+        if (salaryForm.employeeId === '' && employeeData.length > 0) {
+          setSalaryForm((c) => ({ ...c, employeeId: String(employeeData[0].id) }))
+        }
+      } catch { /* ignore */ }
+      try {
+        const salaryData = await api('/salary-profiles', { signal: ctrl.signal })
+        setSalaryStructures(
+          salaryData.map((row) => ({
+            profileId: row.profile_id,
+            employeeId: row.employee_id,
+            employeeName: row.employee_name,
+            department: row.department || '-',
+            baseSalary: Number(row.base_salary),
+            allowance: Number(row.allowance),
+            deduction: Number(row.deduction),
+            paymentMethod: row.payment_method,
+            bankName: row.bank_name,
+            bankAccountName: row.bank_account_name,
+            bankAccountNumber: row.bank_account_number,
+          })),
+        )
+      } catch { setSalaryStructures([]) }
+      setLoadingSalary(false)
+    }
+    init()
+    return () => ctrl.abort()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
+
+  useEffect(() => {
+    if (!token || activePage !== 'payroll') return
+    loadPayrollRuns()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, activePage])
+
+  useEffect(() => {
+    if (!token || activePage !== 'laporan') return
+    const fetchReports = async () => {
+      try {
+        setLoadingReports(true)
+        const [dashboardData, salaryDistData, leaveStatsData] = await Promise.all([
+          api('/reports/dashboard'),
+          api('/reports/salary-distribution'),
+          api('/reports/leave-stats'),
+        ])
+        setReport(dashboardData)
+        setSalaryDistribution(salaryDistData)
+        setLeaveStats(leaveStatsData)
+      } catch (err) {
+        console.error('Failed to fetch reports:', err)
+      } finally {
+        setLoadingReports(false)
+      }
+    }
+    fetchReports()
+  }, [token, activePage])
+
+  useEffect(() => {
+    if (!editSalaryModal.open) return
+    const handleEsc = (event) => {
+      if (event.key === 'Escape') {
+        setEditingEmployeeId(null)
+        setEditSalaryModal({ open: false, employeeId: '', employeeName: '', baseSalary: 0, allowance: 0, deduction: 0 })
+        setPayrollMessage('Mode edit dibatalkan')
+      }
+    }
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [editSalaryModal.open])
+
+  const handleLogout = () => {
+    logout()
+    setActivePage('dashboard')
+  }
+
+  const resetSalaryForm = () => {
+    const defaultEmployeeId = employees.length > 0 ? String(employees[0].id) : ''
+    setSalaryForm({ employeeId: defaultEmployeeId, baseSalary: 8000000, allowance: 1000000, deduction: 250000 })
+  }
+
+  async function loadPayrollRuns() {
+    try {
+      const data = await api('/payroll/runs')
+      setPayrollRuns(data)
+      if (data.length > 0 && !selectedRunId) {
+        setSelectedRunId(data[0].id)
+        await loadPayrollDetail(data[0].id)
+      }
+    } catch { /* ignore */ }
+  }
+
+  async function loadPayrollDetail(runId) {
+    try {
+      const data = await api(`/payroll/runs/${runId}`)
+      setPayrollDetail(data)
+      setSelectedPayrollItemId(data.items?.[0]?.id || null)
+    } catch { /* ignore */ }
+  }
+
+  const handleSaveSalaryStructure = async () => {
+    const employee = employees.find((e) => String(e.id) === String(salaryForm.employeeId))
+    if (!employee) return
+    if (
+      Number.isNaN(Number(salaryForm.baseSalary)) ||
+      Number.isNaN(Number(salaryForm.allowance)) ||
+      Number.isNaN(Number(salaryForm.deduction))
+    ) {
+      setPayrollMessage('Nominal gaji wajib berupa angka yang valid')
+      return
+    }
+    if (Number(salaryForm.baseSalary) < 0 || Number(salaryForm.allowance) < 0 || Number(salaryForm.deduction) < 0) {
+      setPayrollMessage('Nominal gaji, tunjangan, dan potongan tidak boleh minus')
+      return
+    }
+    try {
+      await api('/salary-profiles', {
+        method: 'POST',
+        body: JSON.stringify({
+          employeeId: Number(salaryForm.employeeId),
+          baseSalary: Number(salaryForm.baseSalary),
+          allowance: Number(salaryForm.allowance),
+          deduction: Number(salaryForm.deduction),
+        }),
+      })
+      setPayrollMessage(`Salary structure untuk ${employee.name} berhasil disimpan`)
+      resetSalaryForm()
+      await loadSalaryStructures()
+    } catch (err) {
+      setPayrollMessage(err.message || 'Gagal menyimpan salary structure')
+    }
+  }
+
+  const handleEditSalaryStructure = (item) => {
+    setEditingEmployeeId(item.employeeId)
+    setEditSalaryModal({
+      open: true,
+      employeeId: String(item.employeeId),
+      employeeName: item.employeeName,
+      baseSalary: Number(item.baseSalary),
+      allowance: Number(item.allowance),
+      deduction: Number(item.deduction),
+    })
+    setPayrollMessage(`Mode edit aktif untuk ${item.employeeName}`)
+  }
+
+  const handleSaveEditedSalary = async () => {
+    if (Number(editSalaryModal.baseSalary) < 0 || Number(editSalaryModal.allowance) < 0 || Number(editSalaryModal.deduction) < 0) {
+      setPayrollMessage('Nominal gaji, tunjangan, dan potongan tidak boleh minus')
+      return
+    }
+    try {
+      await api(`/salary-profiles/${editSalaryModal.employeeId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          baseSalary: Number(editSalaryModal.baseSalary),
+          allowance: Number(editSalaryModal.allowance),
+          deduction: Number(editSalaryModal.deduction),
+        }),
+      })
+      setEditSalaryModal((prev) => ({ ...prev, open: false }))
+      setPayrollMessage(`Salary structure untuk ${editSalaryModal.employeeName} berhasil diupdate`)
+      setEditingEmployeeId(null)
+      await loadSalaryStructures()
+    } catch (err) {
+      setPayrollMessage(err.message || 'Gagal mengupdate salary structure')
+    }
+  }
+
+  const handleRunPayroll = async () => {
+    setRunningPayroll(true)
+    setPayrollMessage('')
+    try {
+      const data = await api('/payroll/runs/generate', {
+        method: 'POST',
+        body: JSON.stringify({ periodMonth: new Date().toISOString().slice(0, 7) + '-01' }),
+      })
+      setPayrollMessage(`Draft payroll berhasil dibuat (Run #${data.id})`)
+      await loadPayrollRuns()
+      await loadPayrollDetail(data.id)
+      await loadDashboardData()
+    } catch (err) {
+      setPayrollMessage(err.message || 'Gagal menjalankan payroll')
+    }
+    setRunningPayroll(false)
+  }
+
+  const handleReviewRun = async () => {
+    if (!selectedRunId) return
+    try {
+      const data = await api(`/payroll/runs/${selectedRunId}/review`, { method: 'POST' })
+      setPayrollMessage(`Run #${data.id} berhasil di-review (menunggu approval Finance)`)
+      await loadPayrollRuns()
+      await loadPayrollDetail(selectedRunId)
+    } catch (err) {
+      setPayrollMessage(err.message || 'Gagal me-review payroll run')
+    }
+  }
+
+  const handleApproveRun = async () => {
+    if (!selectedRunId) return
+    try {
+      const data = await api(`/payroll/runs/${selectedRunId}/approve`, { method: 'POST' })
+      setPayrollMessage(`Run #${data.id} berhasil di-approve oleh Finance`)
+      await loadPayrollRuns()
+      await loadPayrollDetail(selectedRunId)
+    } catch (err) {
+      setPayrollMessage(err.message || 'Gagal me-approve payroll run')
+    }
+  }
+
+  const handleRejectRun = async () => {
+    if (!selectedRunId) return
+    try {
+      const data = await api(`/payroll/runs/${selectedRunId}/reject`, { method: 'POST', body: JSON.stringify({ comment: 'Rejected' }) })
+      setPayrollMessage(`Run #${data.id} telah di-reject`)
+      await loadPayrollRuns()
+      await loadPayrollDetail(selectedRunId)
+    } catch (err) {
+      setPayrollMessage(err.message || 'Gagal me-reject payroll run')
+    }
+  }
+
+  const handleFinalizeRun = async () => {
+    if (!selectedRunId) return
+    setFinalizingPayroll(true)
+    setPayrollMessage('')
+    try {
+      const data = await api(`/payroll/runs/${selectedRunId}/finalize`, { method: 'POST' })
+      setPayrollMessage(`Run #${data.id} berhasil difinalisasi`)
+      await loadPayrollRuns()
+      await loadPayrollDetail(selectedRunId)
+      await loadDashboardData()
+    } catch (err) {
+      if (err.errors) {
+        setPayrollMessage(`Validasi gagal: ${err.errors.join('; ')}`)
+      } else {
+        setPayrollMessage(err.message || 'Gagal finalize payroll run')
+      }
+    }
+    setFinalizingPayroll(false)
+  }
+
+  const handleValidateRun = async () => {
+    if (!selectedRunId) return
+    try {
+      const data = await api(`/payroll/runs/${selectedRunId}/validate`)
+      if (data.valid) {
+        setPayrollMessage('Validasi berhasil: tidak ada anomali')
+      } else {
+        setPayrollMessage(`Validasi gagal: ${data.errors.join('; ')}`)
+      }
+    } catch (err) {
+      setPayrollMessage(err.message || 'Gagal memvalidasi payroll run')
+    }
+  }
+
+  const handleDeleteSalaryStructure = async (employeeId) => {
+    try {
+      await api(`/salary-profiles/${employeeId}`, { method: 'DELETE' })
+      setPayrollMessage('Salary structure berhasil dinonaktifkan')
+      await loadSalaryStructures()
+    } catch (err) {
+      setPayrollMessage(err.message || 'Gagal menghapus salary structure')
+    }
   }
 
   if (!token) {

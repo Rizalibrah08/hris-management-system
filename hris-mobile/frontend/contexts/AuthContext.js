@@ -4,6 +4,8 @@ import { setAuthToken, clearAuthToken as clearApiToken, api } from '../services/
 
 const AuthContext = createContext(null);
 
+const USER_KEY = 'auth_user';
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,13 +17,24 @@ export function AuthProvider({ children }) {
         const token = await AsyncStorage.getItem('auth_token');
         if (token) {
           setAuthToken(token);
-          const me = await api.auth.me();
-          setUser(me);
+          const savedUser = await AsyncStorage.getItem(USER_KEY);
+          if (savedUser) {
+            setUser(JSON.parse(savedUser));
+          }
+          try {
+            const me = await api.auth.me();
+            setUser(me);
+            await AsyncStorage.setItem(USER_KEY, JSON.stringify(me));
+          } catch {
+            setSessionError(true);
+            await AsyncStorage.removeItem('auth_token');
+            await AsyncStorage.removeItem(USER_KEY);
+            clearApiToken();
+            setUser(null);
+          }
         }
       } catch {
         setSessionError(true);
-        await AsyncStorage.removeItem('auth_token');
-        clearApiToken();
       } finally {
         setLoading(false);
       }
@@ -32,15 +45,24 @@ export function AuthProvider({ children }) {
     const res = await api.auth.login(nik, password);
     setAuthToken(res.token);
     await AsyncStorage.setItem('auth_token', res.token);
-    const me = await api.auth.me();
-    setUser(me);
-    return me;
+    const userData = {
+      id: res.employeeId,
+      nik: nik,
+      role: res.role,
+      employeeId: res.employeeId,
+      employeeName: res.employeeName,
+      department: res.department,
+    };
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(userData));
+    setUser(userData);
+    return userData;
   }, []);
 
   const logout = useCallback(async () => {
     try { await api.auth.logout(); } catch {}
     clearApiToken();
     await AsyncStorage.removeItem('auth_token');
+    await AsyncStorage.removeItem(USER_KEY);
     setUser(null);
   }, []);
 
@@ -48,6 +70,7 @@ export function AuthProvider({ children }) {
     try {
       const me = await api.auth.me();
       setUser(me);
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(me));
     } catch {}
   }, []);
 

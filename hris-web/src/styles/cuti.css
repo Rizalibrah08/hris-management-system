@@ -1,2 +1,159 @@
 /* ===== Cuti (Leave) ===== */
-/* Leave page uses shared styles from global.css */
+
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease;
+  max-width: 380px;
+}
+
+.toast.success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.toast.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.loading-text,
+.empty-text {
+  text-align: center;
+  padding: 24px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* Leave form */
+.leave-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 600px;
+}
+
+.leave-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.leave-form .form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.leave-form .form-group input,
+.leave-form .form-group select,
+.leave-form .form-group textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.leave-form .form-group input:focus,
+.leave-form .form-group select:focus,
+.leave-form .form-group textarea:focus {
+  border-color: #4b3ac3;
+  box-shadow: 0 0 0 2px rgba(75, 58, 195, 0.1);
+}
+
+.leave-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.leave-form .form-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+/* Leave type badge */
+.leave-type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+/* Status badge (shared with global but inline) */
+.status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  text-transform: capitalize;
+}
+
+/* Action buttons */
+.action-cell {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.approve-btn {
+  background: #10b981 !important;
+  color: #fff !important;
+}
+
+.approve-btn:hover {
+  background: #059669 !important;
+}
+
+.reject-btn {
+  background: #f59e0b !important;
+  color: #fff !important;
+}
+
+.reject-btn:hover {
+  background: #d97706 !important;
+}
+
+.cancel-btn {
+  background: #ef4444 !important;
+  color: #fff !important;
+}
+
+.cancel-btn:hover {
+  background: #dc2626 !important;
+}
+
+.muted {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+/* Table responsive wrapper */
+.table-container {
+  overflow-x: auto;
+}
