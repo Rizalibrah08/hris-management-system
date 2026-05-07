@@ -51,7 +51,7 @@ async function run() {
     'employee_salary_component_values', 'employee_salary_profiles',
     'payroll_components', 'payslips', 'payslip', 'payroll',
     'attendance', 'leave_request', 'expenses', 'office_assets', 'tasks',
-    'users', 'employees', 'positions', 'departments', 'roles',
+    'users', 'employees', 'positions', 'departments', 'roles', 'leave_types',
   ]
   for (const t of tables) {
     try { await conn.query(`DELETE FROM \`${t}\``) } catch { /* table may not exist */ }
@@ -74,6 +74,12 @@ async function run() {
   const positions = ['Software Engineer', 'Senior Software Engineer', 'Engineering Manager', 'HR Specialist', 'HR Manager', 'Payroll Analyst', 'Finance Manager', 'Marketing Lead', 'Digital Marketing Specialist', 'Operations Manager', 'Data Analyst', 'Product Manager', 'Legal Counsel', 'UI/UX Designer', 'DevOps Engineer', 'HR Admin', 'Recruitment Specialist', 'Accountant', 'Tax Specialist', 'Content Writer', 'SEO Specialist', 'Admin Staff', 'IT Support Specialist', 'Junior Software Engineer', 'Graphic Designer']
   for (const name of positions) {
     await conn.execute('INSERT INTO positions(name) VALUES (?)', [name])
+  }
+
+  // Seed leave types
+  const leaveTypes = ['Cuti Tahunan', 'Cuti Sakit', 'Cuti Melahirkan', 'Cuti Menikah', 'Izin Pribadi', 'Izin Mendadak', 'Lainnya']
+  for (const name of leaveTypes) {
+    await conn.execute('INSERT INTO leave_types(name) VALUES (?)', [name])
   }
 
   // Helper to get IDs

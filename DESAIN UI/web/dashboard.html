@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud HRIS - Dashboard</title>
+<style>
+:root {
+  --primary: #4b3ac3;
+  --primary-hover: #3c2ea3;
+  --primary-light: #eef2ff;
+  --primary-light-hover: #e2e9ff;
+  --bg-page: #f6f8ff;
+  --bg-panel: #fff;
+  --text-primary: #1d2340;
+  --text-muted: #6b7280;
+  --text-label: #6874a8;
+  --text-sidebar-muted: rgba(255, 255, 255, 0.65);
+  --border-light: #edf0fb;
+  --border-input: #d1d5db;
+  --green-bg: #d1fae5;
+  --green-text: #065f46;
+  --green-bg-soft: #ecfdf5;
+  --red-bg: #fee2e2;
+  --red-text: #991b1b;
+  --red-bg-soft: #fff1f1;
+  --amber-bg: #fef3c7;
+  --amber-text: #92400e;
+  --amber-bg-soft: #fff8e1;
+  --blue-bg: #eef2ff;
+  --blue-text: #3730a3;
+  --sidebar-start: #4937bf;
+  --sidebar-end: #31238c;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --shadow-panel: 0 8px 24px rgba(31, 49, 113, 0.06);
+  --shadow-topbar: 0 10px 30px rgba(31, 49, 113, 0.08);
+  --shadow-modal: 0 24px 44px rgba(17, 26, 58, 0.28);
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.dashboard-layout {
+  display: flex;
+  height: 100vh;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.content {
+  flex: 1;
+  padding: 26px;
+  overflow-y: auto;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  height: 100vh;
+  background: linear-gradient(180deg, var(--sidebar-start), var(--sidebar-end));
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transition: width var(--transition-normal);
+}
+
+.sidebar-header {
+  padding: 14px 14px 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.brand-text { min-width: 0; }
+
+.brand-text h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.brand-text p {
+  margin: 2px 0 0;
+  opacity: 0.65;
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.sidebar-toggle {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.toggle-icon { line-height: 0.7; }
+
+.menu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 14px;
+}
+
+.menu-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+  padding: 8px 6px 4px;
+}
+
+.menu-item {
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.menu-item.active,
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.menu-item.active { font-weight: 600; }
+
+.sidebar-footer {
+  padding: 12px 14px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.user-info { flex: 1; min-width: 0; }
+
+.user-info strong {
+  font-size: 13px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-info p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--text-sidebar-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logout-btn {
+  border: 0;
+  border-radius: 6px;
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.logout-btn:hover { background: rgba(255, 255, 255, 0.24); }
+
+/* ===== Topbar ===== */
+.topbar {
+  background: var(--bg-panel);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-topbar);
+}
+
+.section-label {
+  margin: 0 0 5px;
+  font-size: 12px;
+  color: var(--text-label);
+  text-transform: uppercase;
+}
+
+.topbar h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+/* ===== Metrics Grid ===== */
+.metrics-grid {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.metric-card {
+  background: var(--bg-panel);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-panel);
+}
+
+.metric-card span {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.metric-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 28px;
+  color: var(--text-primary);
+}
+
+.metric-card p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-label);
+}
+
+.metric-card small {
+  display: inline-block;
+  margin-top: 9px;
+  padding: 4px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--primary-light);
+  color: var(--blue-text);
+}
+
+/* ===== Main Grid ===== */
+.main-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 14px;
+}
+
+/* ===== Panel ===== */
+.panel {
+  background: var(--bg-panel);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-panel);
+}
+
+.table-panel { grid-row: span 2; }
+
+.panel h3 {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.panel-head h3 { margin: 0; }
+
+/* ===== Table ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th, td {
+  border-bottom: 1px solid var(--border-light);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  color: var(--text-label);
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background: transparent;
+}
+
+tbody tr:hover { background: var(--primary-light); }
+
+/* ===== Status Badges ===== */
+.status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status.aktif,
+.status.approved {
+  background: var(--green-bg);
+  color: var(--green-text);
+}
+
+.status.terlambat {
+  background: var(--amber-bg-soft);
+  color: var(--amber-text);
+}
+
+.status.pending {
+  background: var(--amber-bg-soft);
+  color: var(--amber-text);
+}
+
+/* ===== Buttons ===== */
+.small-btn {
+  border: 0;
+  border-radius: 6px;
+  background: var(--primary-light);
+  color: var(--blue-text);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background var(--transition-fast);
+  white-space: nowrap;
+}
+
+.small-btn:hover { background: var(--primary-light-hover); }
+
+/* ===== Timeline ===== */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.timeline li {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+}
+
+.timeline strong { font-size: 14px; }
+
+.timeline p {
+  margin: 4px 0 0;
+  color: var(--text-label);
+  font-size: 13px;
+}
+
+/* ===== Highlight ===== */
+.highlight {
+  background: linear-gradient(135deg, var(--primary), #6757dd);
+  color: #fff;
+}
+
+.highlight p {
+  margin: 0;
+  opacity: 0.85;
+}
+
+.highlight strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 30px;
+}
+
+.payroll-kpis {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.payroll-kpis div {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+}
+
+.payroll-kpis span {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.payroll-kpis b {
+  display: block;
+  margin-top: 4px;
+}
+
+.muted { color: var(--text-muted); }
+
+/* ===== Responsive ===== */
+@media (max-width: 1200px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .table-panel { grid-row: auto; }
+  .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .metrics-grid { grid-template-columns: 1fr; }
+  .dashboard-layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; max-height: 50vh; }
+  .content { height: auto; }
+}
+</style>
+</head>
+<body>
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-logo">H</div>
+        <div class="brand-text">
+          <h1>Cloud HRIS</h1>
+          <p>Workspace Console</p>
+        </div>
+      </div>
+      <button class="sidebar-toggle" title="Collapse sidebar">
+        <span class="toggle-icon">&#8249;</span>
+      </button>
+    </div>
+    <nav class="menu">
+      <span class="menu-label">Main Menu</span>
+      <button class="menu-item active">Dashboard</button>
+      <button class="menu-item">Karyawan</button>
+      <button class="menu-item">Absensi</button>
+      <button class="menu-item">Cuti &amp; Izin</button>
+      <button class="menu-item">Payroll</button>
+      <button class="menu-item">Slip Gaji</button>
+      <button class="menu-item">Laporan</button>
+      <button class="menu-item">Lokasi Kantor</button>
+      <button class="menu-item">Master Data</button>
+      <button class="menu-item">Role Management</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">A</div>
+        <div class="user-info">
+          <strong>Aditia Pratama</strong>
+          <p>Super Admin</p>
+        </div>
+        <button type="button" class="logout-btn">Logout</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <header class="topbar">
+      <div>
+        <p class="section-label">Dashboard</p>
+        <h2>Human Resource Information System (HRIS) Terpadu Berbasis Cloud</h2>
+      </div>
+    </header>
+
+    <section class="metrics-grid">
+      <article class="metric-card">
+        <span>Total Karyawan</span>
+        <strong>29</strong>
+        <p>Data realtime</p>
+        <small>+12%</small>
+      </article>
+      <article class="metric-card">
+        <span>Kehadiran Hari Ini</span>
+        <strong>85%</strong>
+        <p>Target 95%</p>
+        <small>Stabil</small>
+      </article>
+      <article class="metric-card">
+        <span>Cuti Menunggu</span>
+        <strong>5</strong>
+        <p>Perlu approval</p>
+        <small>Perlu aksi</small>
+      </article>
+      <article class="metric-card">
+        <span>Total Payroll</span>
+        <strong>Rp 287.800.000</strong>
+        <p>Periode bulan ini</p>
+        <small>Terkendali</small>
+      </article>
+    </section>
+
+    <section class="main-grid">
+      <article class="panel table-panel">
+        <div class="panel-head">
+          <h3>Monitoring Kehadiran Real-time</h3>
+          <button class="small-btn">Lihat Semua</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Departemen</th>
+                <th>Clock In</th>
+                <th>Clock Out</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Aditia Pratama</td>
+                <td>Engineering</td>
+                <td>07:55</td>
+                <td>17:05</td>
+                <td><span class="status aktif">Aktif</span></td>
+              </tr>
+              <tr>
+                <td>Nadia Putri</td>
+                <td>HRD</td>
+                <td>08:10</td>
+                <td>17:20</td>
+                <td><span class="status aktif">Aktif</span></td>
+              </tr>
+              <tr>
+                <td>Rizky Maulana</td>
+                <td>Finance</td>
+                <td>08:22</td>
+                <td>17:15</td>
+                <td><span class="status aktif">Aktif</span></td>
+              </tr>
+              <tr>
+                <td>Salsa Wijaya</td>
+                <td>Marketing</td>
+                <td>09:01</td>
+                <td>17:30</td>
+                <td><span class="status terlambat">Terlambat</span></td>
+              </tr>
+              <tr>
+                <td>Budi Santoso</td>
+                <td>Operations</td>
+                <td>07:50</td>
+                <td>17:00</td>
+                <td><span class="status aktif">Aktif</span></td>
+              </tr>
+              <tr>
+                <td>Intan Lestari</td>
+                <td>Engineering</td>
+                <td>08:05</td>
+                <td class="muted">Belum</td>
+                <td><span class="status aktif">Aktif</span></td>
+              </tr>
+              <tr>
+                <td>Dini Prameswari</td>
+                <td>HRD</td>
+                <td>08:00</td>
+                <td>17:10</td>
+                <td><span class="status aktif">Aktif</span></td>
+              </tr>
+              <tr>
+                <td>Maya Sari</td>
+                <td>Finance</td>
+                <td>07:45</td>
+                <td>17:00</td>
+                <td><span class="status aktif">Aktif</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="panel">
+        <h3>Pengajuan Cuti &amp; Izin</h3>
+        <ul class="timeline">
+          <li>
+            <strong>Cuti Tahunan - Budi Santoso</strong>
+            <p>Keperluan keluarga &middot; <span class="status pending">Pending</span></p>
+          </li>
+          <li>
+            <strong>Izin Sakit - Salsa Wijaya</strong>
+            <p>Demam &middot; <span class="status pending">Pending</span></p>
+          </li>
+          <li>
+            <strong>Cuti Melahirkan - Nadia Putri</strong>
+            <p>Persiapan persalinan &middot; <span class="status pending">Pending</span></p>
+          </li>
+          <li>
+            <strong>Izin Pribadi - Rizky Maulana</strong>
+            <p>Urusan bank &middot; <span class="status pending">Pending</span></p>
+          </li>
+        </ul>
+      </article>
+
+      <article class="panel highlight">
+        <h3>Payroll Basic (Bulan Ini)</h3>
+        <p>Total Penggajian</p>
+        <strong>Rp 287.800.000</strong>
+        <div class="payroll-kpis">
+          <div>
+            <span>Karyawan Aktif</span>
+            <b>29</b>
+          </div>
+          <div>
+            <span>Cuti Pending</span>
+            <b>5</b>
+          </div>
+          <div>
+            <span>Payslip Terbit</span>
+            <b>29</b>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+</div>
+</body>
+</html>

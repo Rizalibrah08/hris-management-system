@@ -369,7 +369,8 @@ app.post('/leave', authRequired, async (req, res) => {
   if (!start_date) return res.status(400).json({ message: 'Tanggal mulai wajib diisi' })
   if (!end_date) return res.status(400).json({ message: 'Tanggal selesai wajib diisi' })
   if (new Date(start_date) > new Date(end_date)) return res.status(400).json({ message: 'Tanggal mulai tidak boleh setelah tanggal selesai' })
-  const allowedTypes = ['Cuti Tahunan', 'Cuti Sakit', 'Cuti Melahirkan', 'Cuti Menikah', 'Izin Pribadi', 'Izin Mendadak', 'Lainnya']
+  const leaveTypes = await query('SELECT name FROM leave_types')
+  const allowedTypes = leaveTypes.map((r) => r.name)
   if (!allowedTypes.includes(leave_type)) return res.status(400).json({ message: `Jenis cuti harus salah satu: ${allowedTypes.join(', ')}` })
   const inserted = await query(
     `INSERT INTO leave_request(employee_id, leave_type, start_date, end_date, reason, status)
@@ -1560,6 +1561,124 @@ app.get('/positions', authRequired, async (_, res) => {
 app.get('/roles', authRequired, async (_, res) => {
   const rows = await query('SELECT id, name FROM roles ORDER BY id')
   res.json(rows)
+})
+
+const adminRefRequired = (authRequired, roleRequired('HRD', 'Super Admin'))
+
+// === Departments CRUD ===
+app.post('/departments', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+  const { name } = req.body
+  if (!name?.trim()) return res.status(400).json({ message: 'Nama departemen wajib diisi' })
+  try {
+    const result = await query('INSERT INTO departments (name) VALUES (?)', [name.trim()])
+    res.status(201).json({ id: result.insertId, name: name.trim() })
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ message: 'Departemen sudah ada' })
+    throw err
+  }
+})
+
+app.put('/departments/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+  const { name } = req.body
+  if (!name?.trim()) return res.status(400).json({ message: 'Nama departemen wajib diisi' })
+  const rows = await query('SELECT id FROM departments WHERE id = ?', [Number(req.params.id)])
+  if (!rows.length) return res.status(404).json({ message: 'Departemen tidak ditemukan' })
+  try {
+    await query('UPDATE departments SET name = ? WHERE id = ?', [name.trim(), Number(req.params.id)])
+    res.json({ id: Number(req.params.id), name: name.trim() })
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ message: 'Departemen sudah ada' })
+    throw err
+  }
+})
+
+app.delete('/departments/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+  const id = Number(req.params.id)
+  const rows = await query('SELECT id FROM departments WHERE id = ?', [id])
+  if (!rows.length) return res.status(404).json({ message: 'Departemen tidak ditemukan' })
+  const linked = await query('SELECT COUNT(*) AS cnt FROM employees WHERE department_id = ?', [id])
+  if (linked[0].cnt > 0) return res.status(400).json({ message: 'Departemen masih digunakan oleh karyawan' })
+  await query('DELETE FROM departments WHERE id = ?', [id])
+  res.json({ message: 'Departemen berhasil dihapus' })
+})
+
+// === Positions CRUD ===
+app.post('/positions', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+  const { name } = req.body
+  if (!name?.trim()) return res.status(400).json({ message: 'Nama jabatan wajib diisi' })
+  try {
+    const result = await query('INSERT INTO positions (name) VALUES (?)', [name.trim()])
+    res.status(201).json({ id: result.insertId, name: name.trim() })
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ message: 'Jabatan sudah ada' })
+    throw err
+  }
+})
+
+app.put('/positions/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+  const { name } = req.body
+  if (!name?.trim()) return res.status(400).json({ message: 'Nama jabatan wajib diisi' })
+  const rows = await query('SELECT id FROM positions WHERE id = ?', [Number(req.params.id)])
+  if (!rows.length) return res.status(404).json({ message: 'Jabatan tidak ditemukan' })
+  try {
+    await query('UPDATE positions SET name = ? WHERE id = ?', [name.trim(), Number(req.params.id)])
+    res.json({ id: Number(req.params.id), name: name.trim() })
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ message: 'Jabatan sudah ada' })
+    throw err
+  }
+})
+
+app.delete('/positions/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+  const id = Number(req.params.id)
+  const rows = await query('SELECT id FROM positions WHERE id = ?', [id])
+  if (!rows.length) return res.status(404).json({ message: 'Jabatan tidak ditemukan' })
+  const linked = await query('SELECT COUNT(*) AS cnt FROM employees WHERE position_id = ?', [id])
+  if (linked[0].cnt > 0) return res.status(400).json({ message: 'Jabatan masih digunakan oleh karyawan' })
+  await query('DELETE FROM positions WHERE id = ?', [id])
+  res.json({ message: 'Jabatan berhasil dihapus' })
+})
+
+// === Leave Types CRUD ===
+app.get('/leave-types', authRequired, async (_, res) => {
+  const rows = await query('SELECT id, name FROM leave_types ORDER BY name')
+  res.json(rows)
+})
+
+app.post('/leave-types', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+  const { name } = req.body
+  if (!name?.trim()) return res.status(400).json({ message: 'Nama jenis izin wajib diisi' })
+  try {
+    const result = await query('INSERT INTO leave_types (name) VALUES (?)', [name.trim()])
+    res.status(201).json({ id: result.insertId, name: name.trim() })
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ message: 'Jenis izin sudah ada' })
+    throw err
+  }
+})
+
+app.put('/leave-types/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+  const { name } = req.body
+  if (!name?.trim()) return res.status(400).json({ message: 'Nama jenis izin wajib diisi' })
+  const rows = await query('SELECT id FROM leave_types WHERE id = ?', [Number(req.params.id)])
+  if (!rows.length) return res.status(404).json({ message: 'Jenis izin tidak ditemukan' })
+  try {
+    await query('UPDATE leave_types SET name = ? WHERE id = ?', [name.trim(), Number(req.params.id)])
+    res.json({ id: Number(req.params.id), name: name.trim() })
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ message: 'Jenis izin sudah ada' })
+    throw err
+  }
+})
+
+app.delete('/leave-types/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+  const id = Number(req.params.id)
+  const rows = await query('SELECT id FROM leave_types WHERE id = ?', [id])
+  if (!rows.length) return res.status(404).json({ message: 'Jenis izin tidak ditemukan' })
+  const linked = await query('SELECT COUNT(*) AS cnt FROM leave_request WHERE leave_type = (SELECT name FROM leave_types WHERE id = ?)', [id])
+  if (linked[0].cnt > 0) return res.status(400).json({ message: 'Jenis izin masih digunakan oleh pengajuan cuti' })
+  await query('DELETE FROM leave_types WHERE id = ?', [id])
+  res.json({ message: 'Jenis izin berhasil dihapus' })
 })
 
 // =============================

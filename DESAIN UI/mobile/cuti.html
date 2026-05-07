@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuti & Izin - HRIS Mobile</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #e8ecf2;
+  display: flex; justify-content: center; align-items: center;
+  min-height: 100vh; padding: 20px;
+}
+.phone-container { position: relative; }
+.phone-frame {
+  width: 399px; height: 852px;
+  background: #1a1a1a;
+  border-radius: 44px; padding: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 0 6px rgba(255,255,255,0.15);
+}
+.phone-notch {
+  width: 120px; height: 28px; background: #1a1a1a;
+  border-radius: 0 0 18px 18px;
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10;
+}
+.phone-screen {
+  width: 375px; height: 812px;
+  background: #F3F4F6; border-radius: 32px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.phone-home-bar {
+  width: 134px; height: 5px; background: #999; border-radius: 3px;
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+}
+.scroll-area { flex: 1; overflow-y: auto; }
+.gradient-header {
+  background: linear-gradient(135deg, #4b3ac3, #6c5ce7);
+  padding: 60px 20px 50px;
+  border-radius: 0 0 28px 28px;
+}
+.header-content {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.header-text h2 { color: #fff; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.header-text p { color: #d4d0f0; font-size: 13px; }
+.header-icon { font-size: 50px; opacity: 0.5; }
+.main-card {
+  background: #fff; border-radius: 18px; padding: 18px;
+  margin: -30px 16px 0;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+}
+.card-title { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 2px; }
+.card-subtitle { font-size: 12px; color: #6b7280; margin-bottom: 14px; }
+.stats-row { display: flex; gap: 8px; }
+.stat-box {
+  flex: 1; background: #fafafa; border: 1px solid #f3f4f6;
+  border-radius: 10px; padding: 12px;
+}
+.stat-box-header {
+  display: flex; align-items: center; gap: 4px; margin-bottom: 6px;
+}
+.dot { width: 7px; height: 7px; border-radius: 4px; flex-shrink: 0; }
+.dot-green { background: #10B981; }
+.dot-amber { background: #F59E0B; }
+.stat-box-title { font-size: 11px; color: #374151; font-weight: 600; }
+.stat-box-value { font-size: 18px; font-weight: 600; color: #111827; }
+.submit-btn {
+  width: 100%; height: 48px; border: none; border-radius: 24px;
+  background: #4b3ac3; color: #fff;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  margin: 16px 16px 0;
+  box-shadow: 0 6px 20px rgba(75,58,195,0.3);
+}
+.leave-chips {
+  display: flex; gap: 8px; padding: 16px; overflow-x: auto;
+}
+.chip {
+  padding: 8px 16px; border-radius: 20px;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+  border: 1px solid #e5e7eb; background: #fff; color: #374151;
+  cursor: pointer;
+}
+.chip.active {
+  background: #4b3ac3; color: #fff; border-color: #4b3ac3;
+}
+.section-title {
+  font-size: 15px; font-weight: 700; color: #111827;
+  padding: 0 16px; margin-bottom: 12px;
+}
+.leave-card {
+  background: #fff; margin: 0 16px 10px; border-radius: 14px;
+  padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.leave-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.leave-header svg { width: 18px; height: 18px; stroke: #4b3ac3; fill: none; stroke-width: 2; }
+.leave-type { font-size: 14px; font-weight: 600; color: #111827; flex: 1; }
+.status-badge {
+  padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 600;
+}
+.badge-pending { background: #FEF3C7; color: #92400E; }
+.badge-approved { background: #D1FAE5; color: #065F46; }
+.badge-rejected { background: #FEE2E2; color: #991B1B; }
+.leave-detail {
+  background: #fafafa; border: 1px solid #f3f4f6;
+  border-radius: 10px; padding: 12px;
+  display: flex; gap: 8px;
+}
+.detail-col { flex: 1; }
+.detail-label { font-size: 11px; color: #6b7280; margin-bottom: 3px; }
+.detail-value { font-size: 13px; font-weight: 500; color: #111827; }
+.detail-reason { font-size: 12px; color: #6b7280; margin-top: 6px; }
+.tab-bar {
+  display: flex; background: #fff;
+  padding: 8px 12px 20px;
+  border-top: 1px solid #f3f4f6;
+  justify-content: space-around;
+}
+.tab-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: pointer; text-decoration: none;
+}
+.tab-icon { font-size: 20px; }
+.tab-label { font-size: 10px; color: #9ca3af; font-weight: 500; }
+.tab-item.active .tab-label { color: #4b3ac3; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="phone-container">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="scroll-area">
+        <div class="gradient-header">
+          <div class="header-content">
+            <div class="header-text">
+              <h2>Cuti & Izin</h2>
+              <p>Kelola cuti Anda</p>
+            </div>
+            <span class="header-icon">&#9992;</span>
+          </div>
+        </div>
+
+        <div class="main-card">
+          <div class="card-title">Total Leave</div>
+          <div class="card-subtitle">Statistik cuti Anda</div>
+          <div class="stats-row">
+            <div class="stat-box">
+              <div class="stat-box-header">
+                <span class="dot dot-green"></span>
+                <span class="stat-box-title">Disetujui</span>
+              </div>
+              <div class="stat-box-value">3</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-header">
+                <span class="dot dot-amber"></span>
+                <span class="stat-box-title">Pending</span>
+              </div>
+              <div class="stat-box-value">2</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="submit-btn" style="width: auto; margin: 16px 16px 12px;">+ Ajukan Cuti</button>
+
+        <div class="leave-chips">
+          <span class="chip active">Cuti Tahunan</span>
+          <span class="chip">Sakit</span>
+          <span class="chip">Melahirkan</span>
+          <span class="chip">Izin</span>
+        </div>
+
+        <div class="section-title" style="margin-top:8px;">Riwayat Pengajuan</div>
+
+        <div class="leave-card">
+          <div class="leave-header">
+            <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span class="leave-type">Cuti Tahunan</span>
+            <span class="status-badge badge-approved">Approved</span>
+          </div>
+          <div class="leave-detail">
+            <div class="detail-col">
+              <div class="detail-label">Tanggal</div>
+              <div class="detail-value">10 Mei - 12 Mei 2026</div>
+            </div>
+            <div class="detail-col">
+              <div class="detail-label">Durasi</div>
+              <div class="detail-value">3 Hari</div>
+            </div>
+          </div>
+          <div class="detail-reason">Liburan keluarga ke Bali</div>
+        </div>
+
+        <div class="leave-card">
+          <div class="leave-header">
+            <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span class="leave-type">Sakit</span>
+            <span class="status-badge badge-pending">Pending</span>
+          </div>
+          <div class="leave-detail">
+            <div class="detail-col">
+              <div class="detail-label">Tanggal</div>
+              <div class="detail-value">15 Mei - 16 Mei 2026</div>
+            </div>
+            <div class="detail-col">
+              <div class="detail-label">Durasi</div>
+              <div class="detail-value">2 Hari</div>
+            </div>
+          </div>
+          <div class="detail-reason">Demam dan perlu istirahat</div>
+        </div>
+
+        <div class="leave-card">
+          <div class="leave-header">
+            <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span class="leave-type">Izin</span>
+            <span class="status-badge badge-rejected">Rejected</span>
+          </div>
+          <div class="leave-detail">
+            <div class="detail-col">
+              <div class="detail-label">Tanggal</div>
+              <div class="detail-value">20 Mei 2026</div>
+            </div>
+            <div class="detail-col">
+              <div class="detail-label">Durasi</div>
+              <div class="detail-value">1 Hari</div>
+            </div>
+          </div>
+          <div class="detail-reason">Keperluan keluarga mendesak</div>
+        </div>
+
+        <div class="leave-card" style="margin-bottom: 20px;">
+          <div class="leave-header">
+            <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span class="leave-type">Cuti Tahunan</span>
+            <span class="status-badge badge-pending">Pending</span>
+          </div>
+          <div class="leave-detail">
+            <div class="detail-col">
+              <div class="detail-label">Tanggal</div>
+              <div class="detail-value">1 Jun - 5 Jun 2026</div>
+            </div>
+            <div class="detail-col">
+              <div class="detail-label">Durasi</div>
+              <div class="detail-value">5 Hari</div>
+            </div>
+          </div>
+          <div class="detail-reason">Menghadiri wisuda adik</div>
+        </div>
+      </div>
+
+      <div class="tab-bar">
+        <div class="tab-item">
+          <span class="tab-icon">&#127968;</span>
+          <span class="tab-label">Dashboard</span>
+        </div>
+        <div class="tab-item">
+          <span class="tab-icon">&#128197;</span>
+          <span class="tab-label">Absensi</span>
+        </div>
+        <div class="tab-item active">
+          <span class="tab-icon">&#127965;</span>
+          <span class="tab-label">Cuti</span>
+        </div>
+        <div class="tab-item">
+          <span class="tab-icon">&#128176;</span>
+          <span class="tab-label">Payroll</span>
+        </div>
+        <div class="tab-item">
+          <span class="tab-icon">&#128100;</span>
+          <span class="tab-label">Profil</span>
+        </div>
+      </div>
+    </div>
+    <div class="phone-home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

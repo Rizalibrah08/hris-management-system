@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slip Gaji - Cloud HRIS</title>
+<style>
+:root {
+  --primary: #4b3ac3;
+  --primary-hover: #3c2ea3;
+  --primary-light: #eef2ff;
+  --primary-light-hover: #e2e9ff;
+  --bg-page: #f6f8ff;
+  --bg-panel: #fff;
+  --text-primary: #1d2340;
+  --text-muted: #6b7280;
+  --text-label: #6874a8;
+  --text-sidebar-muted: rgba(255, 255, 255, 0.65);
+  --border-light: #edf0fb;
+  --border-input: #d1d5db;
+  --green-bg: #d1fae5;
+  --green-text: #065f46;
+  --green-bg-soft: #ecfdf5;
+  --red-bg: #fee2e2;
+  --red-text: #991b1b;
+  --red-bg-soft: #fff1f1;
+  --amber-bg: #fef3c7;
+  --amber-text: #92400e;
+  --amber-bg-soft: #fff8e1;
+  --blue-bg: #eef2ff;
+  --blue-text: #3730a3;
+  --sidebar-start: #4937bf;
+  --sidebar-end: #31238c;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --shadow-panel: 0 8px 24px rgba(31, 49, 113, 0.06);
+  --shadow-topbar: 0 10px 30px rgba(31, 49, 113, 0.08);
+  --shadow-modal: 0 24px 44px rgba(17, 26, 58, 0.28);
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+
+/* Layout */
+.dashboard-layout { display: flex; height: 100vh; background: var(--bg-page); color: var(--text-primary); overflow: hidden; }
+.content { flex: 1; padding: 26px; overflow-y: auto; }
+
+/* Sidebar */
+.sidebar { width: 260px; flex-shrink: 0; height: 100vh; background: linear-gradient(180deg, var(--sidebar-start), var(--sidebar-end)); color: #fff; display: flex; flex-direction: column; overflow-y: auto; }
+.sidebar-header { padding: 14px 14px 12px; flex-shrink: 0; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+.brand-logo { width: 36px; height: 36px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; flex-shrink: 0; }
+.brand-text { min-width: 0; }
+.brand-text h1 { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
+.brand-text p { margin: 2px 0 0; opacity: 0.65; font-size: 11px; font-weight: 400; white-space: nowrap; }
+.sidebar-toggle { width: 34px; height: 34px; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.1); cursor: pointer; border-radius: var(--radius-sm); color: rgba(255,255,255,0.85); font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.menu { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 4px 14px; }
+.menu-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.45); padding: 8px 6px 4px; }
+.menu-item { border: 0; background: transparent; color: rgba(255,255,255,0.72); text-align: left; padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 500; transition: background var(--transition-fast), color var(--transition-fast); }
+.menu-item.active, .menu-item:hover { background: rgba(255,255,255,0.16); color: #fff; }
+.menu-item.active { font-weight: 600; }
+.sidebar-footer { padding: 12px 14px 8px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto; }
+.user-card { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px; background: rgba(255,255,255,0.08); }
+.user-avatar { width: 34px; height: 34px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.user-info { flex: 1; min-width: 0; }
+.user-info strong { font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-info p { margin: 2px 0 0; font-size: 11px; color: var(--text-sidebar-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.logout-btn { border: 0; border-radius: 6px; padding: 5px 10px; background: rgba(255,255,255,0.14); color: #fff; cursor: pointer; font-size: 11px; font-weight: 500; flex-shrink: 0; }
+
+/* Topbar */
+.topbar { background: var(--bg-panel); border-radius: var(--radius-lg); padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; box-shadow: var(--shadow-topbar); }
+.section-label { margin: 0 0 5px; font-size: 12px; color: var(--text-label); text-transform: uppercase; }
+.topbar h2 { margin: 0; font-size: 20px; }
+.topbar input { border: 1px solid var(--border-input); background: var(--bg-page); border-radius: var(--radius-sm); padding: 10px 12px; min-width: 320px; font-family: inherit; font-size: 13px; outline: none; }
+.topbar input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(75,58,195,0.1); }
+
+/* Panel */
+.panel { background: var(--bg-panel); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-panel); }
+.panel h3 { margin: 0 0 14px; font-size: 16px; font-weight: 700; }
+.feature-layout { margin-top: 18px; display: grid; gap: 14px; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.panel-head h3 { margin: 0; }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { border-bottom: 1px solid var(--border-light); padding: 10px 12px; text-align: left; vertical-align: middle; }
+th { color: var(--text-label); font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.03em; background: transparent; }
+tbody tr:hover { background: var(--primary-light); }
+.table-container { overflow-x: auto; }
+
+/* Buttons */
+.primary-btn { border: 0; border-radius: var(--radius-sm); background: var(--primary); color: #fff; padding: 10px 14px; cursor: pointer; font-size: 13px; font-weight: 600; }
+.primary-btn:hover { background: var(--primary-hover); }
+.primary-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.small-btn { border: 0; border-radius: 6px; background: var(--primary-light); color: var(--blue-text); padding: 6px 10px; cursor: pointer; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.small-btn:hover { background: var(--primary-light-hover); }
+.cancel-btn { background: var(--red-bg-soft); color: var(--red-text); }
+.cancel-btn:hover { background: #fecaca; }
+.action-cell { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Utility */
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+/* Slip Gaji specific */
+.generate-form { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+.generate-form select { border: 1px solid var(--border-input); border-radius: var(--radius-sm); padding: 9px 12px; font-size: 13px; font-family: inherit; outline: none; min-width: 280px; }
+.generate-form select:focus { border-color: var(--primary); }
+.amount-cell { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 600; }
+.amount-cell.earning { color: var(--green-text); }
+.amount-cell.deduction { color: var(--red-text); }
+.amount-cell.net { color: var(--text-primary); font-size: 14px; }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(16,22,45,0.45); display: grid; place-items: center; z-index: 999; animation: overlay-fade-in 0.18s ease-out; }
+.modal-card { width: min(520px, 92vw); background: var(--bg-panel); border-radius: var(--radius-md); padding: 24px; border: 1px solid var(--border-light); box-shadow: var(--shadow-modal); animation: modal-pop-in 0.2s ease-out; max-height: 90vh; overflow-y: auto; }
+.modal-card h3 { margin: 0 0 8px; font-size: 18px; }
+.modal-actions { margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px; }
+
+@keyframes overlay-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-pop-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* Payslip Detail */
+.payslip-detail { max-width: 580px; }
+.payslip-header { text-align: center; margin-bottom: 16px; }
+.payslip-header h3 { margin: 0; font-size: 22px; }
+.payslip-header p { margin: 4px 0 0; font-size: 12px; color: var(--text-muted); }
+.payslip-info { background: var(--bg-page); border-radius: var(--radius-sm); padding: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.info-row { display: flex; flex-direction: column; gap: 2px; }
+.info-row span { font-size: 11px; color: var(--text-muted); }
+.info-row strong { font-size: 13px; }
+.payslip-components h4 { margin: 12px 0 8px; font-size: 14px; color: #374151; }
+.payslip-components table { margin-bottom: 8px; }
+.payslip-components .total-row td { font-weight: 700; border-top: 2px solid var(--border-light); padding-top: 8px; }
+.payslip-net { margin-top: 16px; padding: 14px; background: var(--green-bg-soft); border-radius: var(--radius-sm); border: 1px solid #a7f3d0; display: flex; justify-content: space-between; align-items: center; }
+.payslip-net span { font-size: 14px; color: var(--green-text); }
+.payslip-net strong { font-size: 20px; color: var(--green-text); }
+</style>
+</head>
+<body>
+<div class="dashboard-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-logo">H</div>
+        <div class="brand-text">
+          <h1>Cloud HRIS</h1>
+          <p>Workspace Console</p>
+        </div>
+      </div>
+      <button class="sidebar-toggle"><span>&#8249;</span></button>
+    </div>
+    <nav class="menu">
+      <span class="menu-label">Main Menu</span>
+      <button class="menu-item">Dashboard</button>
+      <button class="menu-item">Karyawan</button>
+      <button class="menu-item">Absensi</button>
+      <button class="menu-item">Cuti &amp; Izin</button>
+      <button class="menu-item">Payroll</button>
+      <button class="menu-item active">Slip Gaji</button>
+      <button class="menu-item">Laporan</button>
+      <button class="menu-item">Lokasi Kantor</button>
+      <button class="menu-item">Master Data</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">A</div>
+        <div class="user-info">
+          <strong>Andi Pratama</strong>
+          <p>Super Admin &mdash; HRD</p>
+        </div>
+        <button class="logout-btn">Logout</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="content">
+    <header class="topbar">
+      <div>
+        <p class="section-label">Slip Gaji</p>
+        <h2>Human Resource Information System (HRIS) Terpadu Berbasis Cloud</h2>
+      </div>
+    </header>
+
+    <section class="feature-layout">
+
+      <!-- Generate Panel -->
+      <article class="panel">
+        <h3>Generate Slip Gaji</h3>
+        <div class="generate-form">
+          <select>
+            <option value="">-- Pilih Payroll Run --</option>
+            <option value="1">Run #8 — 2026-05 — 29 karyawan</option>
+            <option value="2">Run #7 — 2026-04 — 28 karyawan</option>
+          </select>
+          <button class="primary-btn">Generate Slip Gaji</button>
+        </div>
+      </article>
+
+      <!-- Daftar Slip Gaji -->
+      <article class="panel">
+        <h3>Daftar Slip Gaji</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Karyawan</th>
+                <th>No. Slip</th>
+                <th>Periode</th>
+                <th>Pendapatan</th>
+                <th>Potongan</th>
+                <th>Take Home Pay</th>
+                <th>Tanggal</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Andi Pratama</td>
+                <td><span class="mono">SLP-202605-001</span></td>
+                <td>2026-05</td>
+                <td class="amount-cell earning">Rp 25.000.000</td>
+                <td class="amount-cell deduction">Rp 3.500.000</td>
+                <td class="amount-cell net">Rp 21.500.000</td>
+                <td>05/05/2026</td>
+                <td class="action-cell">
+                  <button class="small-btn">Detail</button>
+                  <button class="small-btn">PDF</button>
+                </td>
+              </tr>
+              <tr>
+                <td>Budi Santoso</td>
+                <td><span class="mono">SLP-202605-002</span></td>
+                <td>2026-05</td>
+                <td class="amount-cell earning">Rp 12.000.000</td>
+                <td class="amount-cell deduction">Rp 1.800.000</td>
+                <td class="amount-cell net">Rp 10.200.000</td>
+                <td>05/05/2026</td>
+                <td class="action-cell">
+                  <button class="small-btn">Detail</button>
+                  <button class="small-btn">PDF</button>
+                </td>
+              </tr>
+              <tr>
+                <td>Citra Dewi</td>
+                <td><span class="mono">SLP-202605-003</span></td>
+                <td>2026-05</td>
+                <td class="amount-cell earning">Rp 8.500.000</td>
+                <td class="amount-cell deduction">Rp 1.200.000</td>
+                <td class="amount-cell net">Rp 7.300.000</td>
+                <td>05/05/2026</td>
+                <td class="action-cell">
+                  <button class="small-btn">Detail</button>
+                  <button class="small-btn">PDF</button>
+                </td>
+              </tr>
+              <tr>
+                <td>Dian Hermawan</td>
+                <td><span class="mono">SLP-202605-004</span></td>
+                <td>2026-05</td>
+                <td class="amount-cell earning">Rp 15.000.000</td>
+                <td class="amount-cell deduction">Rp 2.400.000</td>
+                <td class="amount-cell net">Rp 12.600.000</td>
+                <td>05/05/2026</td>
+                <td class="action-cell">
+                  <button class="small-btn">Detail</button>
+                  <button class="small-btn">PDF</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- Detail Modal (shown by default for design showcase) -->
+    <div class="modal-overlay">
+      <div class="modal-card payslip-detail">
+        <div class="payslip-header">
+          <h3>Slip Gaji</h3>
+          <p class="mono">SLP-202605-001</p>
+        </div>
+
+        <div class="payslip-info">
+          <div class="info-row">
+            <span>Periode</span>
+            <strong>2026-05</strong>
+          </div>
+          <div class="info-row">
+            <span>Nama</span>
+            <strong>Andi Pratama</strong>
+          </div>
+          <div class="info-row">
+            <span>Departemen</span>
+            <strong>Engineering</strong>
+          </div>
+          <div class="info-row">
+            <span>Jabatan</span>
+            <strong>Senior Developer</strong>
+          </div>
+        </div>
+
+        <div class="payslip-components">
+          <h4>Pendapatan</h4>
+          <table>
+            <tbody>
+              <tr>
+                <td>Gaji Pokok</td>
+                <td class="amount-cell earning">Rp 18.000.000</td>
+              </tr>
+              <tr>
+                <td>Tunjangan Jabatan</td>
+                <td class="amount-cell earning">Rp 5.000.000</td>
+              </tr>
+              <tr>
+                <td>Tunjangan Transport</td>
+                <td class="amount-cell earning">Rp 2.000.000</td>
+              </tr>
+              <tr class="total-row">
+                <td>Total Pendapatan</td>
+                <td class="amount-cell">Rp 25.000.000</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Potongan</h4>
+          <table>
+            <tbody>
+              <tr>
+                <td>BPJS Ketenagakerjaan</td>
+                <td class="amount-cell deduction">Rp 1.000.000</td>
+              </tr>
+              <tr>
+                <td>BPJS Kesehatan</td>
+                <td class="amount-cell deduction">Rp 500.000</td>
+              </tr>
+              <tr>
+                <td>PPh 21</td>
+                <td class="amount-cell deduction">Rp 2.000.000</td>
+              </tr>
+              <tr class="total-row">
+                <td>Total Potongan</td>
+                <td class="amount-cell">Rp 3.500.000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="payslip-net">
+          <span>Take Home Pay</span>
+          <strong>Rp 21.500.000</strong>
+        </div>
+
+        <div class="modal-actions">
+          <button class="small-btn cancel-btn">Tutup</button>
+          <button class="primary-btn">Download PDF</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

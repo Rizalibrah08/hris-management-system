@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Absensi - HRIS Mobile</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #e8ecf2;
+  display: flex; justify-content: center; align-items: center;
+  min-height: 100vh; padding: 20px;
+}
+.phone-container { position: relative; }
+.phone-frame {
+  width: 399px; height: 852px;
+  background: #1a1a1a;
+  border-radius: 44px; padding: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 0 6px rgba(255,255,255,0.15);
+}
+.phone-notch {
+  width: 120px; height: 28px; background: #1a1a1a;
+  border-radius: 0 0 18px 18px;
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10;
+}
+.phone-screen {
+  width: 375px; height: 812px;
+  background: #F3F4F6; border-radius: 32px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.phone-home-bar {
+  width: 134px; height: 5px; background: #999; border-radius: 3px;
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+}
+.scroll-area {
+  flex: 1; overflow-y: auto;
+}
+.gradient-header {
+  background: linear-gradient(135deg, #4b3ac3, #6c5ce7);
+  padding: 60px 20px 50px;
+  border-radius: 0 0 28px 28px;
+}
+.header-content {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.header-text h2 { color: #fff; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.header-date { color: #d4d0f0; font-size: 13px; }
+.header-icon { font-size: 48px; opacity: 0.6; }
+.main-card {
+  background: #fff; border-radius: 18px; padding: 18px;
+  margin: -30px 16px 0;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+}
+.card-title { font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 2px; }
+.card-subtitle { font-size: 12px; color: #6b7280; margin-bottom: 14px; }
+.stats-row {
+  display: flex; gap: 8px; margin-bottom: 14px;
+}
+.stat-box {
+  flex: 1; background: #fafafa; border: 1px solid #f3f4f6;
+  border-radius: 12px; padding: 14px;
+}
+.stat-box-label {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; color: #6b7280; margin-bottom: 6px;
+}
+.stat-box-value { font-size: 18px; font-weight: 600; color: #111827; }
+.clock-btn {
+  width: 100%; height: 48px; border: none; border-radius: 24px;
+  font-size: 15px; font-weight: 700; cursor: pointer; color: #fff;
+}
+.btn-clockout { background: #1f1f1f; }
+.btn-clocked { background: #c4b5fd; cursor: default; }
+.btn-clockin { background: #4b3ac3; }
+.history-section { padding: 20px 16px 16px; }
+.section-title {
+  font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 12px;
+}
+.history-card {
+  background: #fff; border-radius: 14px; padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 10px;
+}
+.history-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.history-header svg { width: 16px; height: 16px; stroke: #4b3ac3; fill: none; stroke-width: 2; }
+.history-date { font-size: 14px; font-weight: 600; color: #111827; flex: 1; }
+.status-badge {
+  padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 600;
+}
+.badge-present { background: #D1FAE5; color: #065F46; }
+.badge-late { background: #FEF3C7; color: #92400E; }
+.badge-absent { background: #FEE2E2; color: #991B1B; }
+.history-detail {
+  display: flex; gap: 8px;
+  background: #fafafa; border: 1px solid #f3f4f6;
+  border-radius: 10px; padding: 12px;
+}
+.detail-col { flex: 1; }
+.detail-label { font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+.detail-value { font-size: 14px; font-weight: 500; color: #374151; }
+.tab-bar {
+  display: flex; background: #fff;
+  padding: 8px 12px 20px;
+  border-top: 1px solid #f3f4f6;
+  justify-content: space-around;
+}
+.tab-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: pointer; text-decoration: none;
+}
+.tab-icon { font-size: 20px; }
+.tab-label { font-size: 10px; color: #9ca3af; font-weight: 500; }
+.tab-item.active .tab-label { color: #4b3ac3; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="phone-container">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="scroll-area">
+        <div class="gradient-header">
+          <div class="header-content">
+            <div class="header-text">
+              <h2>Absensi</h2>
+              <div class="header-date">Kamis, 7 Mei 2026</div>
+            </div>
+            <span class="header-icon">&#128338;</span>
+          </div>
+        </div>
+
+        <div class="main-card">
+          <div class="card-title">Total Working Hour</div>
+          <div class="card-subtitle">Hari Ini</div>
+          <div class="stats-row">
+            <div class="stat-box">
+              <div class="stat-box-label">&#9200; Today</div>
+              <div class="stat-box-value">03:20 Hrs</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-label">&#9202; Clock In</div>
+              <div class="stat-box-value">07:55</div>
+            </div>
+          </div>
+          <button class="clock-btn btn-clockout">&#128337; Clock Out</button>
+        </div>
+
+        <div class="history-section">
+          <div class="section-title">Riwayat Kehadiran</div>
+
+          <div class="history-card">
+            <div class="history-header">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span class="history-date">Kamis, 7 Mei 2026</span>
+              <span class="status-badge badge-present">Hadir</span>
+            </div>
+            <div class="history-detail">
+              <div class="detail-col">
+                <div class="detail-label">Total Hours</div>
+                <div class="detail-value">03:20 Hrs</div>
+              </div>
+              <div class="detail-col">
+                <div class="detail-label">Clock In & Out</div>
+                <div class="detail-value">07:55 — --:--</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="history-card">
+            <div class="history-header">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span class="history-date">Rabu, 6 Mei 2026</span>
+              <span class="status-badge badge-present">Hadir</span>
+            </div>
+            <div class="history-detail">
+              <div class="detail-col">
+                <div class="detail-label">Total Hours</div>
+                <div class="detail-value">09:10 Hrs</div>
+              </div>
+              <div class="detail-col">
+                <div class="detail-label">Clock In & Out</div>
+                <div class="detail-value">07:48 — 17:05</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="history-card">
+            <div class="history-header">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span class="history-date">Selasa, 5 Mei 2026</span>
+              <span class="status-badge badge-late">Terlambat</span>
+            </div>
+            <div class="history-detail">
+              <div class="detail-col">
+                <div class="detail-label">Total Hours</div>
+                <div class="detail-value">08:20 Hrs</div>
+              </div>
+              <div class="detail-col">
+                <div class="detail-label">Clock In & Out</div>
+                <div class="detail-value">08:15 — 17:02</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="history-card">
+            <div class="history-header">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span class="history-date">Senin, 4 Mei 2026</span>
+              <span class="status-badge badge-present">Hadir</span>
+            </div>
+            <div class="history-detail">
+              <div class="detail-col">
+                <div class="detail-label">Total Hours</div>
+                <div class="detail-value">08:55 Hrs</div>
+              </div>
+              <div class="detail-col">
+                <div class="detail-label">Clock In & Out</div>
+                <div class="detail-value">07:50 — 17:00</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="history-card">
+            <div class="history-header">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span class="history-date">Jumat, 1 Mei 2026</span>
+              <span class="status-badge badge-absent">Libur</span>
+            </div>
+            <div class="history-detail">
+              <div class="detail-col">
+                <div class="detail-label">Total Hours</div>
+                <div class="detail-value">-</div>
+              </div>
+              <div class="detail-col">
+                <div class="detail-label">Clock In & Out</div>
+                <div class="detail-value">— — —</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-bar">
+        <div class="tab-item">
+          <span class="tab-icon">&#127968;</span>
+          <span class="tab-label">Dashboard</span>
+        </div>
+        <div class="tab-item active">
+          <span class="tab-icon">&#128197;</span>
+          <span class="tab-label">Absensi</span>
+        </div>
+        <div class="tab-item">
+          <span class="tab-icon">&#127965;</span>
+          <span class="tab-label">Cuti</span>
+        </div>
+        <div class="tab-item">
+          <span class="tab-icon">&#128176;</span>
+          <span class="tab-label">Payroll</span>
+        </div>
+        <div class="tab-item">
+          <span class="tab-icon">&#128100;</span>
+          <span class="tab-label">Profil</span>
+        </div>
+      </div>
+    </div>
+    <div class="phone-home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

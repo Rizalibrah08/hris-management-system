@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slip Gaji - HRIS Mobile</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #e8ecf2;
+  display: flex; justify-content: center; align-items: center;
+  min-height: 100vh; padding: 20px;
+}
+.phone-container { position: relative; }
+.phone-frame {
+  width: 399px; height: 852px;
+  background: #1a1a1a;
+  border-radius: 44px; padding: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 0 6px rgba(255,255,255,0.15);
+}
+.phone-notch {
+  width: 120px; height: 28px; background: #1a1a1a;
+  border-radius: 0 0 18px 18px;
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10;
+}
+.phone-screen {
+  width: 375px; height: 812px;
+  background: #F3F4F6; border-radius: 32px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.phone-home-bar {
+  width: 134px; height: 5px; background: #999; border-radius: 3px;
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+}
+.scroll-area { flex: 1; overflow-y: auto; }
+.top-header {
+  background: #4b3ac3; padding: 60px 16px 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.back-btn {
+  width: 36px; height: 36px; border-radius: 18px;
+  background: rgba(255,255,255,0.2); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; color: #fff;
+  font-size: 18px; font-weight: 700;
+}
+.top-header h2 { color: #fff; font-size: 18px; font-weight: 700; }
+.company-section {
+  background: #fff; padding: 20px 16px;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.company-logo {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: linear-gradient(135deg, #4b3ac3, #6c5ce7);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 20px; font-weight: 800;
+}
+.company-name { font-size: 16px; font-weight: 700; color: #111827; }
+.company-sub { font-size: 11px; color: #6b7280; }
+.info-section { padding: 16px; }
+.info-card {
+  background: #fff; border-radius: 14px; padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 14px;
+}
+.info-row {
+  display: flex; justify-content: space-between; padding: 8px 0;
+  border-bottom: 1px solid #f9fafb;
+}
+.info-row:last-child { border-bottom: none; }
+.info-label { font-size: 13px; color: #6b7280; }
+.info-value { font-size: 13px; color: #111827; font-weight: 500; }
+.table-card {
+  background: #fff; border-radius: 14px; padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 14px;
+}
+.table-title {
+  font-size: 14px; font-weight: 700; color: #4b3ac3; margin-bottom: 12px;
+  padding-bottom: 8px; border-bottom: 2px solid #4b3ac3;
+}
+.table-row {
+  display: flex; justify-content: space-between; padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.table-row:last-child { border-bottom: none; }
+.table-cell { font-size: 13px; color: #374151; }
+.table-cell.amount { font-weight: 500; }
+.total-section {
+  background: #fff; border-radius: 14px; padding: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin: 0 16px 16px;
+  text-align: center; border: 2px solid #D1FAE5;
+}
+.total-label { font-size: 13px; color: #6b7280; margin-bottom: 6px; }
+.total-amount { font-size: 24px; font-weight: 800; color: #10B981; }
+.download-btn {
+  width: calc(100% - 32px); height: 48px;
+  background: #4b3ac3; color: #fff; border: none; border-radius: 24px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  margin: 0 16px 24px;
+  box-shadow: 0 6px 20px rgba(75,58,195,0.3);
+}
+</style>
+</head>
+<body>
+<div class="phone-container">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="scroll-area">
+        <div class="top-header">
+          <button class="back-btn">&#8592;</button>
+          <h2>Slip Gaji</h2>
+        </div>
+
+        <div class="company-section">
+          <div class="company-logo">CH</div>
+          <div>
+            <div class="company-name">Cloud HRIS</div>
+            <div class="company-sub">HR Management System</div>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <div class="info-card">
+            <div class="info-row">
+              <span class="info-label">Nama</span>
+              <span class="info-value">Aditia Pratama</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">NIK</span>
+              <span class="info-value">EMP-2024001</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Departemen</span>
+              <span class="info-value">Engineering</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Jabatan</span>
+              <span class="info-value">Senior Developer</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Periode</span>
+              <span class="info-value">Mei 2026</span>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <div class="table-title">&#9650; Pendapatan</div>
+            <div class="table-row">
+              <span class="table-cell">Gaji Pokok</span>
+              <span class="table-cell amount">Rp 7.000.000</span>
+            </div>
+            <div class="table-row">
+              <span class="table-cell">Tunjangan Transport</span>
+              <span class="table-cell amount">Rp 1.200.000</span>
+            </div>
+            <div class="table-row">
+              <span class="table-cell">Tunjangan Makan</span>
+              <span class="table-cell amount">Rp 800.000</span>
+            </div>
+            <div class="table-row">
+              <span class="table-cell">Tunjangan Kinerja</span>
+              <span class="table-cell amount">Rp 1.500.000</span>
+            </div>
+            <div class="table-row">
+              <span class="table-cell" style="font-weight:700;">Total Pendapatan</span>
+              <span class="table-cell amount" style="font-weight:700;">Rp 10.500.000</span>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <div class="table-title" style="color:#EF4444; border-color:#EF4444;">&#9660; Potongan</div>
+            <div class="table-row">
+              <span class="table-cell">BPJS Kesehatan</span>
+              <span class="table-cell amount" style="color:#EF4444;">-Rp 150.000</span>
+            </div>
+            <div class="table-row">
+              <span class="table-cell">BPJS Ketenagakerjaan</span>
+              <span class="table-cell amount" style="color:#EF4444;">-Rp 200.000</span>
+            </div>
+            <div class="table-row">
+              <span class="table-cell">PPh 21</span>
+              <span class="table-cell amount" style="color:#EF4444;">-Rp 1.650.000</span>
+            </div>
+            <div class="table-row">
+              <span class="table-cell" style="font-weight:700;">Total Potongan</span>
+              <span class="table-cell amount" style="font-weight:700;color:#EF4444;">-Rp 2.000.000</span>
+            </div>
+          </div>
+
+          <div class="total-section">
+            <div class="total-label">Take Home Pay</div>
+            <div class="total-amount">Rp 8.500.000</div>
+          </div>
+        </div>
+
+        <button class="download-btn">&#128196; Unduh PDF</button>
+      </div>
+    </div>
+    <div class="phone-home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

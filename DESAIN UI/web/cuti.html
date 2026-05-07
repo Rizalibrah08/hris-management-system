@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuti &amp; Izin - Cloud HRIS</title>
+<style>
+/* ===== CSS Variables ===== */
+:root {
+  --primary: #4b3ac3;
+  --primary-hover: #3c2ea3;
+  --primary-light: #eef2ff;
+  --primary-light-hover: #e2e9ff;
+  --bg-page: #f6f8ff;
+  --bg-panel: #fff;
+  --text-primary: #1d2340;
+  --text-muted: #6b7280;
+  --text-label: #6874a8;
+  --text-sidebar-muted: rgba(255, 255, 255, 0.65);
+  --border-light: #edf0fb;
+  --border-input: #d1d5db;
+  --green-bg: #d1fae5;
+  --green-text: #065f46;
+  --green-bg-soft: #ecfdf5;
+  --red-bg: #fee2e2;
+  --red-text: #991b1b;
+  --red-bg-soft: #fff1f1;
+  --amber-bg: #fef3c7;
+  --amber-text: #92400e;
+  --amber-bg-soft: #fff8e1;
+  --blue-bg: #eef2ff;
+  --blue-text: #3730a3;
+  --sidebar-start: #4937bf;
+  --sidebar-end: #31238c;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --shadow-panel: 0 8px 24px rgba(31, 49, 113, 0.06);
+  --shadow-topbar: 0 10px 30px rgba(31, 49, 113, 0.08);
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+}
+
+/* ===== Reset ===== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Layout ===== */
+.dashboard-layout {
+  display: flex;
+  height: 100vh;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+.content {
+  flex: 1;
+  padding: 26px;
+  overflow-y: auto;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  height: 100vh;
+  background: linear-gradient(180deg, var(--sidebar-start), var(--sidebar-end));
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.sidebar-header {
+  padding: 14px 14px 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.brand-text { min-width: 0; }
+.brand-text h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.brand-text p {
+  margin: 2px 0 0;
+  opacity: 0.65;
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.sidebar-toggle {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.menu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 14px;
+}
+.menu-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+  padding: 8px 6px 4px;
+}
+.menu-item {
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+}
+.menu-item.active {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-weight: 600;
+}
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+.sidebar-footer {
+  padding: 12px 14px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
+}
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-info strong {
+  font-size: 13px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.user-info p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--text-sidebar-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.logout-btn {
+  border: 0;
+  border-radius: 6px;
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+/* ===== Topbar ===== */
+.topbar {
+  background: var(--bg-panel);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-topbar);
+}
+.section-label {
+  margin: 0 0 5px;
+  font-size: 12px;
+  color: var(--text-label);
+  text-transform: uppercase;
+}
+.topbar h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+/* ===== Panel ===== */
+.panel {
+  background: var(--bg-panel);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-panel);
+}
+.panel h3 {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.feature-layout {
+  margin-top: 18px;
+  display: grid;
+  gap: 14px;
+}
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.panel-head h3 { margin: 0; }
+
+/* ===== Quick Grid ===== */
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.quick-card {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  background: var(--bg-panel);
+}
+.quick-card span {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.quick-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 22px;
+}
+
+/* ===== Table ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border-bottom: 1px solid var(--border-light);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+th {
+  color: var(--text-label);
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background: transparent;
+}
+tbody tr:hover {
+  background: var(--primary-light);
+}
+.table-container {
+  overflow-x: auto;
+}
+
+/* ===== Status Badges ===== */
+.status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.status.approved {
+  background: var(--green-bg);
+  color: var(--green-text);
+}
+.status.pending {
+  background: var(--amber-bg-soft);
+  color: var(--amber-text);
+}
+.status.rejected {
+  background: var(--red-bg-soft);
+  color: var(--red-text);
+}
+
+/* ===== Buttons ===== */
+.primary-btn {
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+}
+.small-btn {
+  border: 0;
+  border-radius: 6px;
+  background: var(--primary-light);
+  color: var(--blue-text);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.cancel-btn {
+  background: var(--red-bg-soft);
+  color: var(--red-text);
+}
+.approve-btn {
+  background: var(--green-bg);
+  color: var(--green-text);
+}
+.reject-btn {
+  background: var(--amber-bg);
+  color: var(--amber-text);
+}
+.action-cell {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.muted {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ===== Leave Form (cuti.css) ===== */
+.leave-type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #ede9fe;
+  color: #5b21b6;
+}
+.leave-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 600px;
+}
+.leave-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.leave-form .form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+.leave-form .form-group input,
+.leave-form .form-group select,
+.leave-form .form-group textarea {
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+.leave-form .form-group input:focus,
+.leave-form .form-group select:focus,
+.leave-form .form-group textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(75, 58, 195, 0.1);
+}
+.leave-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.leave-form .form-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+</style>
+</head>
+<body>
+<div class="dashboard-layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-logo">H</div>
+        <div class="brand-text">
+          <h1>Cloud HRIS</h1>
+          <p>Workspace Console</p>
+        </div>
+      </div>
+      <div class="sidebar-toggle">&#8249;</div>
+    </div>
+    <nav class="menu">
+      <span class="menu-label">Main Menu</span>
+      <button class="menu-item">Dashboard</button>
+      <button class="menu-item">Karyawan</button>
+      <button class="menu-item">Absensi</button>
+      <button class="menu-item active">Cuti &amp; Izin</button>
+      <button class="menu-item">Payroll</button>
+      <button class="menu-item">Slip Gaji</button>
+      <button class="menu-item">Laporan</button>
+      <button class="menu-item">Lokasi Kantor</button>
+      <button class="menu-item">Master Data</button>
+      <button class="menu-item">Role Management</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">A</div>
+        <div class="user-info">
+          <strong>Administrator</strong>
+          <p>Super Admin</p>
+        </div>
+        <button class="logout-btn">Logout</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== CONTENT ===== -->
+  <main class="content">
+    <header class="topbar">
+      <div>
+        <p class="section-label">Cuti &amp; Izin</p>
+        <h2>Human Resource Information System (HRIS) Terpadu Berbasis Cloud</h2>
+      </div>
+    </header>
+
+    <section class="feature-layout">
+
+      <!-- Stats Panel -->
+      <article class="panel">
+        <div class="panel-head">
+          <h3>Leave Management</h3>
+          <button class="primary-btn">+ Ajukan Cuti / Izin</button>
+        </div>
+        <div class="quick-grid">
+          <div class="quick-card">
+            <span>Disetujui</span>
+            <strong>8</strong>
+          </div>
+          <div class="quick-card">
+            <span>Ditolak</span>
+            <strong>2</strong>
+          </div>
+          <div class="quick-card">
+            <span>Menunggu Approval</span>
+            <strong>5</strong>
+          </div>
+        </div>
+      </article>
+
+      <!-- Leave Application Form -->
+      <article class="panel">
+        <h3>Form Pengajuan Cuti / Izin</h3>
+        <form class="leave-form">
+          <div class="form-group">
+            <label>Karyawan</label>
+            <select required>
+              <option value="">-- Pilih Karyawan --</option>
+              <option>Aditia Pratama (Engineering)</option>
+              <option>Nadia Putri (HRD)</option>
+              <option>Rizky Maulana (Finance)</option>
+              <option>Salsa Wijaya (Marketing)</option>
+              <option>Budi Santoso (Operations)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Jenis Cuti / Izin</label>
+            <select required>
+              <option>Cuti Tahunan</option>
+              <option>Cuti Sakit</option>
+              <option>Cuti Melahirkan</option>
+              <option>Cuti Menikah</option>
+              <option>Izin Pribadi</option>
+              <option>Izin Mendadak</option>
+              <option>Lainnya</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tanggal Mulai</label>
+              <input type="date" value="2026-05-10" required>
+            </div>
+            <div class="form-group">
+              <label>Tanggal Selesai</label>
+              <input type="date" value="2026-05-12" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Alasan</label>
+            <textarea rows="3" placeholder="Tulis alasan pengajuan cuti atau izin...">Keperluan keluarga di luar kota</textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="small-btn cancel-btn">Batal</button>
+            <button type="submit" class="primary-btn">Kirim Pengajuan</button>
+          </div>
+        </form>
+      </article>
+
+      <!-- Leave Requests Table -->
+      <article class="panel">
+        <div class="panel-head">
+          <h3>Daftar Pengajuan Cuti &amp; Izin</h3>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Departemen</th>
+                <th>Jenis</th>
+                <th>Mulai</th>
+                <th>Selesai</th>
+                <th>Alasan</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Aditia Pratama</td>
+                <td>Engineering</td>
+                <td><span class="leave-type-badge">Cuti Tahunan</span></td>
+                <td>2026-05-10</td>
+                <td>2026-05-14</td>
+                <td>Liburan keluarga</td>
+                <td><span class="status approved">Approved</span></td>
+                <td class="action-cell"><span class="muted">Selesai</span></td>
+              </tr>
+              <tr>
+                <td>Nadia Putri</td>
+                <td>HRD</td>
+                <td><span class="leave-type-badge">Cuti Sakit</span></td>
+                <td>2026-05-08</td>
+                <td>2026-05-09</td>
+                <td>Demam berdarah</td>
+                <td><span class="status pending">Pending</span></td>
+                <td class="action-cell">
+                  <button class="small-btn approve-btn">Setuju</button>
+                  <button class="small-btn reject-btn">Tolak</button>
+                </td>
+              </tr>
+              <tr>
+                <td>Rizky Maulana</td>
+                <td>Finance</td>
+                <td><span class="leave-type-badge">Izin Pribadi</span></td>
+                <td>2026-05-12</td>
+                <td>2026-05-12</td>
+                <td>Urusan dokumen</td>
+                <td><span class="status pending">Pending</span></td>
+                <td class="action-cell">
+                  <button class="small-btn approve-btn">Setuju</button>
+                  <button class="small-btn reject-btn">Tolak</button>
+                </td>
+              </tr>
+              <tr>
+                <td>Salsa Wijaya</td>
+                <td>Marketing</td>
+                <td><span class="leave-type-badge">Cuti Melahirkan</span></td>
+                <td>2026-06-01</td>
+                <td>2026-09-01</td>
+                <td>Persiapan melahirkan</td>
+                <td><span class="status approved">Approved</span></td>
+                <td class="action-cell"><span class="muted">Selesai</span></td>
+              </tr>
+              <tr>
+                <td>Budi Santoso</td>
+                <td>Operations</td>
+                <td><span class="leave-type-badge">Izin Mendadak</span></td>
+                <td>2026-05-07</td>
+                <td>2026-05-07</td>
+                <td>Kendaraan mogok</td>
+                <td><span class="status rejected">Rejected</span></td>
+                <td class="action-cell"><span class="muted">Selesai</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+    </section>
+  </main>
+</div>
+</body>
+</html>

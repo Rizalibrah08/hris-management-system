@@ -12,6 +12,8 @@ import Absensi from './pages/Absensi'
 import Cuti from './pages/Cuti'
 import RoleManagement from './pages/RoleManagement'
 import SlipGaji from './pages/SlipGaji'
+import Lokasi from './pages/Lokasi'
+import MasterData from './pages/MasterData'
 import { useAuth } from './contexts/AuthContext'
 // Payroll page is still handled by FeaturePages component
 
@@ -63,9 +65,10 @@ function App() {
   }
 
   const roleMenus = useMemo(() => {
-    const base = menus.filter(m => m.key !== 'role' && m.key !== 'laporan')
+    const adminKeys = ['laporan', 'lokasi', 'masterdata']
+    const base = menus.filter(m => !['role', ...adminKeys].includes(m.key))
     if (['HRD', 'Finance', 'Super Admin'].includes(role)) {
-      base.push(menus.find(m => m.key === 'laporan'))
+      adminKeys.forEach(k => base.push(menus.find(m => m.key === k)))
     }
     if (role === 'Super Admin') {
       base.push(menus.find(m => m.key === 'role'))
@@ -387,6 +390,8 @@ function App() {
         {activePage === 'cuti' && <Cuti />}
         {activePage === 'role' && role === 'Super Admin' && <RoleManagement />}
         {activePage === 'slipgaji' && <SlipGaji />}
+        {activePage === 'lokasi' && ['HRD', 'Super Admin'].includes(role) && <Lokasi />}
+        {activePage === 'masterdata' && ['HRD', 'Super Admin'].includes(role) && <MasterData />}
         {['payroll', 'laporan'].includes(activePage) && (
           <FeaturePages
             activePage={activePage}

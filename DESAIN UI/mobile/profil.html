@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil - HRIS Mobile</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #e8ecf2;
+  display: flex; justify-content: center; align-items: center;
+  min-height: 100vh; padding: 20px;
+}
+.phone-container { position: relative; }
+.phone-frame {
+  width: 399px; height: 852px;
+  background: #1a1a1a;
+  border-radius: 44px; padding: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 0 6px rgba(255,255,255,0.15);
+}
+.phone-notch {
+  width: 120px; height: 28px; background: #1a1a1a;
+  border-radius: 0 0 18px 18px;
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10;
+}
+.phone-screen {
+  width: 375px; height: 812px;
+  background: #F3F4F6; border-radius: 32px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.phone-home-bar {
+  width: 134px; height: 5px; background: #999; border-radius: 3px;
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+}
+.scroll-area { flex: 1; overflow-y: auto; }
+.profile-header {
+  background: #4b3ac3; padding: 60px 16px 30px;
+}
+.profile-header h2 {
+  color: #fff; font-size: 20px; font-weight: 700; text-align: center;
+}
+.avatar-section {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px 16px 0; margin-top: -20px;
+}
+.avatar-large {
+  width: 80px; height: 80px; border-radius: 40px;
+  background: #EDEBFE;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 10px;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.avatar-large span {
+  font-size: 32px; font-weight: 700; color: #4b3ac3;
+}
+.profile-name {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
+}
+.profile-name span { font-size: 20px; font-weight: 700; color: #111827; }
+.verified { color: #3B82F6; font-size: 16px; }
+.profile-dept { font-size: 14px; color: #6b7280; }
+.info-section { padding: 20px 16px; }
+.section-label {
+  font-size: 11px; font-weight: 700; color: #6b7280;
+  letter-spacing: 1px; margin-bottom: 10px;
+}
+.info-card {
+  background: #fff; border-radius: 12px; padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 16px;
+}
+.info-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid #f3f4f6;
+}
+.info-item:last-child { border-bottom: none; }
+.info-icon {
+  width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.info-text { font-size: 14px; color: #374151; }
+.edit-btn {
+  width: 100%; height: 48px; background: #4b3ac3; color: #fff;
+  border: none; border-radius: 24px; font-size: 15px; font-weight: 700;
+  cursor: pointer; margin: 0 16px 12px;
+  box-shadow: 0 6px 20px rgba(75,58,195,0.3);
+}
+.logout-btn {
+  width: 100%; height: 48px; background: #FEF2F2; color: #EF4444;
+  border: none; border-radius: 24px; font-size: 15px; font-weight: 600;
+  cursor: pointer; margin: 0 16px 20px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.tab-bar {
+  display: flex; background: #fff;
+  padding: 8px 12px 20px;
+  border-top: 1px solid #f3f4f6;
+  justify-content: space-around;
+}
+.tab-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: pointer; text-decoration: none;
+}
+.tab-icon { font-size: 20px; }
+.tab-label { font-size: 10px; color: #9ca3af; font-weight: 500; }
+.tab-item.active .tab-label { color: #4b3ac3; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="phone-container">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="scroll-area">
+        <div class="profile-header">
+          <h2>Profil</h2>
+        </div>
+
+        <div class="avatar-section">
+          <div class="avatar-large"><span>AP</span></div>
+          <div class="profile-name">
+            <span>Aditia Pratama</span>
+            <span class="verified">&#10003;</span>
+          </div>
+          <div class="profile-dept">Engineering</div>
+        </div>
+
+        <div class="info-section">
+          <div class="section-label">INFORMASI KONTAK</div>
+          <div class="info-card">
+            <div class="info-item">
+              <span class="info-icon">&#9993;</span>
+              <span class="info-text">aditia.pratama@cloudhris.id</span>
+            </div>
+            <div class="info-item">
+              <span class="info-icon">&#9742;</span>
+              <span class="info-text">+62 812-3456-7890</span>
+            </div>
+          </div>
+
+          <div class="section-label">INFORMASI KEPEGAWAIAN</div>
+          <div class="info-card">
+            <div class="info-item">
+              <span class="info-icon">&#128196;</span>
+              <span class="info-text">NIK: EMP-2024001</span>
+            </div>
+            <div class="info-item">
+              <span class="info-icon">&#127970;</span>
+              <span class="info-text">Engineering</span>
+            </div>
+            <div class="info-item">
+              <span class="info-icon">&#128188;</span>
+              <span class="info-text">Senior Developer</span>
+            </div>
+            <div class="info-item">
+              <span class="info-icon">&#128197;</span>
+              <span class="info-text">Kontrak s/d 31 Desember 2026</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="edit-btn">&#9998; Edit Profil</button>
+        <button class="logout-btn">&#128682; Keluar</button>
+      </div>
+
+      <div class="tab-bar">
+        <div class="tab-item">
+          <span class="tab-icon">&#127968;</span>
+          <span class="tab-label">Dashboard</span>
+        </div>
+        <div class="tab-item">
+          <span class="tab-icon">&#128197;</span>
+          <span class="tab-label">Absensi</span>
+        </div>
+        <div class="tab-item">
+          <span class="tab-icon">&#127965;</span>
+          <span class="tab-label">Cuti</span>
+        </div>
+        <div class="tab-item">
+          <span class="tab-icon">&#128176;</span>
+          <span class="tab-label">Payroll</span>
+        </div>
+        <div class="tab-item active">
+          <span class="tab-icon">&#128100;</span>
+          <span class="tab-label">Profil</span>
+        </div>
+      </div>
+    </div>
+    <div class="phone-home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

@@ -4,16 +4,6 @@ import { useAuth } from '../contexts/AuthContext'
 import '../styles/global.css'
 import '../styles/cuti.css'
 
-const LEAVE_TYPES = [
-  'Cuti Tahunan',
-  'Cuti Sakit',
-  'Cuti Melahirkan',
-  'Cuti Menikah',
-  'Izin Pribadi',
-  'Izin Mendadak',
-  'Lainnya',
-]
-
 export default function Cuti() {
   const { role } = useAuth()
   const [leaveData, setLeaveData] = useState([])
@@ -31,6 +21,7 @@ export default function Cuti() {
     reason: '',
   })
   const [selectedEmployeeName, setSelectedEmployeeName] = useState('')
+  const [leaveTypes, setLeaveTypes] = useState([])
 
   const canApprove = ['HRD', 'Super Admin', 'Manager'].includes(role)
   const isAdmin = ['HRD', 'Super Admin'].includes(role)
@@ -58,12 +49,22 @@ export default function Cuti() {
     }
   }, [])
 
+  const loadLeaveTypes = useCallback(async (signal) => {
+    try {
+      const data = await api('/leave-types', { signal })
+      setLeaveTypes(Array.isArray(data) ? data : [])
+    } catch {
+      setLeaveTypes([])
+    }
+  }, [])
+
   useEffect(() => {
     const ctrl = new AbortController()
     loadData(ctrl.signal)
+    loadLeaveTypes(ctrl.signal)
     if (isAdmin) loadEmployees(ctrl.signal)
     return () => ctrl.abort()
-  }, [loadData, loadEmployees, isAdmin])
+  }, [loadData, loadEmployees, loadLeaveTypes, isAdmin])
 
   const approvedCount = useMemo(() => leaveData.filter((l) => l.status === 'Approved').length, [leaveData])
   const rejectedCount = useMemo(() => leaveData.filter((l) => l.status === 'Rejected').length, [leaveData])
@@ -204,8 +205,8 @@ export default function Cuti() {
             <div className="form-group">
               <label htmlFor="leave-type">Jenis Cuti / Izin</label>
               <select id="leave-type" value={form.leave_type} onChange={(e) => setForm((p) => ({ ...p, leave_type: e.target.value }))} required>
-                {LEAVE_TYPES.map((type) => (
-                  <option key={type} value={type}>{type}</option>
+                {leaveTypes.map((type) => (
+                  <option key={type.id || type.name} value={type.name}>{type.name}</option>
                 ))}
               </select>
             </div>

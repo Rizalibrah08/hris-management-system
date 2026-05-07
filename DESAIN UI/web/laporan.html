@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laporan - Cloud HRIS</title>
+<style>
+:root {
+  --primary: #4b3ac3;
+  --primary-hover: #3c2ea3;
+  --primary-light: #eef2ff;
+  --primary-light-hover: #e2e9ff;
+  --bg-page: #f6f8ff;
+  --bg-panel: #fff;
+  --text-primary: #1d2340;
+  --text-muted: #6b7280;
+  --text-label: #6874a8;
+  --text-sidebar-muted: rgba(255, 255, 255, 0.65);
+  --border-light: #edf0fb;
+  --border-input: #d1d5db;
+  --green-bg: #d1fae5;
+  --green-text: #065f46;
+  --green-bg-soft: #ecfdf5;
+  --red-bg: #fee2e2;
+  --red-text: #991b1b;
+  --red-bg-soft: #fff1f1;
+  --amber-bg: #fef3c7;
+  --amber-text: #92400e;
+  --amber-bg-soft: #fff8e1;
+  --blue-bg: #eef2ff;
+  --blue-text: #3730a3;
+  --sidebar-start: #4937bf;
+  --sidebar-end: #31238c;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --shadow-panel: 0 8px 24px rgba(31, 49, 113, 0.06);
+  --shadow-topbar: 0 10px 30px rgba(31, 49, 113, 0.08);
+  --shadow-modal: 0 24px 44px rgba(17, 26, 58, 0.28);
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+
+/* Layout */
+.dashboard-layout { display: flex; height: 100vh; background: var(--bg-page); color: var(--text-primary); overflow: hidden; }
+.content { flex: 1; padding: 26px; overflow-y: auto; }
+
+/* Sidebar */
+.sidebar { width: 260px; flex-shrink: 0; height: 100vh; background: linear-gradient(180deg, var(--sidebar-start), var(--sidebar-end)); color: #fff; display: flex; flex-direction: column; overflow-y: auto; }
+.sidebar-header { padding: 14px 14px 12px; flex-shrink: 0; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+.brand-logo { width: 36px; height: 36px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; flex-shrink: 0; }
+.brand-text { min-width: 0; }
+.brand-text h1 { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
+.brand-text p { margin: 2px 0 0; opacity: 0.65; font-size: 11px; font-weight: 400; white-space: nowrap; }
+.sidebar-toggle { width: 34px; height: 34px; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.1); cursor: pointer; border-radius: var(--radius-sm); color: rgba(255,255,255,0.85); font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.menu { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 4px 14px; }
+.menu-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.45); padding: 8px 6px 4px; }
+.menu-item { border: 0; background: transparent; color: rgba(255,255,255,0.72); text-align: left; padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 500; transition: background var(--transition-fast), color var(--transition-fast); }
+.menu-item.active, .menu-item:hover { background: rgba(255,255,255,0.16); color: #fff; }
+.menu-item.active { font-weight: 600; }
+.sidebar-footer { padding: 12px 14px 8px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto; }
+.user-card { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px; background: rgba(255,255,255,0.08); }
+.user-avatar { width: 34px; height: 34px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.user-info { flex: 1; min-width: 0; }
+.user-info strong { font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-info p { margin: 2px 0 0; font-size: 11px; color: var(--text-sidebar-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.logout-btn { border: 0; border-radius: 6px; padding: 5px 10px; background: rgba(255,255,255,0.14); color: #fff; cursor: pointer; font-size: 11px; font-weight: 500; flex-shrink: 0; }
+
+/* Topbar */
+.topbar { background: var(--bg-panel); border-radius: var(--radius-lg); padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; box-shadow: var(--shadow-topbar); }
+.section-label { margin: 0 0 5px; font-size: 12px; color: var(--text-label); text-transform: uppercase; }
+.topbar h2 { margin: 0; font-size: 20px; }
+
+/* Panel */
+.panel { background: var(--bg-panel); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-panel); }
+.panel h3 { margin: 0 0 14px; font-size: 16px; font-weight: 700; }
+.feature-layout { margin-top: 18px; display: grid; gap: 14px; }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { border-bottom: 1px solid var(--border-light); padding: 10px 12px; text-align: left; vertical-align: middle; }
+th { color: var(--text-label); font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.03em; background: transparent; }
+tbody tr:hover { background: var(--primary-light); }
+.table-container { overflow-x: auto; }
+
+/* Buttons */
+.primary-btn { border: 0; border-radius: var(--radius-sm); background: var(--primary); color: #fff; padding: 10px 14px; cursor: pointer; font-size: 13px; font-weight: 600; }
+.primary-btn:hover { background: var(--primary-hover); }
+.small-btn { border: 0; border-radius: 6px; background: var(--primary-light); color: var(--blue-text); padding: 6px 10px; cursor: pointer; font-size: 12px; font-weight: 600; white-space: nowrap; }
+
+/* Quick Grid */
+.quick-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 2rem; }
+.quick-card { border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px; background: var(--bg-panel); }
+.quick-card span { display: block; font-size: 12px; color: var(--text-muted); }
+.quick-card strong { display: block; margin-top: 8px; font-size: 22px; }
+
+/* Laporan specific */
+.charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 20px; margin: 20px 0; }
+.chart-container { background: #fcfdff; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 16px; box-shadow: var(--shadow-panel); }
+.chart-container h4 { margin: 0 0 12px 0; color: var(--text-primary); font-size: 15px; font-weight: 600; }
+.chart-container table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+.chart-container table th, .chart-container table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e7ebfb; font-size: 13px; }
+.chart-container table th { background: #f0f3f9; font-weight: 600; color: #4b5587; }
+.chart-container table tr:hover { background: #f9fafd; }
+</style>
+</head>
+<body>
+<div class="dashboard-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-logo">H</div>
+        <div class="brand-text">
+          <h1>Cloud HRIS</h1>
+          <p>Workspace Console</p>
+        </div>
+      </div>
+      <button class="sidebar-toggle"><span>&#8249;</span></button>
+    </div>
+    <nav class="menu">
+      <span class="menu-label">Main Menu</span>
+      <button class="menu-item">Dashboard</button>
+      <button class="menu-item">Karyawan</button>
+      <button class="menu-item">Absensi</button>
+      <button class="menu-item">Cuti &amp; Izin</button>
+      <button class="menu-item">Payroll</button>
+      <button class="menu-item">Slip Gaji</button>
+      <button class="menu-item active">Laporan</button>
+      <button class="menu-item">Lokasi Kantor</button>
+      <button class="menu-item">Master Data</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">A</div>
+        <div class="user-info">
+          <strong>Andi Pratama</strong>
+          <p>Super Admin &mdash; HRD</p>
+        </div>
+        <button class="logout-btn">Logout</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="content">
+    <header class="topbar">
+      <div>
+        <p class="section-label">Laporan</p>
+        <h2>Human Resource Information System (HRIS) Terpadu Berbasis Cloud</h2>
+      </div>
+    </header>
+
+    <section class="feature-layout">
+      <article class="panel">
+        <h3>Laporan &amp; Analitik HR</h3>
+
+        <div style="margin-bottom: 1.5rem; display: flex; gap: 8px;">
+          <button class="primary-btn" style="padding: 8px 16px; font-size: 14px;">Export PDF</button>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="quick-grid" style="margin-bottom: 2rem;">
+          <div class="quick-card">
+            <span>Total Karyawan</span>
+            <strong>29</strong>
+          </div>
+          <div class="quick-card">
+            <span>Kehadiran Hari Ini</span>
+            <strong>85%</strong>
+          </div>
+          <div class="quick-card">
+            <span>Cuti Menunggu</span>
+            <strong>5</strong>
+          </div>
+          <div class="quick-card">
+            <span>Total Payroll (Bulan)</span>
+            <strong>Rp 287.800.000</strong>
+          </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-grid">
+
+          <!-- Distribusi Gaji per Departemen -->
+          <div class="chart-container">
+            <h4>Distribusi Gaji per Departemen</h4>
+            <table>
+              <thead>
+                <tr><th>Departemen</th><th>Jumlah Karyawan</th><th>Total Gaji</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Engineering</td><td>8</td><td>Rp 120.000.000</td></tr>
+                <tr><td>Finance</td><td>4</td><td>Rp 52.000.000</td></tr>
+                <tr><td>HRD</td><td>5</td><td>Rp 48.000.000</td></tr>
+                <tr><td>Marketing</td><td>6</td><td>Rp 40.800.000</td></tr>
+                <tr><td>Operations</td><td>6</td><td>Rp 27.000.000</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Jumlah Cuti per Tipe -->
+          <div class="chart-container">
+            <h4>Jumlah Cuti per Tipe</h4>
+            <table>
+              <thead>
+                <tr><th>Tipe Cuti</th><th>Total</th><th>Disetujui</th><th>Ditolak</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Cuti Tahunan</td><td>15</td><td>10</td><td>2</td></tr>
+                <tr><td>Cuti Sakit</td><td>8</td><td>7</td><td>0</td></tr>
+                <tr><td>Cuti Melahirkan</td><td>2</td><td>2</td><td>0</td></tr>
+                <tr><td>Izin Pribadi</td><td>6</td><td>4</td><td>1</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Tren Kehadiran -->
+          <div class="chart-container">
+            <h4>Tren Kehadiran (7 Hari)</h4>
+            <table>
+              <thead>
+                <tr><th>Tanggal</th><th>Tingkat Kehadiran</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>01/05/2026</td><td>92%</td></tr>
+                <tr><td>02/05/2026</td><td>88%</td></tr>
+                <tr><td>03/05/2026</td><td>90%</td></tr>
+                <tr><td>04/05/2026</td><td>85%</td></tr>
+                <tr><td>05/05/2026</td><td>82%</td></tr>
+                <tr><td>06/05/2026</td><td>87%</td></tr>
+                <tr><td>07/05/2026</td><td>85%</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Biaya Payroll per Departemen -->
+          <div class="chart-container">
+            <h4>Biaya Payroll per Departemen</h4>
+            <table>
+              <thead>
+                <tr><th>Departemen</th><th>Jumlah Karyawan</th><th>Total Gaji Bruto</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Engineering</td><td>8</td><td>Rp 120.000.000</td></tr>
+                <tr><td>Finance</td><td>4</td><td>Rp 52.000.000</td></tr>
+                <tr><td>HRD</td><td>5</td><td>Rp 48.000.000</td></tr>
+                <tr><td>Marketing</td><td>6</td><td>Rp 40.800.000</td></tr>
+                <tr><td>Operations</td><td>6</td><td>Rp 27.000.000</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Distribusi Gaji per Posisi -->
+          <div class="chart-container">
+            <h4>Distribusi Gaji per Posisi</h4>
+            <table>
+              <thead>
+                <tr><th>Posisi</th><th>Jumlah Karyawan</th><th>Total Gaji</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Senior Developer</td><td>5</td><td>Rp 85.000.000</td></tr>
+                <tr><td>Staff Finance</td><td>4</td><td>Rp 52.000.000</td></tr>
+                <tr><td>HR Specialist</td><td>3</td><td>Rp 33.000.000</td></tr>
+                <tr><td>Marketing Lead</td><td>2</td><td>Rp 22.000.000</td></tr>
+                <tr><td>Operations Staff</td><td>6</td><td>Rp 27.000.000</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Status Cuti Bulanan -->
+          <div class="chart-container">
+            <h4>Status Cuti Bulanan (3 Bulan Terakhir)</h4>
+            <table>
+              <thead>
+                <tr><th>Bulan</th><th>Total</th><th>Disetujui</th><th>Ditolak</th><th>Pending</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Maret 2026</td><td>12</td><td>9</td><td>2</td><td>1</td></tr>
+                <tr><td>April 2026</td><td>10</td><td>8</td><td>1</td><td>1</td></tr>
+                <tr><td>Mei 2026</td><td>8</td><td>6</td><td>0</td><td>2</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- Detail Distribusi Gaji -->
+        <div style="margin-top: 2rem;">
+          <h4 style="margin: 0 0 12px; font-size: 16px; font-weight: 700;">Detail Distribusi Gaji</h4>
+          <table style="width: 100%; margin-top: 1rem;">
+            <thead>
+              <tr>
+                <th>Departemen</th>
+                <th>Jumlah Karyawan</th>
+                <th>Total Gaji</th>
+                <th>Rata-rata Gaji</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Engineering</td><td>8</td><td>Rp 120.000.000</td><td>Rp 15.000.000</td></tr>
+              <tr><td>Finance</td><td>4</td><td>Rp 52.000.000</td><td>Rp 13.000.000</td></tr>
+              <tr><td>HRD</td><td>5</td><td>Rp 48.000.000</td><td>Rp 9.600.000</td></tr>
+              <tr><td>Marketing</td><td>6</td><td>Rp 40.800.000</td><td>Rp 6.800.000</td></tr>
+              <tr><td>Operations</td><td>6</td><td>Rp 27.000.000</td><td>Rp 4.500.000</td></tr>
+              <tr><td>Sales</td><td>4</td><td>Rp 24.000.000</td><td>Rp 6.000.000</td></tr>
+              <tr><td>IT Support</td><td>3</td><td>Rp 18.000.000</td><td>Rp 6.000.000</td></tr>
+              <tr><td>Legal</td><td>2</td><td>Rp 16.000.000</td><td>Rp 8.000.000</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </article>
+    </section>
+  </main>
+</div>
+</body>
+</html>

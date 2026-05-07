@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRIS — Desain UI/UX</title>
+<style>
+:root {
+  --primary: #4b3ac3;
+  --primary-hover: #3c2ea3;
+  --primary-light: #eef2ff;
+  --bg-page: #f6f8ff;
+  --bg-panel: #fff;
+  --text-primary: #1d2340;
+  --text-muted: #6b7280;
+  --text-label: #6874a8;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-panel: 0 8px 24px rgba(31, 49, 113, 0.06);
+  --transition-fast: 0.15s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+header {
+  background: linear-gradient(135deg, #4937bf, #31238c);
+  color: #fff;
+  padding: 40px 26px 32px;
+  text-align: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+header p {
+  margin: 6px 0 0;
+  opacity: 0.75;
+  font-size: 15px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 640px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.column-card {
+  background: var(--bg-panel);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-panel);
+}
+
+.column-card h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  color: var(--primary);
+}
+
+.column-card .subtitle {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-list li {
+  margin: 0;
+}
+
+.file-list a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.file-list a:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.file-list .num {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.file-list a:hover .num {
+  background: var(--primary);
+  color: #fff;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>HRIS — Desain UI/UX</h1>
+  <p>Daftar seluruh halaman perancangan antarmuka Cloud HRIS</p>
+</header>
+
+<div class="container">
+  <div class="columns">
+
+    <!-- Web Column -->
+    <div class="column-card">
+      <h2>Web</h2>
+      <p class="subtitle">Aplikasi Desktop / Web Dashboard</p>
+      <ol class="file-list">
+        <li><a href="web/login.html"><span class="num">1</span> Login</a></li>
+        <li><a href="web/dashboard.html"><span class="num">2</span> Dashboard</a></li>
+        <li><a href="web/karyawan.html"><span class="num">3</span> Karyawan (Manajemen Karyawan)</a></li>
+        <li><a href="web/absensi.html"><span class="num">4</span> Absensi</a></li>
+        <li><a href="web/cuti-izin.html"><span class="num">5</span> Cuti &amp; Izin</a></li>
+        <li><a href="web/payroll.html"><span class="num">6</span> Payroll</a></li>
+        <li><a href="web/slip-gaji.html"><span class="num">7</span> Slip Gaji</a></li>
+        <li><a href="web/laporan.html"><span class="num">8</span> Laporan &amp; Analitik</a></li>
+        <li><a href="web/role-management.html"><span class="num">9</span> Role Management</a></li>
+        <li><a href="web/lokasi-kantor.html"><span class="num">10</span> Lokasi Kantor</a></li>
+        <li><a href="web/masterdata.html"><span class="num">11</span> Master Data</a></li>
+      </ol>
+    </div>
+
+    <!-- Mobile Column -->
+    <div class="column-card">
+      <h2>Mobile</h2>
+      <p class="subtitle">Aplikasi Seluler Karyawan</p>
+      <ol class="file-list">
+        <li><a href="mobile/login.html"><span class="num">1</span> Login</a></li>
+        <li><a href="mobile/dashboard.html"><span class="num">2</span> Dashboard</a></li>
+        <li><a href="mobile/absensi.html"><span class="num">3</span> Absensi</a></li>
+        <li><a href="mobile/cuti.html"><span class="num">4</span> Cuti</a></li>
+        <li><a href="mobile/payroll.html"><span class="num">5</span> Payroll</a></li>
+        <li><a href="mobile/slip-gaji.html"><span class="num">6</span> Slip Gaji</a></li>
+        <li><a href="mobile/profil.html"><span class="num">7</span> Profil</a></li>
+      </ol>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  Cloud HRIS &copy; 2026 &mdash; Human Capital Management System
+</footer>
+
+</body>
+</html>

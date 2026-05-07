@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payroll - HRIS Mobile</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #e8ecf2;
+  display: flex; justify-content: center; align-items: center;
+  min-height: 100vh; padding: 20px;
+}
+.phone-container { position: relative; }
+.phone-frame {
+  width: 399px; height: 852px;
+  background: #1a1a1a;
+  border-radius: 44px; padding: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 0 6px rgba(255,255,255,0.15);
+}
+.phone-notch {
+  width: 120px; height: 28px; background: #1a1a1a;
+  border-radius: 0 0 18px 18px;
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10;
+}
+.phone-screen {
+  width: 375px; height: 812px;
+  background: #F3F4F6; border-radius: 32px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.phone-home-bar {
+  width: 134px; height: 5px; background: #999; border-radius: 3px;
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+}
+.scroll-area { flex: 1; overflow-y: auto; }
+.gradient-header {
+  background: linear-gradient(135deg, #4b3ac3, #6c5ce7);
+  padding: 60px 20px 50px;
+  border-radius: 0 0 28px 28px;
+}
+.header-content { display: flex; justify-content: space-between; align-items: center; }
+.header-text h2 { color: #fff; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.header-text p { color: #d4d0f0; font-size: 13px; }
+.header-icon { font-size: 48px; opacity: 0.6; }
+.payroll-card {
+  background: #fff; border-radius: 18px; padding: 18px;
+  margin: -30px 16px 0;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+}
+.period { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 2px; }
+.period-sub { font-size: 12px; color: #6b7280; margin-bottom: 14px; }
+.amount-row {
+  display: flex; gap: 8px; margin-bottom: 14px;
+}
+.amount-box {
+  flex: 1; background: #fafafa; border: 1px solid #f3f4f6;
+  border-radius: 12px; padding: 14px;
+}
+.amount-label {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; color: #6b7280; margin-bottom: 6px;
+}
+.amount-value { font-size: 16px; font-weight: 600; color: #111827; }
+.breakdown-section { padding: 20px 16px 0; }
+.section-title {
+  font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 10px;
+}
+.breakdown-card {
+  background: #fff; border-radius: 14px; padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 10px;
+}
+.breakdown-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid #f3f4f6;
+}
+.breakdown-item:last-child { border-bottom: none; }
+.breakdown-left { display: flex; align-items: center; gap: 10px; }
+.breakdown-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.icon-green-bg { background: #D1FAE5; color: #10B981; }
+.icon-red-bg { background: #FEE2E2; color: #EF4444; }
+.icon-blue-bg { background: #EDEBFE; color: #4b3ac3; }
+.breakdown-name { font-size: 14px; color: #111827; font-weight: 500; }
+.breakdown-amount { font-size: 14px; font-weight: 600; color: #111827; }
+.breakdown-amount.negative { color: #EF4444; }
+.history-section { padding: 20px 16px 20px; }
+.history-title {
+  font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 10px;
+}
+.history-card {
+  background: #fff; border-radius: 14px; padding: 14px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 8px;
+}
+.history-period { font-size: 14px; font-weight: 600; color: #111827; }
+.history-sub { font-size: 11px; color: #6b7280; }
+.history-net { font-size: 15px; font-weight: 700; color: #10B981; }
+.tab-bar {
+  display: flex; background: #fff;
+  padding: 8px 12px 20px;
+  border-top: 1px solid #f3f4f6;
+  justify-content: space-around;
+}
+.tab-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: pointer; text-decoration: none;
+}
+.tab-icon { font-size: 20px; }
+.tab-label { font-size: 10px; color: #9ca3af; font-weight: 500; }
+.tab-item.active .tab-label { color: #4b3ac3; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="phone-container">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="scroll-area">
+        <div class="gradient-header">
+          <div class="header-content">
+            <div class="header-text">
+              <h2>Payroll</h2>
+              <p>Informasi gaji Anda</p>
+            </div>
+            <span class="header-icon">&#128176;</span>
+          </div>
+        </div>
+
+        <div class="payroll-card">
+          <div class="period">Mei 2026</div>
+          <div class="period-sub">Gaji Bulan Ini</div>
+          <div class="amount-row">
+            <div class="amount-box">
+              <div class="amount-label">&#128200; Gross</div>
+              <div class="amount-value">Rp 10.500.000</div>
+            </div>
+            <div class="amount-box">
+              <div class="amount-label">&#9989; Net</div>
+              <div class="amount-value" style="color:#10B981;">Rp 8.500.000</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="breakdown-section">
+          <div class="section-title">Rincian Komponen</div>
+          <div class="breakdown-card">
+            <div class="breakdown-item">
+              <div class="breakdown-left">
+                <span class="breakdown-icon icon-blue-bg">&#128188;</span>
+                <span class="breakdown-name">Gaji Pokok</span>
+              </div>
+              <span class="breakdown-amount">Rp 7.000.000</span>
+            </div>
+            <div class="breakdown-item">
+              <div class="breakdown-left">
+                <span class="breakdown-icon icon-green-bg">&#127873;</span>
+                <span class="breakdown-name">Tunjangan</span>
+              </div>
+              <span class="breakdown-amount">Rp 3.500.000</span>
+            </div>
+            <div class="breakdown-item">
+              <div class="breakdown-left">
+                <span class="breakdown-icon icon-red-bg">&#10133;</span>
+                <span class="breakdown-name">Potongan</span>
+              </div>
+              <span class="breakdown-amount negative">-Rp 2.000.000</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="history-section">
+          <div class="history-title">Riwayat Slip Gaji</div>
+
+          <div class="history-card">
+            <div>
+              <div class="history-period">Mei 2026</div>
+              <div class="history-sub">1 - 31 Mei 2026</div>
+            </div>
+            <div class="history-net">Rp 8.500.000</div>
+          </div>
+
+          <div class="history-card">
+            <div>
+              <div class="history-period">April 2026</div>
+              <div class="history-sub">1 - 30 April 2026</div>
+            </div>
+            <div class="history-net">Rp 8.500.000</div>
+          </div>
+
+          <div class="history-card">
+            <div>
+              <div class="history-period">Maret 2026</div>
+              <div class="history-sub">1 - 31 Maret 2026</div>
+            </div>
+            <div class="history-net">Rp 8.450.000</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-bar">
+        <div class="tab-item">
+          <span class="tab-icon">&#127968;</span>
+          <span class="tab-label">Dashboard</span>
+        </div>
+        <div class="tab-item">
+          <span class="tab-icon">&#128197;</span>
+          <span class="tab-label">Absensi</span>
+        </div>
+        <div class="tab-item">
+          <span class="tab-icon">&#127965;</span>
+          <span class="tab-label">Cuti</span>
+        </div>
+        <div class="tab-item active">
+          <span class="tab-icon">&#128176;</span>
+          <span class="tab-label">Payroll</span>
+        </div>
+        <div class="tab-item">
+          <span class="tab-icon">&#128100;</span>
+          <span class="tab-label">Profil</span>
+        </div>
+      </div>
+    </div>
+    <div class="phone-home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

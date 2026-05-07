@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payroll - Cloud HRIS</title>
+<style>
+/* ===== CSS Variables ===== */
+:root {
+  --primary: #4b3ac3;
+  --primary-hover: #3c2ea3;
+  --primary-light: #eef2ff;
+  --primary-light-hover: #e2e9ff;
+  --bg-page: #f6f8ff;
+  --bg-panel: #fff;
+  --text-primary: #1d2340;
+  --text-muted: #6b7280;
+  --text-label: #6874a8;
+  --text-sidebar-muted: rgba(255, 255, 255, 0.65);
+  --border-light: #edf0fb;
+  --border-input: #d1d5db;
+  --green-bg: #d1fae5;
+  --green-text: #065f46;
+  --green-bg-soft: #ecfdf5;
+  --red-bg: #fee2e2;
+  --red-text: #991b1b;
+  --red-bg-soft: #fff1f1;
+  --amber-bg: #fef3c7;
+  --amber-text: #92400e;
+  --amber-bg-soft: #fff8e1;
+  --blue-bg: #eef2ff;
+  --blue-text: #3730a3;
+  --sidebar-start: #4937bf;
+  --sidebar-end: #31238c;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --shadow-panel: 0 8px 24px rgba(31, 49, 113, 0.06);
+  --shadow-topbar: 0 10px 30px rgba(31, 49, 113, 0.08);
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+}
+
+/* ===== Reset ===== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Layout ===== */
+.dashboard-layout {
+  display: flex;
+  height: 100vh;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+.content {
+  flex: 1;
+  padding: 26px;
+  overflow-y: auto;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  height: 100vh;
+  background: linear-gradient(180deg, var(--sidebar-start), var(--sidebar-end));
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.sidebar-header {
+  padding: 14px 14px 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.brand-text { min-width: 0; }
+.brand-text h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.brand-text p {
+  margin: 2px 0 0;
+  opacity: 0.65;
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.sidebar-toggle {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.menu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 14px;
+}
+.menu-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+  padding: 8px 6px 4px;
+}
+.menu-item {
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+}
+.menu-item.active {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-weight: 600;
+}
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+.sidebar-footer {
+  padding: 12px 14px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
+}
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-info strong {
+  font-size: 13px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.user-info p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--text-sidebar-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.logout-btn {
+  border: 0;
+  border-radius: 6px;
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+/* ===== Topbar ===== */
+.topbar {
+  background: var(--bg-panel);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-topbar);
+}
+.section-label {
+  margin: 0 0 5px;
+  font-size: 12px;
+  color: var(--text-label);
+  text-transform: uppercase;
+}
+.topbar h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+/* ===== Panel ===== */
+.panel {
+  background: var(--bg-panel);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-panel);
+}
+.panel h3 {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.feature-layout {
+  margin-top: 18px;
+  display: grid;
+  gap: 14px;
+}
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.panel-head h3 { margin: 0; }
+
+/* ===== Quick Grid ===== */
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.quick-card {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  background: var(--bg-panel);
+}
+.quick-card span {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.quick-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 22px;
+}
+.quick-card .status-badge {
+  margin-top: 8px;
+}
+.detail-summary { margin-bottom: 14px; }
+.detail-summary .quick-card strong {
+  font-size: 18px;
+}
+
+/* ===== Table ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border-bottom: 1px solid var(--border-light);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+th {
+  color: var(--text-label);
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background: transparent;
+}
+tbody tr:hover {
+  background: var(--primary-light);
+}
+.table-container {
+  overflow-x: auto;
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* ===== Status Badges ===== */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-pill);
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  line-height: 1.4;
+}
+.status-badge.status-draft {
+  background: #f1f5f9;
+  color: #475569;
+}
+.status-badge.status-reviewed {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.status-badge.status-approved {
+  background: #d1fae5;
+  color: #065f46;
+}
+.status-badge.status-finalized {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+/* ===== Buttons ===== */
+.primary-btn {
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+}
+.secondary-btn {
+  background: var(--primary-light);
+  color: var(--blue-text);
+}
+.small-btn {
+  border: 0;
+  border-radius: 6px;
+  background: var(--primary-light);
+  color: var(--blue-text);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.cancel-btn {
+  background: var(--red-bg-soft);
+  color: var(--red-text);
+}
+.tab-btn {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-label);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  font-family: inherit;
+}
+.tab-btn.active {
+  border-color: #d8dcf8;
+  background: var(--bg-panel);
+  color: var(--primary);
+  box-shadow: 0 6px 18px rgba(75, 58, 195, 0.12);
+}
+
+/* ===== Payroll-specific (payroll.css) ===== */
+.payroll-layout { }
+.payroll-tabs {
+  display: flex;
+  gap: 10px;
+  padding: 6px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-panel);
+  border-radius: var(--radius-sm);
+}
+.payroll-header {
+  margin-bottom: 6px;
+}
+.payroll-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.payroll-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.message {
+  margin-top: 10px;
+  color: var(--primary);
+  font-weight: 500;
+}
+.payroll-run-section .panel-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.table-wrap {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+.detail-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+.payroll-run-detail h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.detail-toolbar {
+  margin: 12px 0;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+}
+.detail-search {
+  flex: 1;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  background: var(--bg-panel);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.detail-search:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(75, 58, 195, 0.1);
+}
+.payroll-layout table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+}
+.payroll-layout th {
+  background: var(--primary-light);
+  color: var(--text-label);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.payroll-layout td,
+.payroll-layout th {
+  border-bottom: 1px solid var(--border-light);
+  padding: 11px 10px;
+  vertical-align: middle;
+}
+.payroll-layout tbody tr:last-child td {
+  border-bottom: none;
+}
+.payroll-layout tbody tr:hover td {
+  background: var(--primary-light);
+}
+.payroll-layout .quick-card {
+  border: 1px solid var(--border-light);
+  background: var(--bg-panel);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+.payroll-layout .quick-card span {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.payroll-layout .quick-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+</style>
+</head>
+<body>
+<div class="dashboard-layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-logo">H</div>
+        <div class="brand-text">
+          <h1>Cloud HRIS</h1>
+          <p>Workspace Console</p>
+        </div>
+      </div>
+      <div class="sidebar-toggle">&#8249;</div>
+    </div>
+    <nav class="menu">
+      <span class="menu-label">Main Menu</span>
+      <button class="menu-item">Dashboard</button>
+      <button class="menu-item">Karyawan</button>
+      <button class="menu-item">Absensi</button>
+      <button class="menu-item">Cuti &amp; Izin</button>
+      <button class="menu-item active">Payroll</button>
+      <button class="menu-item">Slip Gaji</button>
+      <button class="menu-item">Laporan</button>
+      <button class="menu-item">Lokasi Kantor</button>
+      <button class="menu-item">Master Data</button>
+      <button class="menu-item">Role Management</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">A</div>
+        <div class="user-info">
+          <strong>Administrator</strong>
+          <p>Super Admin</p>
+        </div>
+        <button class="logout-btn">Logout</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== CONTENT ===== -->
+  <main class="content">
+    <header class="topbar">
+      <div>
+        <p class="section-label">Payroll</p>
+        <h2>Human Resource Information System (HRIS) Terpadu Berbasis Cloud</h2>
+      </div>
+    </header>
+
+    <!-- Payroll Tabs -->
+    <div style="margin-top: 18px;">
+      <div class="payroll-tabs">
+        <button class="tab-btn active">Run</button>
+        <button class="tab-btn">Struktur Gaji</button>
+      </div>
+    </div>
+
+    <section class="feature-layout payroll-layout" style="margin-top: 14px;">
+
+      <!-- Panel 1: Payroll Management -->
+      <article class="panel">
+        <div class="panel-head">
+          <h3>Payroll Management</h3>
+          <div class="payroll-actions">
+            <button class="primary-btn">Generate Draft Run</button>
+            <button class="primary-btn secondary-btn">Submit Review</button>
+            <button class="primary-btn">Approve</button>
+            <button class="small-btn cancel-btn">Reject</button>
+            <button class="primary-btn">Finalize Run</button>
+            <button class="small-btn">Validate</button>
+          </div>
+        </div>
+        <p>Total payroll bulan ini: <span class="mono">Rp 187.500.000</span></p>
+        <p class="message">Draft payroll berhasil dibuat (Run #3)</p>
+        <div class="quick-grid detail-summary" style="margin-top: 10px;">
+          <div class="quick-card">
+            <span>Status Workflow</span>
+            <span class="status-badge status-draft">draft</span>
+          </div>
+          <div class="quick-card">
+            <span>Next Step</span>
+            <strong>HRD Submit Review</strong>
+          </div>
+        </div>
+      </article>
+
+      <!-- Panel 2: Daftar Payroll Run -->
+      <article class="panel">
+        <h3>Daftar Payroll Run</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Periode</th>
+                <th>Status</th>
+                <th>Karyawan</th>
+                <th>Total Net</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>#1</td>
+                <td>2026-04-01</td>
+                <td><span class="status-badge status-finalized">finalized</span></td>
+                <td>28</td>
+                <td class="mono">Rp 185.200.000</td>
+                <td><button class="small-btn">Detail</button></td>
+              </tr>
+              <tr>
+                <td>#2</td>
+                <td>2026-05-01</td>
+                <td><span class="status-badge status-approved">approved</span></td>
+                <td>28</td>
+                <td class="mono">Rp 187.500.000</td>
+                <td><button class="small-btn">Detail</button></td>
+              </tr>
+              <tr style="background: var(--primary-light);">
+                <td>#3</td>
+                <td>2026-06-01</td>
+                <td><span class="status-badge status-draft">draft</span></td>
+                <td>28</td>
+                <td class="mono">Rp 192.100.000</td>
+                <td><button class="small-btn">Detail</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <!-- Panel 3: Run Detail -->
+      <article class="panel payroll-run-section">
+        <h3>Detail Run #3</h3>
+        <div class="panel-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <!-- Left: Run Detail -->
+          <div class="detail-panel">
+            <div class="payroll-run-detail">
+              <h4>Run Detail #3</h4>
+              <div class="quick-grid" style="margin-bottom: 12px;">
+                <div class="quick-card">
+                  <span>Periode</span>
+                  <strong>2026-06-01</strong>
+                </div>
+                <div class="quick-card">
+                  <span>Jumlah Karyawan</span>
+                  <strong>28</strong>
+                </div>
+                <div class="quick-card">
+                  <span>Total Net</span>
+                  <strong class="mono">Rp 192.100.000</strong>
+                </div>
+              </div>
+              <div class="detail-toolbar" style="margin-bottom: 8px;">
+                <input class="detail-search" placeholder="Cari karyawan..." value="">
+                <button class="small-btn">Export CSV</button>
+              </div>
+              <div class="table-wrap" style="padding: 0; border: none;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nama</th>
+                      <th>Departemen</th>
+                      <th>Gross</th>
+                      <th>Potongan</th>
+                      <th>Net</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Aditia Pratama</td>
+                      <td>Engineering</td>
+                      <td class="mono">Rp 12.500.000</td>
+                      <td class="mono">Rp 750.000</td>
+                      <td class="mono">Rp 11.750.000</td>
+                    </tr>
+                    <tr>
+                      <td>Nadia Putri</td>
+                      <td>HRD</td>
+                      <td class="mono">Rp 8.200.000</td>
+                      <td class="mono">Rp 350.000</td>
+                      <td class="mono">Rp 7.850.000</td>
+                    </tr>
+                    <tr>
+                      <td>Rizky Maulana</td>
+                      <td>Finance</td>
+                      <td class="mono">Rp 10.000.000</td>
+                      <td class="mono">Rp 500.000</td>
+                      <td class="mono">Rp 9.500.000</td>
+                    </tr>
+                    <tr>
+                      <td>Salsa Wijaya</td>
+                      <td>Marketing</td>
+                      <td class="mono">Rp 7.800.000</td>
+                      <td class="mono">Rp 280.000</td>
+                      <td class="mono">Rp 7.520.000</td>
+                    </tr>
+                    <tr>
+                      <td>Budi Santoso</td>
+                      <td>Operations</td>
+                      <td class="mono">Rp 6.500.000</td>
+                      <td class="mono">Rp 200.000</td>
+                      <td class="mono">Rp 6.300.000</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <!-- Right: placeholder -->
+          <div class="detail-panel" style="display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+            <p>Pilih karyawan untuk melihat komponen gaji</p>
+          </div>
+        </div>
+      </article>
+
+    </section>
+  </main>
+</div>
+</body>
+</html>
