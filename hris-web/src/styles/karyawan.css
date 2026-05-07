@@ -8,61 +8,21 @@
 }
 
 .search-input {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
   padding: 8px 12px;
   font-size: 13px;
   min-width: 220px;
   outline: none;
   font-family: inherit;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .search-input:focus {
-  border-color: #4b3ac3;
+  border-color: var(--primary);
   box-shadow: 0 0 0 2px rgba(75, 58, 195, 0.1);
 }
 
-/* Toast */
-.toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-  padding: 12px 20px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  animation: slideIn 0.3s ease;
-  max-width: 380px;
-}
-
-.toast.success {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-}
-
-.toast.error {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
-}
-
-@keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-.loading-text,
-.empty-text {
-  text-align: center;
-  padding: 24px;
-  color: #6b7280;
-  font-size: 14px;
-}
-
-/* Employee table */
 .employee-table td {
   vertical-align: middle;
 }
@@ -70,13 +30,13 @@
 .emp-name {
   display: block;
   font-weight: 600;
-  color: #1d2340;
+  color: var(--text-primary);
 }
 
 .emp-detail {
   display: block;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text-muted);
   margin-top: 2px;
 }
 
@@ -86,16 +46,15 @@
 
 .salary-cell {
   font-weight: 600;
-  color: #065f46;
+  color: var(--green-text);
 }
 
 .muted-text {
-  color: #9ca3af;
+  color: var(--text-muted);
   font-style: italic;
   font-size: 12px;
 }
 
-/* Contract cell */
 .contract-cell {
   display: flex;
   flex-direction: column;
@@ -112,119 +71,79 @@
 }
 
 .contract-badge.active {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--green-bg);
+  color: var(--green-text);
 }
 
 .contract-badge.expiring {
-  background: #fff3e3;
-  color: #b66b00;
+  background: var(--amber-bg-soft);
+  color: var(--amber-text);
 }
 
 .contract-badge.expired {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--red-bg);
+  color: var(--red-text);
 }
 
 .contract-badge.none {
   background: #f3f4f6;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
-/* Status badges */
 .status-badge-sm {
   display: inline-block;
   padding: 3px 10px;
-  border-radius: 20px;
+  border-radius: var(--radius-pill);
   font-size: 11px;
   font-weight: 600;
 }
 
 .status-badge-sm.active {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--green-bg);
+  color: var(--green-text);
 }
 
 .status-badge-sm.inactive {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--red-bg);
+  color: var(--red-text);
 }
 
-/* Action buttons */
 .salary-btn {
   background: #e0e7ff !important;
   color: #3730a3 !important;
 }
 
+.salary-btn:hover {
+  background: #c7d2fe !important;
+}
+
 .toggle-btn {
-  background: #fef3c7 !important;
-  color: #92400e !important;
+  background: var(--amber-bg) !important;
+  color: var(--amber-text) !important;
 }
 
-/* Form groups inside modals */
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.toggle-btn:hover {
+  background: #fde68a !important;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.form-group label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.form-group input,
-.form-group select {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 9px 12px;
-  font-size: 14px;
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  border-color: #4b3ac3;
-  box-shadow: 0 0 0 2px rgba(75, 58, 195, 0.1);
-}
-
-/* Salary preview */
 .salary-preview {
   margin-top: 8px;
   padding: 10px 14px;
-  background: #f0fdf4;
-  border-radius: 8px;
+  background: var(--green-bg-soft);
+  border-radius: var(--radius-sm);
   border: 1px solid #bbf7d0;
 }
 
 .salary-preview span {
   font-size: 14px;
-  color: #065f46;
+  color: var(--green-text);
 }
 
 .salary-preview strong {
   font-size: 16px;
 }
 
-/* Table container */
-.table-container {
-  overflow-x: auto;
-}
-
-/* Responsive */
 @media (max-width: 768px) {
-  .form-row {
-    grid-template-columns: 1fr;
-  }
   .panel-head-actions {
     flex-direction: column;
     align-items: stretch;

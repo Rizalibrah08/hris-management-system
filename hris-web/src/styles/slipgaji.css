@@ -8,8 +8,8 @@
 }
 
 .generate-form select {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
   padding: 9px 12px;
   font-size: 13px;
   font-family: inherit;
@@ -18,7 +18,7 @@
 }
 
 .generate-form select:focus {
-  border-color: #4b3ac3;
+  border-color: var(--primary);
 }
 
 .amount-cell {
@@ -27,19 +27,18 @@
 }
 
 .amount-cell.earning {
-  color: #065f46;
+  color: var(--green-text);
 }
 
 .amount-cell.deduction {
-  color: #991b1b;
+  color: var(--red-text);
 }
 
 .amount-cell.net {
-  color: #1d2340;
+  color: var(--text-primary);
   font-size: 14px;
 }
 
-/* Detail modal */
 .payslip-detail {
   max-width: 580px;
 }
@@ -57,12 +56,12 @@
 .payslip-header p {
   margin: 4px 0 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .payslip-info {
-  background: #f6f8ff;
-  border-radius: 10px;
+  background: var(--bg-page);
+  border-radius: var(--radius-sm);
   padding: 14px;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -78,7 +77,7 @@
 
 .info-row span {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .info-row strong {
@@ -97,15 +96,15 @@
 
 .payslip-components .total-row td {
   font-weight: 700;
-  border-top: 2px solid #e5e7eb;
+  border-top: 2px solid var(--border-light);
   padding-top: 8px;
 }
 
 .payslip-net {
   margin-top: 16px;
   padding: 14px;
-  background: #ecfdf5;
-  border-radius: 10px;
+  background: var(--green-bg-soft);
+  border-radius: var(--radius-sm);
   border: 1px solid #a7f3d0;
   display: flex;
   justify-content: space-between;
@@ -114,55 +113,10 @@
 
 .payslip-net span {
   font-size: 14px;
-  color: #065f46;
+  color: var(--green-text);
 }
 
 .payslip-net strong {
   font-size: 20px;
-  color: #065f46;
-}
-
-/* Toast */
-.toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-  padding: 12px 20px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  animation: slideIn 0.3s ease;
-  max-width: 400px;
-  cursor: pointer;
-}
-
-.toast.success {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-}
-
-.toast.error {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
-}
-
-.loading-text,
-.empty-text {
-  text-align: center;
-  padding: 24px;
-  color: #6b7280;
-  font-size: 14px;
-}
-
-@keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-.table-container {
-  overflow-x: auto;
+  color: var(--green-text);
 }
