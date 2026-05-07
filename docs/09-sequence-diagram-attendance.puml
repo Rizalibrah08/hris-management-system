@@ -1,101 +1,151 @@
 @startuml HRIS_Attendance_Sequence_Diagram
 
 actor Employee as emp
+actor "HRD / Admin" as hrd
 participant "Mobile App" as mob
+participant "Web App" as web
 participant "API Server" as api
 participant "AuthService" as auth
 participant "AttendanceService" as att
+participant "GeofenceService" as geo
 database "MySQL" as db
 
-== Clock In Flow ==
+== Clock In Flow (Mobile) ==
 
-emp -> mob : Tap "Clock In"
+emp -> mob : Tap "Clock In Now"
 activate mob
 
-mob -> emp : Request camera permission
-emp -> mob : Grant permission
+mob -> mob : Request GPS location\n(expo-location)
+mob <-- mob : { latitude, longitude }
 
-mob -> emp : Show camera preview
-emp -> mob : Take selfie
+mob -> mob : Open camera for selfie\n(expo-camera)
+emp -> mob : Take selfie photo
 
-mob -> api : POST /attendance/clockin\n{gps_location, selfie(base64)}
+mob -> api : POST /attendance/clockin\n{employee_id, gps_location, selfie (base64)}
 activate api
 
 api -> auth : verifyToken(token)
 activate auth
-auth --> api : userId, employeeId
+auth --> api : { userId, role, employeeId }
 deactivate auth
 
-api -> att : clockIn(employeeId, data)
-activate att
+alt Role = Employee AND employee_id != req.user.employeeId
+  api --> mob : 403 Forbidden\n(Cannot clock in for another employee)
+  mob --> emp : Show error "Tidak dapat absen\nuntuk karyawan lain"
+else Authorized
+  api -> att : clockIn(employeeId, data)
+  activate att
 
-att -> db : SELECT * FROM attendance\nWHERE employee_id=id AND DATE(clock_in)=TODAY
-activate db
-db --> att : existingRecord (if any)
-deactivate db
+  att -> geo : validateGeofence(gpsString)
+  activate geo
 
-alt No existing clock-in today
-  att -> db : INSERT INTO attendance\n(employee_id, clock_in, gps_location,\nselfie, status='Aktif')
+  geo -> db : SELECT office_latitude, office_longitude,\nallowed_radius FROM company_settings
   activate db
-  db --> att : attendanceRecord
+  db --> geo : { lat, lng, radius (default 500m) }
   deactivate db
 
-  att --> api : {id, clock_in, status:'Aktif'}
-  api --> mob : 201 Clock-in successful
-  mob --> emp : Show success + clock-in time
-else Already clocked in today
-  att --> api : Error: Already clocked in
-  api --> mob : 409 Conflict
-  mob --> emp : Show "Already clocked in today"
+  geo -> geo : haversineDistance(office, user_gps)
+  alt Distance > allowed_radius
+    geo --> att : false (outside geofence)
+    att --> api : Error: Outside allowed area
+    api --> mob : 400 Bad Request\n"Anda berada di luar area kantor"
+    mob --> emp : Show "Di luar area kantor"
+  else Within geofence
+    geo --> att : true (inside geofence)
+    deactivate geo
+
+    att -> db : SELECT * FROM attendance\nWHERE employee_id=id\nAND DATE(clock_in)=CURDATE()\nAND clock_out IS NULL
+    activate db
+    db --> att : existingRecord
+    deactivate db
+
+    alt No active clock-in today
+      att -> db : INSERT INTO attendance\n(employee_id, clock_in, gps_location,\nselfie, status)
+      activate db
+      db --> att : { id, clock_in, status: 'Aktif' }
+      deactivate db
+
+      att --> api : 201 Created\n{ id, clock_in, status: 'Aktif' }
+      api --> mob : 201 Clock-in successful
+      mob --> emp : Show success\n+ clock-in time
+    else Already clocked in today
+      att --> api : Error: Already clocked in
+      api --> mob : 409 Conflict
+      mob --> emp : Show "Sudah clock in hari ini"
+    end
+  end
+
+  deactivate att
 end
 
-deactivate att
 deactivate api
 deactivate mob
 
-== Clock Out Flow ==
+== Clock Out Flow (Mobile) ==
 
 emp -> mob : Tap "Clock Out"
 activate mob
+
+mob -> mob : Request GPS location\n(expo-location)
+mob <-- mob : { latitude, longitude }
 
 mob -> api : POST /attendance/clockout\n{gps_location}
 activate api
 
 api -> auth : verifyToken(token)
 activate auth
-auth --> api : userId, employeeId
+auth --> api : { userId, employeeId }
 deactivate auth
 
 api -> att : clockOut(employeeId, data)
 activate att
 
-att -> db : SELECT * FROM attendance\nWHERE employee_id=id\nAND DATE(clock_in)=TODAY\nAND clock_out IS NULL
+att -> geo : validateGeofence(gpsString)
+activate geo
+
+geo -> db : SELECT office_latitude, office_longitude,\nallowed_radius FROM company_settings
 activate db
-db --> att : todayRecord
+db --> geo : { lat, lng, radius }
 deactivate db
 
-alt Found active clock-in
-  att -> db : UPDATE attendance\nSET clock_out=NOW(), gps_location=...\nWHERE id=todayRecord.id
+geo -> geo : haversineDistance(office, user_gps)
+alt Distance > allowed_radius
+  geo --> att : false (outside geofence)
+  att --> api : Error: Outside allowed area
+  api --> mob : 400 Bad Request\n"Anda berada di luar area kantor"
+  mob --> emp : Show "Di luar area kantor"
+else Within geofence
+  geo --> att : true (inside geofence)
+  deactivate geo
+
+  att -> db : SELECT * FROM attendance\nWHERE employee_id=id\nAND DATE(clock_in)=CURDATE()\nAND clock_out IS NULL
   activate db
-  db --> att : ok
+  db --> att : todayRecord
   deactivate db
 
-  att --> api : {id, clock_in, clock_out, status:'Aktif'}
-  api --> mob : 200 Clock-out successful
-  mob --> emp : Show summary\n(hours worked, time range)
-else No active clock-in found
-  att --> api : Error: No active clock-in
-  api --> mob : 404 Not found
-  mob --> emp : Show "No active clock-in found"
+  alt Found active clock-in
+    att -> db : UPDATE attendance\nSET clock_out=NOW(), gps_location=CONCAT(gps_location, ', ', out_gps)\nWHERE id=todayRecord.id
+    activate db
+    db --> att : ok
+    deactivate db
+
+    att --> api : 200 OK\n{ id, clock_in, clock_out, status }
+    api --> mob : 200 Clock-out successful
+    mob --> emp : Show summary\n(hours worked, time range)
+  else No active clock-in found
+    att --> api : Error: No active clock-in today
+    api --> mob : 404 Not Found
+    mob --> emp : Show "Belum clock in hari ini"
+  end
 end
 
 deactivate att
 deactivate api
 deactivate mob
 
-== View Attendance Status ==
+== View Attendance Status (Mobile) ==
 
-emp -> mob : View attendance history
+emp -> mob : Open attendance screen
 activate mob
 
 mob -> api : GET /attendance/my-status
@@ -103,23 +153,157 @@ activate api
 
 api -> auth : verifyToken(token)
 activate auth
-auth --> api : userId, employeeId
+auth --> api : { userId, employeeId }
 deactivate auth
 
 api -> att : getMyStatus(employeeId)
 activate att
 
-att -> db : SELECT * FROM attendance\nWHERE employee_id=id\nORDER BY clock_in DESC\nLIMIT 1
+att -> db : SELECT * FROM attendance\nWHERE employee_id=id\nAND DATE(clock_in)=CURDATE()
 activate db
 db --> att : todayRecord
 deactivate db
 
-att --> api : {clock_in, clock_out, status}
-api --> mob : 200 Attendance status
-mob --> emp : Display current status
+alt Has clock-in with no clock-out
+  att --> api : { hasClockedIn: true, hasClockedOut: false,\nattendance: { clock_in, status } }
+else Has clock-in and clock-out
+  att --> api : { hasClockedIn: true, hasClockedOut: true,\nattendance: { clock_in, clock_out, status } }
+else No attendance today
+  att --> api : { hasClockedIn: false, hasClockedOut: false,\nattendance: null }
+end
+
+api --> mob : 200 Status response
+mob --> emp : Display current status\n+ appropriate button\n(Clock In / Clock Out / View Details)
 
 deactivate att
 deactivate api
 deactivate mob
+
+== View Attendance History / Calendar (Mobile) ==
+
+emp -> mob : Tap calendar icon\nor view history
+activate mob
+
+mob -> api : GET /attendance/my?month=YYYY-MM
+activate api
+
+api -> auth : verifyToken(token)
+activate auth
+auth --> api : { userId, employeeId }
+deactivate auth
+
+api -> att : getMyHistory(employeeId, month)
+activate att
+
+att -> db : SELECT * FROM attendance\nJOIN employees ON employees.id=attendance.employee_id\nWHERE employee_id=id\nAND DATE_FORMAT(clock_in, '%Y-%m')=month\nORDER BY clock_in DESC
+activate db
+db --> att : historyRecords[]
+deactivate db
+
+att --> api : [ { id, clock_in, clock_out, status,\nselfie, gps_location } ]
+api --> mob : 200 Attendance history
+
+alt Calendar view
+  mob -> mob : Group by day & assign color:\n- Hijau = Hadir\n- Kuning = Terlambat\n- Biru = Izin\n- Merah = Alpha
+  mob --> emp : Show monthly calendar\nwith color-coded days
+else Detail view (tap a day)
+  mob --> emp : Show day detail:\nselfie, clock in/out times,\ntotal hours, GPS, notes
+  opt Export PDF
+    mob -> mob : Generate PDF report\nvia expo-print
+    mob --> emp : Download / share PDF
+  end
+end
+
+deactivate att
+deactivate api
+deactivate mob
+
+== HRD / Admin Monitoring Absensi Hari Ini (Web) ==
+
+hrd -> web : Open "Absensi" page
+activate web
+
+web -> web : Check token from localStorage\n(role: HRD / Super Admin)
+
+web -> api : GET /attendance/today
+activate api
+
+api -> auth : verifyToken(token)
+activate auth
+auth --> api : { userId, role, employeeId }
+deactivate auth
+
+api -> api : roleRequired('HRD', 'Super Admin')
+alt Role not HRD or Super Admin
+  api --> web : 403 Forbidden
+  web --> hrd : Show access denied
+else Authorized
+  api -> att : getTodayAttendance()
+  activate att
+
+  att -> db : SELECT a.id, a.clock_in, a.clock_out,\na.gps_location, a.status,\ne.name AS employee_name,\nd.name AS department_name\nFROM attendance a\nJOIN employees e ON e.id=a.employee_id\nJOIN departments d ON d.id=e.department_id\nWHERE DATE(a.clock_in)=CURDATE()\nORDER BY a.clock_in ASC
+  activate db
+  db --> att : todayRecords[]
+  deactivate db
+
+  att --> api : todayRecords[]
+  api --> web : 200 Today's attendance list
+
+  web -> web : Calculate summary:\n- Kehadiran Hari Ini (%)\n- Hadir Tepat Waktu\n- Terlambat\n- Izin
+  web --> hrd : Display Attendance Table +\nSummary Cards\n+ Real-time Monitoring
+
+  deactivate att
+end
+
+deactivate api
+deactivate web
+
+== Dashboard Attendance Report (Web) ==
+
+hrd -> web : Open "Dashboard" page
+activate web
+
+web -> api : GET /reports/dashboard
+activate api
+
+api -> auth : verifyToken(token)
+activate auth
+auth --> api : { userId, role }
+deactivate auth
+
+api -> api : roleRequired('HRD', 'Finance', 'Super Admin')
+alt Role not allowed
+  api --> web : 403 Forbidden
+else Authorized
+  api -> att : getDashboardAttendance()
+  activate att
+
+  group "Attendance Rate Calculation"
+    att -> db : SELECT\n(SELECT COUNT(*) FROM attendance\nWHERE DATE(clock_in)=CURDATE())\n/ (SELECT COUNT(*) FROM employees) * 100\nAS attendance_rate
+    activate db
+    db --> att : { attendance_rate: 85.7 }
+    deactivate db
+  end
+
+  group "7-Day Attendance Trend"
+    loop Day = 0 to 6 (last 7 days)
+      att -> db : SELECT COUNT(*) AS hadir\nFROM attendance\nWHERE DATE(clock_in)=DATE_SUB(CURDATE(), INTERVAL day DAY)
+      activate db
+      db --> att : count
+      deactivate db
+    end
+  end
+
+  att --> api : { attendanceRate, attendanceTrend[] }
+  api --> web : 200 Dashboard data
+
+  web -> web : Render:\n- Attendance Rate Card (% donut/ring)\n- 7-Day Trend (LineChart / BarChart)\n- Real-time "Monitoring Kehadiran" table
+  web --> hrd : Display Dashboard with\nattendance analytics
+
+  deactivate att
+end
+
+deactivate api
+deactivate web
 
 @enduml
