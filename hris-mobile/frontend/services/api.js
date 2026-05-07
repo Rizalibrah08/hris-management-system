@@ -1,26 +1,65 @@
 // ============================================================
 // HRIS Mobile API Configuration
 // ============================================================
-// 
-// UNTUK DEVELOPMENT DENGAN NGROK:
-// 1. Jalankan backend: npm run dev:server (di folder hris-web)
-// 2. Jalankan ngrok: ngrok http 5000
-// 3. Copy URL ngrok yang muncul (contoh: https://abc123.ngrok-free.app)
-// 4. Ganti value NGROK_URL di bawah dengan URL Anda
-// 5. Restart aplikasi mobile (npx expo start --clear)
 //
-// UNTUK PRODUCTION:
-// Ganti PROD_URL dengan URL backend production Anda
+// Cara koneksi (otomatis, prioritas):
+//   1. Custom URL (atur via setServerUrl / AsyncStorage key: api_server_url)
+//   2. Auto-detect LAN IP (pakai IP dev machine dari Expo, port 5000)
+//   3. Production URL (PROD_URL)
+//
+// Setup:
+//   - HP & PC satu WiFi → auto LAN, tidak perlu ngrok
+//   - HP beda jaringan → setel URL ngrok via setServerUrl() atau
+//     AsyncStorage key 'api_server_url'
 // ============================================================
 
-// URL ngrok Anda (GANTI INI setiap kali jalankan ngrok)
-const NGROK_URL = 'https://reformer-flagman-urologist.ngrok-free.dev';
+import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// URL production (ganti saat deploy)
+const STORAGE_KEY = 'api_server_url';
 const PROD_URL = 'https://your-production-api.com';
 
-// Pilih URL berdasarkan environment
-const API_BASE_URL = __DEV__ ? NGROK_URL : PROD_URL;
+let _baseUrl = null;
+
+async function resolveBaseUrl() {
+  if (_baseUrl) return _baseUrl;
+
+  try {
+    const custom = await AsyncStorage.getItem(STORAGE_KEY);
+    if (custom) {
+      _baseUrl = custom;
+      return _baseUrl;
+    }
+  } catch {}
+
+  if (__DEV__) {
+    try {
+      const hostUri = Constants.expoConfig?.hostUri;
+      if (hostUri) {
+        const host = hostUri.split(':')[0];
+        _baseUrl = `http://${host}:5000`;
+        return _baseUrl;
+      }
+    } catch {}
+  }
+
+  _baseUrl = PROD_URL;
+  return _baseUrl;
+}
+
+export async function setServerUrl(url) {
+  if (url) {
+    await AsyncStorage.setItem(STORAGE_KEY, url);
+    _baseUrl = url;
+  } else {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    _baseUrl = null;
+  }
+}
+
+export async function getServerUrl() {
+  return resolveBaseUrl();
+}
 
 let authToken = null;
 
@@ -37,10 +76,10 @@ export function clearAuthToken() {
 }
 
 async function request(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const baseUrl = await resolveBaseUrl();
+  const url = `${baseUrl}${endpoint}`;
   const headers = {
     'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': 'true',
     ...(options.headers || {}),
   };
   if (authToken) {
@@ -71,9 +110,8 @@ async function request(endpoint, options = {}) {
       throw new Error(
         'Cannot connect to server. Please check:\n' +
         '1. Backend is running (npm run dev:server)\n' +
-        '2. ngrok is running (ngrok http 5000)\n' +
-        '3. NGROK_URL in api.js is correct\n' +
-        '4. You have internet connection'
+        '2. Device & PC on same WiFi (LAN mode)\n' +
+        '3. Or set custom URL via setServerUrl() for ngrok'
       );
     }
     throw error;

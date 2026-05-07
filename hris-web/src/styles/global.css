@@ -454,28 +454,37 @@ tbody tr:hover {
   display: inline-flex;
   align-items: center;
   border-radius: var(--radius-pill);
-  padding: 3px 10px;
+  padding: 4px 12px;
   font-size: 11px;
   font-weight: 600;
   text-transform: capitalize;
-  color: #fff;
+  line-height: 1.4;
 }
 
 .status-badge.status-draft {
-  background: var(--primary);
+  background: #f1f5f9;
+  color: #475569;
 }
 
 .status-badge.status-reviewed {
-  background: #2563eb;
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
 .status-badge.status-approved {
-  background: #059669;
+  background: #d1fae5;
+  color: #065f46;
 }
 
 .status-badge.status-finalized,
 .status-badge.status-published {
-  background: var(--green-text);
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.status-badge.status-rejected {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 /* ===== Buttons ===== */

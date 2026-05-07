@@ -106,19 +106,6 @@ export default function Cuti() {
     }
   }
 
-  const handleCancel = async (leaveId) => {
-    clearMessages()
-    try {
-      await api(`/leave/${leaveId}`, { method: 'DELETE' })
-      setMessage('Pengajuan berhasil dibatalkan')
-      const ctrl = new AbortController()
-      await loadData(ctrl.signal)
-      ctrl.abort()
-    } catch (err) {
-      setError(err.message || 'Gagal membatalkan pengajuan')
-    }
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     clearMessages()
@@ -293,11 +280,6 @@ export default function Cuti() {
                             Tolak
                           </button>
                         </>
-                      )}
-                      {l.status === 'Pending' && (
-                        <button className="small-btn cancel-btn" onClick={() => handleCancel(l.id)}>
-                          Batal
-                        </button>
                       )}
                       {!canApprove && l.status !== 'Pending' && (
                         <span className="muted">-</span>

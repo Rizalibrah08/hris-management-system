@@ -98,7 +98,6 @@ export default function SlipGaji() {
       {isAdmin && (
         <article className="panel">
           <h3>Generate Slip Gaji</h3>
-          <p className="section-note">Generate slip gaji dari payroll run yang sudah finalized. Otomatis generate untuk semua karyawan di run tersebut.</p>
           <div className="generate-form">
             <select value={selectedRunId} onChange={(e) => setSelectedRunId(e.target.value)}>
               <option value="">-- Pilih Payroll Run --</option>
