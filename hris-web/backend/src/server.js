@@ -332,9 +332,11 @@ app.post('/attendance/clockin', authRequired, optionalMulter(uploadSelfie, 'self
     return res.status(403).json({ message: 'Tidak dapat clock in untuk karyawan lain' })
   }
 
-  const geofence = await validateGeofence(gps_location)
-  if (!geofence.valid) {
-    return res.status(400).json({ message: geofence.message, distance: geofence.distance, maxRadius: geofence.maxRadius })
+  if (gps_location) {
+    const geofence = await validateGeofence(gps_location)
+    if (!geofence.valid) {
+      return res.status(400).json({ message: geofence.message, distance: geofence.distance, maxRadius: geofence.maxRadius })
+    }
   }
 
   const active = await query(
@@ -365,9 +367,11 @@ app.post('/attendance/clockout', authRequired, async (req, res) => {
   }
   if (!attId) return res.status(400).json({ message: 'attendance_id wajib diisi' })
 
-  const geofence = await validateGeofence(gps_location)
-  if (!geofence.valid) {
-    return res.status(400).json({ message: geofence.message, distance: geofence.distance, maxRadius: geofence.maxRadius })
+  if (gps_location) {
+    const geofence = await validateGeofence(gps_location)
+    if (!geofence.valid) {
+      return res.status(400).json({ message: geofence.message, distance: geofence.distance, maxRadius: geofence.maxRadius })
+    }
   }
 
   await query('UPDATE attendance SET clock_out = NOW() WHERE id=?', [attId])

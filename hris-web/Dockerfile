@@ -16,6 +16,7 @@ COPY --from=builder /app/package*.json ./
 RUN npm install --omit=dev
 COPY --from=builder /app/backend ./backend
 COPY --from=builder /app/dist ./dist
+RUN mkdir -p /app/backend/src/uploads/selfies /app/backend/src/uploads/photos && chown -R node:node /app/backend/src/uploads
 USER node
 EXPOSE 5000
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

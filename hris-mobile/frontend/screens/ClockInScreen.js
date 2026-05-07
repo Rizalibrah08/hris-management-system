@@ -19,6 +19,7 @@ export default function ClockInScreen() {
   const [loading, setLoading] = useState(true);
   const [gpsLocation, setGpsLocation] = useState(null);
   const [locPermission, setLocPermission] = useState(null);
+  const [locFetching, setLocFetching] = useState(true);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -34,12 +35,20 @@ export default function ClockInScreen() {
 
   const fetchLocation = useCallback(async () => {
     try {
+      setLocFetching(true);
       const { status: permStatus } = await Location.requestForegroundPermissionsAsync();
       setLocPermission(permStatus);
-      if (permStatus !== 'granted') return;
+      if (permStatus !== 'granted') {
+        setLocFetching(false);
+        return;
+      }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
       setGpsLocation(`${loc.coords.latitude},${loc.coords.longitude}`);
-    } catch {}
+    } catch {
+      setGpsLocation(null);
+    } finally {
+      setLocFetching(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -147,6 +156,16 @@ export default function ClockInScreen() {
         {/* Action Button */}
         {loading ? (
           <ActivityIndicator size="large" color="#7C3AED" style={{ marginVertical: 16 }} />
+        ) : locFetching && !isClockedIn ? (
+          <View style={styles.actionButtonDisabled}>
+            <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
+            <Text style={styles.actionButtonText}>Mengambil lokasi...</Text>
+          </View>
+        ) : !gpsLocation && !isClockedIn ? (
+          <TouchableOpacity style={styles.actionButtonDisabled} onPress={fetchLocation}>
+            <Ionicons name="location" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+            <Text style={styles.actionButtonText}>Izinkan & Ambil Lokasi</Text>
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={styles.actionButton}
@@ -391,6 +410,16 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  actionButtonDisabled: {
+    backgroundColor: '#A78BFA',
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   actionButtonText: {
     color: '#FFFFFF',
