@@ -1,7 +1,10 @@
 import dotenv from 'dotenv'
 import mysql from 'mysql2/promise'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-dotenv.config()
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '..', '.env') })
 
 const host = process.env.DB_HOST || 'localhost'
 const port = Number(process.env.DB_PORT || 3306)

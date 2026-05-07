@@ -24,7 +24,7 @@ export default function SlipGaji() {
     try {
       const endpoint = isAdmin ? '/payslips' : '/payslips/my'
       const data = await api(endpoint, { signal })
-      setPayslips(data)
+      setPayslips(Array.isArray(data) ? data : [])
     } catch (err) {
       if (err.name !== 'AbortError') setPayslips([])
     } finally {
@@ -35,8 +35,10 @@ export default function SlipGaji() {
   const loadRuns = useCallback(async (signal) => {
     try {
       const data = await api('/payroll/runs', { signal })
-      setPayrollRuns(data.filter((r) => r.status === 'finalized'))
-    } catch { /* ignore */ }
+      setPayrollRuns(Array.isArray(data) ? data.filter((r) => r.status === 'finalized') : [])
+    } catch {
+      setPayrollRuns([])
+    }
   }, [])
 
   useEffect(() => {
