@@ -134,7 +134,12 @@ export default function AttendanceScreen() {
         </View>
 
         <View style={styles.historyContainer}>
-          <Text style={styles.sectionTitle}>Riwayat Kehadiran</Text>
+          <View style={styles.historyHeader}>
+            <Text style={styles.sectionTitle}>Riwayat Kehadiran</Text>
+            <TouchableOpacity style={styles.calendarButton} onPress={() => navigation.navigate('AttendanceCalendar')}>
+              <Ionicons name="calendar" size={18} color="#8B5CF6" />
+            </TouchableOpacity>
+          </View>
           {history.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Ionicons name="calendar-outline" size={40} color="#D1D5DB" />
@@ -231,6 +236,8 @@ const styles = StyleSheet.create({
   clockedOutButtonFull: { backgroundColor: '#C4B5FD', paddingVertical: 16, borderRadius: 30, alignItems: 'center' },
   clockedOutButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
   sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#111827', marginBottom: 12 },
+  historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  calendarButton: { padding: 4 },
   historyContainer: { marginTop: 16, paddingHorizontal: 20 },
   historyCard: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
   historyCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },

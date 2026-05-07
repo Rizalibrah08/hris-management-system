@@ -5,6 +5,7 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import multer from 'multer'
 import { query } from './db.js'
 import { authRequired, roleRequired, webPortalGuard } from './middleware.js'
 import path from 'path'
@@ -20,6 +21,48 @@ app.use(cors())
 app.use(helmet())
 app.use(morgan('dev'))
 app.use(express.json())
+
+const uploadsDir = path.join(__dirname, 'uploads')
+const selfieStorage = multer.diskStorage({
+  destination: path.join(uploadsDir, 'selfies'),
+  filename: (_req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+})
+const uploadSelfie = multer({ storage: selfieStorage, limits: { fileSize: 5 * 1024 * 1024 } })
+
+const photoStorage = multer.diskStorage({
+  destination: path.join(uploadsDir, 'photos'),
+  filename: (_req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+})
+const uploadPhoto = multer({ storage: photoStorage, limits: { fileSize: 5 * 1024 * 1024 } })
+
+app.use('/uploads', express.static(uploadsDir))
+
+function optionalMulter(multerInstance, fieldName) {
+  return (req, res, next) => {
+    const contentType = req.headers['content-type'] || ''
+    if (contentType.includes('multipart/form-data')) {
+      return multerInstance.single(fieldName)(req, res, next)
+    }
+    next()
+  }
+}
+
+await query(`CREATE TABLE IF NOT EXISTS notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  message TEXT,
+  type VARCHAR(50) DEFAULT 'info',
+  reference_type VARCHAR(50),
+  reference_id INT,
+  is_read TINYINT(1) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+)`)
+
+try {
+  await query("ALTER TABLE employees ADD COLUMN photo_url VARCHAR(500) NULL")
+} catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') console.warn('photo_url column:', e.message) }
 
 // Strip /api prefix for production (matches Vite proxy behavior)
 // NOTE: Using plain app.use (no mount path) because Express mount points restore req.url after sub-app
@@ -206,7 +249,7 @@ app.get('/employees/me', authRequired, async (req, res) => {
     return res.status(404).json({ message: 'User tidak memiliki data karyawan' })
   }
   const rows = await query(
-    `SELECT e.id, e.name, e.email, e.phone, d.name AS department, p.name AS position, e.contract_end, e.department_id, e.position_id
+    `SELECT e.id, e.name, e.email, e.phone, e.photo_url, d.name AS department, p.name AS position, e.contract_end, e.department_id, e.position_id
      FROM employees e
      LEFT JOIN departments d ON d.id = e.department_id
      LEFT JOIN positions p ON p.id = e.position_id
@@ -214,7 +257,11 @@ app.get('/employees/me', authRequired, async (req, res) => {
     [employeeId],
   )
   if (rows.length === 0) return res.status(404).json({ message: 'Data karyawan tidak ditemukan' })
-  res.json(rows[0])
+  const emp = rows[0]
+  res.json({
+    ...emp,
+    photoUrl: emp.photo_url,
+  })
 })
 
 app.put('/employees/me', authRequired, async (req, res) => {
@@ -268,12 +315,20 @@ app.delete('/employees/:id', authRequired, roleRequired('HRD', 'Super Admin'), a
   res.status(204).end()
 })
 
-app.post('/attendance/clockin', authRequired, async (req, res) => {
-  const { employee_id, gps_location, selfie } = req.body
+app.post('/attendance/clockin', authRequired, optionalMulter(uploadSelfie, 'selfie'), async (req, res) => {
+  const employee_id = req.body.employee_id
+  const gps_location = req.body.gps_location
+  let selfie = null
+  if (req.file) {
+    selfie = `/uploads/selfies/${req.file.filename}`
+  } else if (req.body.selfie) {
+    selfie = req.body.selfie
+  }
+
   const empId = employee_id || req.user.employeeId
   if (!empId) return res.status(400).json({ message: 'employee_id wajib diisi' })
 
-  if (req.user.role === 'Employee' && employee_id && employee_id !== req.user.employeeId) {
+  if (req.user.role === 'Employee' && employee_id && String(employee_id) !== String(req.user.employeeId)) {
     return res.status(403).json({ message: 'Tidak dapat clock in untuk karyawan lain' })
   }
 
@@ -388,6 +443,16 @@ app.put('/leave/approve', authRequired, roleRequired('Manager', 'HRD', 'Super Ad
   if (!allowed.includes(status)) return res.status(400).json({ message: `Status harus salah satu: ${allowed.join(', ')}` })
   await query('UPDATE leave_request SET status=? WHERE id=?', [status, leave_id])
   const updated = await query('SELECT * FROM leave_request WHERE id = ?', [leave_id])
+  if (updated.length > 0) {
+    await notifyUserByEmployeeId(
+      updated[0].employee_id,
+      status === 'Approved' ? 'Pengajuan Cuti Disetujui' : 'Pengajuan Cuti Ditolak',
+      `${status === 'Approved' ? 'Pengajuan' : 'Maaf, pengajuan'} cuti ${updated[0].leave_type} Anda (${updated[0].start_date} s/d ${updated[0].end_date}) ${status === 'Approved' ? 'telah disetujui' : 'ditolak'}.`,
+      status === 'Approved' ? 'success' : 'warning',
+      'leave',
+      leave_id,
+    )
+  }
   res.json(updated[0] || null)
 })
 
@@ -1110,6 +1175,10 @@ app.post('/payroll/runs/:runId/finalize', authRequired, roleRequired('Finance', 
   await auditLog(Number(runId), req.user.sub, 'FINALIZE_PAYROLL_RUN', before, { status: 'finalized' }, req.ip)
 
   const updated = await query('SELECT * FROM payroll_runs WHERE id = ?', [runId])
+  const items = await query('SELECT employee_id FROM payroll_run_items WHERE payroll_run_id = ?', [runId])
+  for (const item of items) {
+    await notifyUserByEmployeeId(item.employee_id, 'Payroll Sudah Difinalisasi', `Payroll periode ${updated[0].period_month} telah difinalisasi.`, 'info', 'payroll', runId)
+  }
   return res.json(updated[0])
 })
 
@@ -1234,6 +1303,38 @@ app.get('/payroll/my-runs', authRequired, async (req, res) => {
   res.json({ items: rows, periods })
 })
 
+app.get('/payroll/my-runs/:id', authRequired, async (req, res) => {
+  const employeeId = req.user.employeeId
+  if (!employeeId) return res.status(404).json({ message: 'User tidak memiliki data karyawan' })
+
+  const run = await query(
+    `SELECT pr.* FROM payroll_runs pr
+     JOIN payroll_run_items pri ON pri.payroll_run_id = pr.id
+     WHERE pr.id = ? AND pri.employee_id = ?`,
+    [req.params.id, employeeId],
+  )
+  if (run.length === 0) return res.status(404).json({ message: 'Data payroll tidak ditemukan' })
+
+  const item = await query(
+    `SELECT pri.*, e.name AS employee_name, d.name AS department
+     FROM payroll_run_items pri
+     JOIN employees e ON e.id = pri.employee_id
+     LEFT JOIN departments d ON d.id = e.department_id
+     WHERE pri.payroll_run_id = ? AND pri.employee_id = ?`,
+    [req.params.id, employeeId],
+  )
+
+  const components = await query(
+    `SELECT pric.component_name_snapshot, pric.component_type, pric.amount
+     FROM payroll_run_item_components pric
+     WHERE pric.payroll_run_item_id = ?
+     ORDER BY pric.component_type, pric.id`,
+    [item.length > 0 ? item[0].id : 0],
+  )
+
+  res.json({ run: run[0], items: item, components })
+})
+
 app.get('/dashboard/mobile', authRequired, async (req, res) => {
   const employeeId = req.user.employeeId
   let attendanceStatus = null
@@ -1308,6 +1409,9 @@ app.post('/payroll/runs/:runId/payslips/generate', authRequired, roleRequired('H
   }
 
   await query("UPDATE payroll_runs SET status='published', updated_at=NOW() WHERE id=?", [runId])
+  for (const item of items) {
+    await notifyUserByEmployeeId(item.employee_id, 'Slip Gaji Tersedia', `Slip gaji periode ${run[0].period_month} sudah tersedia.`, 'success', 'payslip', runId)
+  }
   res.json({ message: `${count} payslip berhasil digenerate`, count, runId: Number(runId) })
 })
 
@@ -1763,6 +1867,123 @@ app.put('/users/:id/password', authRequired, async (req, res) => {
   const hash = await bcrypt.hash(newPassword, 10)
   await query('UPDATE users SET password = ? WHERE id = ?', [hash, id])
   res.json({ message: 'Password berhasil diubah' })
+})
+
+// =============================
+// Delegation List
+// =============================
+
+app.get('/employees/delegation-list', authRequired, async (req, res) => {
+  const rows = await query(
+    `SELECT e.id, e.name, d.name AS department, p.name AS position
+     FROM employees e
+     LEFT JOIN departments d ON d.id = e.department_id
+     LEFT JOIN positions p ON p.id = e.position_id
+     WHERE e.is_active = 1
+     ORDER BY e.name ASC`,
+  )
+  res.json(rows)
+})
+
+// =============================
+// Profile Photo Upload
+// =============================
+
+app.post('/employees/me/photo', authRequired, uploadPhoto.single('photo'), async (req, res) => {
+  const employeeId = req.user.employeeId
+  if (!employeeId) return res.status(404).json({ message: 'User tidak memiliki data karyawan' })
+  if (!req.file) return res.status(400).json({ message: 'File foto wajib diupload' })
+
+  const photoUrl = `/uploads/photos/${req.file.filename}`
+  await query('UPDATE employees SET photo_url = ? WHERE id = ?', [photoUrl, employeeId])
+  res.json({ photoUrl, message: 'Foto profil berhasil diupload' })
+})
+
+app.get('/employees/me/photo', authRequired, async (req, res) => {
+  const employeeId = req.user.employeeId
+  if (!employeeId) return res.status(404).json({ message: 'User tidak memiliki data karyawan' })
+
+  const rows = await query('SELECT photo_url FROM employees WHERE id = ?', [employeeId])
+  if (!rows.length || !rows[0].photo_url) return res.status(404).json({ message: 'Foto profil belum diupload' })
+  res.json({ photoUrl: rows[0].photo_url })
+})
+
+// =============================
+// Notifications
+// =============================
+
+async function createNotification(userId, title, message, type = 'info', refType = null, refId = null) {
+  await query(
+    `INSERT INTO notifications(user_id, title, message, type, reference_type, reference_id)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [userId, title, message, type, refType, refId],
+  )
+}
+
+async function notifyUserByEmployeeId(employeeId, title, message, type = 'info', refType = null, refId = null) {
+  const users = await query('SELECT id FROM users WHERE employee_id = ?', [employeeId])
+  if (users.length > 0) {
+    await createNotification(users[0].id, title, message, type, refType, refId)
+  }
+}
+
+app.get('/notifications/my', authRequired, async (req, res) => {
+  const rows = await query(
+    `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50`,
+    [req.user.sub],
+  )
+  const unread = rows.filter(r => !r.is_read).length
+  res.json({ notifications: rows, unread })
+})
+
+app.put('/notifications/:id/read', authRequired, async (req, res) => {
+  const { id } = req.params
+  const existing = await query('SELECT * FROM notifications WHERE id = ? AND user_id = ?', [id, req.user.sub])
+  if (existing.length === 0) return res.status(404).json({ message: 'Notifikasi tidak ditemukan' })
+  await query('UPDATE notifications SET is_read = 1 WHERE id = ?', [id])
+  res.json({ message: 'Notifikasi ditandai sudah dibaca' })
+})
+
+app.put('/notifications/read-all', authRequired, async (req, res) => {
+  await query('UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0', [req.user.sub])
+  res.json({ message: 'Semua notifikasi ditandai sudah dibaca' })
+})
+
+// =============================
+// Leave Quota
+// =============================
+
+app.get('/leave/quota', authRequired, async (req, res) => {
+  const employeeId = req.user.employeeId
+  if (!employeeId) return res.status(404).json({ message: 'User tidak memiliki data karyawan' })
+
+  const currentYear = new Date().getFullYear()
+  const [quotaTotal, usedApproved] = await Promise.all([
+    query(
+      `SELECT leave_type, COUNT(*) AS total
+       FROM leave_request
+       WHERE employee_id = ? AND YEAR(created_at) = ? AND status = 'Approved'
+       GROUP BY leave_type`,
+      [employeeId, currentYear],
+    ),
+    query('SELECT id, name FROM leave_types ORDER BY name'),
+  ])
+
+  const leaveTypes = quotaTotal
+  const used = {}
+  for (const row of usedApproved) {
+    used[row.leave_type] = Number(row.total)
+  }
+
+  const DEFAULT_QUOTA = { 'Cuti Tahunan': 12, 'Izin Sakit': 12, 'Izin': 6, 'Cuti Khusus': 3, 'Izin Pribadi': 6 }
+  const quotas = leaveTypes.map(lt => ({
+    leaveType: lt.name,
+    total: DEFAULT_QUOTA[lt.name] || 12,
+    used: used[lt.name] || 0,
+    remaining: (DEFAULT_QUOTA[lt.name] || 12) - (used[lt.name] || 0),
+  }))
+
+  res.json({ quotas, year: currentYear })
 })
 
 app.use((err, _req, res, _next) => {

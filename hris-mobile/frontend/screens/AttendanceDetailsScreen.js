@@ -6,6 +6,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 
@@ -26,7 +28,6 @@ export default function AttendanceDetailsScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const isFocused = useIsFocused();
-  const [isExportVisible, setIsExportVisible] = useState(false);
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -151,49 +152,31 @@ export default function AttendanceDetailsScreen() {
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.exportButton}
-          onPress={() => setIsExportVisible(true)}
+          onPress={async () => {
+            if (!displayItem) return;
+            const d = displayItem;
+            const html = `<html><body style="font-family:sans-serif;padding:20px">
+              <h2>Detail Kehadiran</h2>
+              <p><strong>Nama:</strong> ${user?.employeeName || d.employee_name || '-'}</p>
+              <p><strong>Tanggal:</strong> ${formatDate(d.clock_in)}</p>
+              <p><strong>Jam Masuk:</strong> ${formatTime(d.clock_in)}</p>
+              <p><strong>Jam Keluar:</strong> ${formatTime(d.clock_out)}</p>
+              <p><strong>Total Jam:</strong> ${formatDuration(d.clock_in, d.clock_out)}</p>
+              <p><strong>Status:</strong> ${d.status || '-'}</p>
+              <p><strong>GPS:</strong> ${d.gps_location || '-'}</p>
+              <p><strong>Catatan:</strong> ${d.notes || '-'}</p>
+            </body></html>`;
+            try {
+              const { uri } = await Print.printToFileAsync({ html });
+              if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(uri);
+              }
+            } catch {}
+          }}
         >
-          <Text style={styles.exportButtonText}>Export As PDF</Text>
+          <Text style={styles.exportButtonText}>Ekspor PDF</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Export Success Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isExportVisible}
-        onRequestClose={() => setIsExportVisible(false)}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
-          onPressOut={() => setIsExportVisible(false)}
-        >
-          <TouchableOpacity activeOpacity={1} style={styles.bottomSheet}>
-            {/* Floating Icon */}
-            <View style={styles.floatingIconContainer}>
-              <View style={styles.floatingIconBox}>
-                <Ionicons name="download-outline" size={40} color="#FFFFFF" />
-              </View>
-            </View>
-
-            <Text style={styles.modalTitle}>Export As PDF Successful!</Text>
-            <Text style={styles.modalSubtitle}>
-              Your clock-in data has been exported as a PDF. You can now download it.
-            </Text>
-
-            <TouchableOpacity 
-              style={styles.btnPrimary}
-              onPress={() => {
-                setIsExportVisible(false);
-                navigation.goBack();
-              }}
-            >
-              <Text style={styles.btnPrimaryText}>Close Message</Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
 
     </SafeAreaView>
   );

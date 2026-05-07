@@ -3,11 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions, ActivityIn
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
+import * as Location from 'expo-location';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 
 const { width, height } = Dimensions.get('window');
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
+const formatTime = (d) => d ? new Date(d).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '--:--';
 
 export default function ClockInScreen() {
   const navigation = useNavigation();
@@ -15,6 +17,8 @@ export default function ClockInScreen() {
   const { user } = useAuth();
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [gpsLocation, setGpsLocation] = useState(null);
+  const [locPermission, setLocPermission] = useState(null);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -28,9 +32,22 @@ export default function ClockInScreen() {
     }
   }, []);
 
+  const fetchLocation = useCallback(async () => {
+    try {
+      const { status: permStatus } = await Location.requestForegroundPermissionsAsync();
+      setLocPermission(permStatus);
+      if (permStatus !== 'granted') return;
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      setGpsLocation(`${loc.coords.latitude},${loc.coords.longitude}`);
+    } catch {}
+  }, []);
+
   useEffect(() => {
-    if (isFocused) fetchStatus();
-  }, [isFocused, fetchStatus]);
+    if (isFocused) {
+      fetchStatus();
+      fetchLocation();
+    }
+  }, [isFocused, fetchStatus, fetchLocation]);
 
   const employeeName = user?.employeeName || user?.nik || '-';
   const today = formatDate(new Date().toISOString());
@@ -41,14 +58,11 @@ export default function ClockInScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Map Background Placeholder */}
+      {/* Map Background */}
       <View style={styles.mapBackground}>
-        {/* Fake Map Elements for visual appearance */}
-        <Text style={[styles.mapText, { top: '15%', left: '20%', fontSize: 24, transform: [{ rotate: '-15deg' }] }]}>Jalan Veteran</Text>
-        <Text style={[styles.mapText, { top: '25%', right: '15%', fontSize: 20 }]}>Masjid Istiqlal</Text>
-        <Text style={[styles.mapText, { top: '50%', left: '10%' }]}>Jalan Kebon Sirih</Text>
-        
-        {/* Clock In Area Circles */}
+        {locPermission !== 'granted' && (
+          <Text style={styles.locationHint}>Izinkan akses lokasi untuk clock-in</Text>
+        )}
         <View style={styles.radiusCircle}>
           <View style={styles.avatarCircle}>
              <View style={styles.avatarInner}>
@@ -56,6 +70,9 @@ export default function ClockInScreen() {
              </View>
           </View>
         </View>
+        {gpsLocation && (
+          <Text style={styles.gpsText}>Lokasi terdeteksi</Text>
+        )}
       </View>
 
       {/* Header (Overlay on map) */}
@@ -104,7 +121,7 @@ export default function ClockInScreen() {
             <View style={styles.locationRow}>
               <Ionicons name="location" size={14} color="#8B5CF6" />
               <Text style={styles.locationText}>
-                {todayAtt?.gps_location || status?.gps_location || 'Lat 45.43534 Long 97897.576'}
+                {gpsLocation || (todayAtt?.gps_location) || 'Mengambil lokasi...'}
               </Text>
             </View>
           </View>
@@ -137,9 +154,9 @@ onPress={() => {
               if (hasClockedOut) {
                 navigation.navigate('Attendance');
               } else if (isClockedIn) {
-                navigation.navigate('Camera', { action: 'clockout', attendanceId: todayAtt?.id });
+                navigation.navigate('Camera', { action: 'clockout', attendanceId: todayAtt?.id, gpsLocation });
               } else {
-                navigation.navigate('Camera', { action: 'clockin' });
+                navigation.navigate('Camera', { action: 'clockin', gpsLocation });
               }
             }}
             >
@@ -164,10 +181,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  mapText: {
+  locationHint: {
     position: 'absolute',
-    color: '#D1D5DB',
-    fontWeight: 'bold',
+    top: '20%',
+    color: '#9CA3AF',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  gpsText: {
+    position: 'absolute',
+    bottom: '30%',
+    color: '#10B981',
+    fontSize: 12,
+    fontWeight: '600',
   },
   radiusCircle: {
     width: width * 0.7,

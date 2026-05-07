@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Image, KeyboardAvoidingView, Platform, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Image, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 
@@ -63,7 +64,7 @@ export default function PersonalDataScreen() {
   const displayEmail = employee?.email || user?.email || '-';
   const displayPhone = employee?.phone || user?.phone || '-';
   const contractEnd = employee?.contract_end || '-';
-  const avatarUri = employee?.avatar || employee?.photo || user?.avatar || user?.photo;
+  const avatarUri = employee?.photoUrl || employee?.photo_url || employee?.photo || user?.photoUrl || user?.photo;
 
   const DropdownInput = ({ label, value, iconName }) => (
     <View style={styles.inputWrapper}>
@@ -126,12 +127,37 @@ export default function PersonalDataScreen() {
                   </View>
                 )}
                 <View style={[StyleSheet.absoluteFill, avatarUri ? null : { backgroundColor: '#C4B5FD', zIndex: -1 }]} />
-                <TouchableOpacity style={styles.uploadIconBadge}>
+                <TouchableOpacity
+                  style={styles.uploadIconBadge}
+                  onPress={async () => {
+                    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                    if (!perm.granted) {
+                      Alert.alert('Izin Diperlukan', 'Izinkan akses ke galeri untuk upload foto profil.');
+                      return;
+                    }
+                    const result = await ImagePicker.launchImageLibraryAsync({
+                      mediaTypes: ['images'],
+                      allowsEditing: true,
+                      aspect: [1, 1],
+                      quality: 0.8,
+                    });
+                    if (!result.canceled && result.assets[0]) {
+                      try {
+                        await api.employees.uploadPhoto(result.assets[0].uri);
+                        await refreshUser();
+                        await fetchEmployee();
+                        Alert.alert('Berhasil', 'Foto profil berhasil diupload.');
+                      } catch (err) {
+                        Alert.alert('Gagal', err.message || 'Upload foto gagal.');
+                      }
+                    }
+                  }}
+                >
                   <Ionicons name="sync" size={16} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
               <Text style={styles.uploadTitle}>Upload Photo</Text>
-              <Text style={styles.uploadSubtitle}>Format should be in .jpeg .png atleast{'\n'}800x800px and less than 5MB</Text>
+              <Text style={styles.uploadSubtitle}>Format .jpeg .png minimal{'\n'}800x800px maks 5MB</Text>
             </View>
 
             {/* Name fields (read-only) */}

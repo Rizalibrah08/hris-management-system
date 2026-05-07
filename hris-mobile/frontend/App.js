@@ -6,8 +6,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ToastProvider } from './components/Toast';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import OnboardingScreen from './screens/OnboardingScreen';
 import LoginScreen from './screens/LoginScreen';
@@ -23,6 +26,8 @@ import PayrollDetailsScreen from './screens/PayrollDetailsScreen';
 import PersonalDataScreen from './screens/PersonalDataScreen';
 import LeaveScreen from './screens/LeaveScreen';
 import SubmitLeaveScreen from './screens/SubmitLeaveScreen';
+import NotificationScreen from './screens/NotificationScreen';
+import AttendanceCalendarScreen from './screens/AttendanceCalendarScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -92,15 +97,18 @@ function AppContent() {
         <Stack.Screen name="Camera" component={CameraScreen} options={{ headerShown: false }} />
         <Stack.Screen name="SubmitClockIn" component={SubmitClockInScreen} options={{ headerShown: false }} />
         <Stack.Screen name="AttendanceDetails" component={AttendanceDetailsScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
         <Stack.Screen name="PayrollTax" component={PayrollTaxScreen} options={{ headerShown: false }} />
         <Stack.Screen name="PayrollDetails" component={PayrollDetailsScreen} options={{ headerShown: false }} />
         <Stack.Screen name="PersonalData" component={PersonalDataScreen} options={{ headerShown: false }} />
         <Stack.Screen name="SubmitLeave" component={SubmitLeaveScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Notifications" component={NotificationScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="AttendanceCalendar" component={AttendanceCalendarScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
+
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 60000 } } });
 
 export default function App() {
   useEffect(() => {
@@ -108,11 +116,17 @@ export default function App() {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ToastProvider>
+              <AppContent />
+            </ToastProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 

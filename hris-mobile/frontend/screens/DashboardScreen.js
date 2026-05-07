@@ -66,8 +66,11 @@ export default function DashboardScreen() {
             </View>
           </View>
           <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
+              <Ionicons name="notifications-outline" size={20} color="#8B5CF6" />
+            </TouchableOpacity>
             <TouchableOpacity style={styles.iconButton} onPress={logout}>
-              <Ionicons name="log-out-outline" size={20} color="#8B5CF6" />
+              <Ionicons name="log-out-outline" size={20} color="#EF4444" />
             </TouchableOpacity>
           </View>
         </View>

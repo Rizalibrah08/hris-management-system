@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, ActivityIn
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 
@@ -13,7 +15,6 @@ export default function PayrollDetailsScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const isFocused = useIsFocused();
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const [salary, setSalary] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -157,48 +158,36 @@ export default function PayrollDetailsScreen() {
 
       {/* Footer Button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.saveButton} onPress={() => setIsModalVisible(true)}>
-          <Text style={styles.saveButtonText}>Save As PDF</Text>
+        <TouchableOpacity 
+          style={styles.saveButton}
+          onPress={async () => {
+            const earningsRows = data.components
+              ? data.components.filter(c => c.component_type === 'earning' || c.type === 'earning')
+                  .map(c => `<tr><td>${c.component_name_snapshot || c.name || '-'}</td><td style="color:green">+Rp ${formatCurrency(c.amount)}</td></tr>`).join('')
+              : '';
+            const deductionRows = data.components
+              ? data.components.filter(c => c.component_type === 'deduction' || c.type === 'deduction')
+                  .map(c => `<tr><td>${c.component_name_snapshot || c.name || '-'}</td><td style="color:red">-Rp ${formatCurrency(c.amount)}</td></tr>`).join('')
+              : '';
+            const html = `<html><body style="font-family:sans-serif;padding:20px">
+              <h2>Slip Gaji</h2>
+              <p><strong>Periode:</strong> ${periodLabel}</p>
+              <p><strong>Gaji Pokok:</strong> Rp ${formatCurrency(baseSalary)}</p>
+              ${earningsRows ? `<h4>Pendapatan</h4><table style="width:100%">${earningsRows}</table>` : ''}
+              ${deductionRows ? `<h4>Potongan</h4><table style="width:100%">${deductionRows}</table>` : ''}
+              <h3>Total: Rp ${formatCurrency(netSalary)}</h3>
+            </body></html>`;
+            try {
+              const { uri } = await Print.printToFileAsync({ html });
+              if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(uri);
+              }
+            } catch {}
+          }}
+        >
+          <Text style={styles.saveButtonText}>Simpan PDF</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Success Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
-          onPressOut={() => setIsModalVisible(false)}
-        >
-          <TouchableOpacity activeOpacity={1} style={styles.bottomSheet}>
-            {/* Floating Icon */}
-            <View style={styles.floatingIconContainer}>
-              <View style={styles.floatingIconBox}>
-                <Ionicons name="download-outline" size={40} color="#FFFFFF" />
-              </View>
-            </View>
-
-            <Text style={styles.modalTitle}>Payroll Saved!</Text>
-            <Text style={styles.modalSubtitle}>
-              Your payroll has been successfully saved. You can check it on your device storage.
-            </Text>
-
-            <TouchableOpacity 
-              style={styles.btnClose}
-              onPress={() => {
-                setIsModalVisible(false);
-                navigation.navigate('Profile');
-              }}
-            >
-              <Text style={styles.btnCloseText}>Close Message</Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
     </SafeAreaView>
   );
 }

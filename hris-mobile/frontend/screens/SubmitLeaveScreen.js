@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Modal, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 
 export default function SubmitLeaveScreen() {
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const { user } = useAuth();
   const [description, setDescription] = useState('');
   const [emergencyPhone, setEmergencyPhone] = useState('');
@@ -22,6 +23,30 @@ export default function SubmitLeaveScreen() {
   const [isSubmitConfirmVisible, setIsSubmitConfirmVisible] = useState(false);
   const [isSubmitSuccessVisible, setIsSubmitSuccessVisible] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [leaveCategories, setLeaveCategories] = useState(['Cuti Tahunan', 'Izin Sakit', 'Izin', 'Cuti Khusus', 'Izin Pribadi']);
+  const [taskDelegations, setTaskDelegations] = useState([]);
+  const [leaveQuotas, setLeaveQuotas] = useState([]);
+
+  useEffect(() => {
+    if (isFocused) {
+      api.employees.delegationList()
+        .then(data => setTaskDelegations(data.map(e => ({ label: `${e.name} - ${e.department || ''}`, value: e.id }))))
+        .catch(() => {});
+      api.leave.quota()
+        .then(data => {
+          if (data?.quotas) setLeaveQuotas(data.quotas);
+        })
+        .catch(() => {});
+      api.leave.myList()
+        .then(data => {
+          if (Array.isArray(data)) {
+            const types = [...new Set(data.map(d => d.leave_type).filter(Boolean))];
+            if (types.length > 0) setLeaveCategories(types);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isFocused]);
 
   const today = new Date();
   const currentYear = today.getFullYear();
@@ -59,24 +84,8 @@ export default function SubmitLeaveScreen() {
     }
   };
 
-  const leaveCategories = [
-    'Cuti Tahunan',
-    'Izin Sakit',
-    'Izin',
-    'Cuti Khusus',
-    'Izin Pribadi',
-  ];
-
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const taskDelegations = [
-    'Jeane - UX Writer',
-    'Alpheas - UI Designer',
-    'John - UX Designer',
-    'Alicia - Jr Product Manager',
-    'Claudia - UI Designer',
-  ];
-
-  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const daysOfWeek = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
   
   const getCalendarDays = () => {
     const year = currentYear;
@@ -419,24 +428,27 @@ export default function SubmitLeaveScreen() {
               <Text style={styles.modalTitleList}>Select Task Delegation</Text>
               <Text style={styles.modalSubtitleList}>Select Leave category</Text>
               
-              <ScrollView showsVerticalScrollIndicator={false} style={styles.optionsScroll}>
-                {taskDelegations.map((del, index) => (
-                  <TouchableOpacity 
-                    key={index} 
-                    style={[
-                      styles.optionItem, 
-                      selectedDelegation === del && styles.optionItemActive
-                    ]}
-                    onPress={() => setSelectedDelegation(del)}
-                  >
-                    <Text style={styles.optionText}>{del}</Text>
-                    <Ionicons 
-                      name={selectedDelegation === del ? "radio-button-on" : "radio-button-off-outline"} 
-                      size={24} 
-                      color={selectedDelegation === del ? "#8B5CF6" : "#9CA3AF"} 
-                    />
-                  </TouchableOpacity>
-                ))}
+               <ScrollView showsVerticalScrollIndicator={false} style={styles.optionsScroll}>
+                 {taskDelegations.map((del, index) => {
+                   const label = typeof del === 'string' ? del : del.label;
+                   return (
+                   <TouchableOpacity 
+                     key={index} 
+                     style={[
+                       styles.optionItem, 
+                       (selectedDelegation === label || selectedDelegation === del.value) && styles.optionItemActive
+                     ]}
+                     onPress={() => setSelectedDelegation(label)}
+                   >
+                     <Text style={styles.optionText}>{label}</Text>
+                     <Ionicons 
+                       name={(selectedDelegation === label || selectedDelegation === del.value) ? "radio-button-on" : "radio-button-off-outline"} 
+                       size={24} 
+                       color={selectedDelegation === label ? '#7C3AED' : '#9CA3AF'}
+                     />
+                   </TouchableOpacity>
+                   );
+                 })}
               </ScrollView>
 
               <View style={styles.modalFooterButtons}>

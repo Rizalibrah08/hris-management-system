@@ -14,12 +14,13 @@ export default function CameraScreen() {
 
   const action = route.params?.action || 'clockin';
   const attendanceId = route.params?.attendanceId;
+  const gpsLocation = route.params?.gpsLocation;
 
   const takePicture = async () => {
     if (cameraRef.current) {
       try {
         const photo = await cameraRef.current.takePictureAsync();
-        navigation.navigate('SubmitClockIn', { photoUri: photo.uri, action, attendanceId });
+        navigation.navigate('SubmitClockIn', { photoUri: photo.uri, action, attendanceId, gpsLocation });
       } catch (error) {
         console.error("Failed to take picture:", error);
       }

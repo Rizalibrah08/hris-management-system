@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 
@@ -18,11 +19,15 @@ export default function SubmitClockInScreen() {
   const photoUri = route.params?.photoUri || '';
   const action = route.params?.action || 'clockin';
   const attendanceId = route.params?.attendanceId;
+  const gpsLocation = route.params?.gpsLocation;
   const isClockOut = action === 'clockout';
   
   const [notes, setNotes] = useState('');
   const [isSuccessVisible, setIsSuccessVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const now = new Date();
+  const currentTime = now.toLocaleString('id-ID', { day: 'numeric', month: 'numeric', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true, timeZoneName: 'short' });
 
   const handleSubmit = async () => {
     if (isClockOut) {
@@ -46,7 +51,12 @@ export default function SubmitClockInScreen() {
       }
       setLoading(true);
       try {
-        await api.attendance.clockIn(user.employeeId, null, photoUri);
+        const compressed = await ImageManipulator.manipulateAsync(
+          photoUri,
+          [{ resize: { width: 800 } }],
+          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG },
+        );
+        await api.attendance.clockIn(user.employeeId, gpsLocation, compressed.uri);
         setIsSuccessVisible(true);
       } catch (err) {
         Alert.alert('Gagal', err.message || 'Clock in gagal');
@@ -85,9 +95,12 @@ export default function SubmitClockInScreen() {
               
               {/* Overlay Info */}
               <View style={styles.overlayInfo}>
-                <Text style={styles.overlayText}>Lat : 45.43534</Text>
-                <Text style={styles.overlayText}>Long : 97897.576</Text>
-                <Text style={styles.overlayText}>11/10/24 09:00AM GMT +07:00</Text>
+                {gpsLocation && (
+                  <Text style={styles.overlayText}>
+                    Lat: {gpsLocation.split(',')[0]?.trim()?.slice(0, 9)} Long: {gpsLocation.split(',')[1]?.trim()?.slice(0, 9)}
+                  </Text>
+                )}
+                <Text style={styles.overlayText}>{currentTime}</Text>
               </View>
 
               {/* Retake Button */}

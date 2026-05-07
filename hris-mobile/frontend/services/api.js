@@ -118,6 +118,41 @@ async function request(endpoint, options = {}) {
   }
 }
 
+async function requestMultipart(endpoint, formData) {
+  const baseUrl = await resolveBaseUrl();
+  const url = `${baseUrl}${endpoint}`;
+  const headers = {};
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+
+  console.log(`[API Upload] POST ${url}`);
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let message = `Upload failed (${response.status})`;
+      try {
+        const body = await response.json();
+        message = body.message || message;
+      } catch {}
+      const error = new Error(message);
+      error.status = response.status;
+      throw error;
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error(`[API Error] ${error.message}`);
+    throw error;
+  }
+}
+
 export const api = {
   auth: {
     login: (nik, password) =>
@@ -127,20 +162,46 @@ export const api = {
       request('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
 
     me: () => request('/auth/me'),
+
+    logout: () => request('/auth/logout', { method: 'POST' }),
   },
 
   employees: {
     me: () => request('/employees/me'),
     updateMe: (data) =>
       request('/employees/me', { method: 'PUT', body: JSON.stringify(data) }),
+    delegationList: () => request('/employees/delegation-list'),
+    uploadPhoto: async (photoUri) => {
+      const formData = new FormData();
+      formData.append('photo', {
+        uri: photoUri,
+        type: 'image/jpeg',
+        name: 'profile.jpg',
+      });
+      return requestMultipart('/employees/me/photo', formData);
+    },
+    getPhoto: () => request('/employees/me/photo'),
   },
 
   attendance: {
-    clockIn: (employeeId, gpsLocation, selfie) =>
-      request('/attendance/clockin', {
+    clockIn: async (employeeId, gpsLocation, selfieUri) => {
+      const hasFile = selfieUri && (selfieUri.startsWith('file://') || selfieUri.startsWith('content://'));
+      if (hasFile) {
+        const formData = new FormData();
+        formData.append('employee_id', String(employeeId));
+        if (gpsLocation) formData.append('gps_location', gpsLocation);
+        formData.append('selfie', {
+          uri: selfieUri,
+          type: 'image/jpeg',
+          name: `selfie-${Date.now()}.jpg`,
+        });
+        return requestMultipart('/attendance/clockin', formData);
+      }
+      return request('/attendance/clockin', {
         method: 'POST',
-        body: JSON.stringify({ employee_id: employeeId, gps_location: gpsLocation, selfie }),
-      }),
+        body: JSON.stringify({ employee_id: employeeId, gps_location: gpsLocation, selfie: selfieUri }),
+      });
+    },
 
     clockOut: (attendanceId) =>
       request('/attendance/clockout', {
@@ -166,6 +227,7 @@ export const api = {
           reason,
         }),
       }),
+    quota: () => request('/leave/quota'),
   },
 
   payroll: {
@@ -182,6 +244,12 @@ export const api = {
 
   dashboard: {
     mobile: () => request('/dashboard/mobile'),
+  },
+
+  notifications: {
+    my: () => request('/notifications/my'),
+    markRead: (id) => request(`/notifications/${id}/read`, { method: 'PUT' }),
+    markAllRead: () => request('/notifications/read-all', { method: 'PUT' }),
   },
 };
 
