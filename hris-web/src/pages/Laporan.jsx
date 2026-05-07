@@ -24,7 +24,7 @@ export default function Laporan() {
             onClick={() => exportReportsToPDF(report, salaryDistribution, leaveStats)}
             style={{ padding: '8px 16px', fontSize: '14px' }}
           >
-            📥 Export PDF
+            Export PDF
           </button>
         </div>
         

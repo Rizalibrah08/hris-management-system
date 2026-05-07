@@ -239,11 +239,12 @@ app.get('/employees', authRequired, roleRequired('HRD', 'Super Admin'), async (_
 })
 
 app.post('/employees', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
-  const { name, department_id, position_id, contract_end } = req.body
+  const { name, department_id, position_id, contract_end, email, phone } = req.body
+  if (!name) return res.status(400).json({ message: 'Nama wajib diisi' })
   const inserted = await query(
-    `INSERT INTO employees(name, department_id, position_id, contract_end)
-     VALUES (?, ?, ?, ?)`,
-    [name, department_id, position_id, contract_end],
+    `INSERT INTO employees(name, department_id, position_id, contract_end, email, phone)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [name, department_id || null, position_id || null, contract_end || null, email || null, phone || null],
   )
   const created = await query('SELECT * FROM employees WHERE id = ?', [inserted.insertId])
   res.status(201).json(created[0])
@@ -251,11 +252,12 @@ app.post('/employees', authRequired, roleRequired('HRD', 'Super Admin'), async (
 
 app.put('/employees/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
   const { id } = req.params
-  const { name, department_id, position_id, contract_end } = req.body
+  const { name, department_id, position_id, contract_end, email, phone, is_active } = req.body
+  if (!name) return res.status(400).json({ message: 'Nama wajib diisi' })
   await query(
-    `UPDATE employees SET name=?, department_id=?, position_id=?, contract_end=?
+    `UPDATE employees SET name=?, department_id=?, position_id=?, contract_end=?, email=?, phone=?, is_active=?
      WHERE id=?`,
-    [name, department_id, position_id, contract_end, id],
+    [name, department_id || null, position_id || null, contract_end || null, email || null, phone || null, is_active !== undefined ? is_active : 1, id],
   )
   const updated = await query('SELECT * FROM employees WHERE id = ?', [id])
   res.json(updated[0] || null)

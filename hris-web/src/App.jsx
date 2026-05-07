@@ -62,29 +62,11 @@ function App() {
   const [runningPayroll, setRunningPayroll] = useState(false)
   const [finalizingPayroll, setFinalizingPayroll] = useState(false)
   const [payrollMessage, setPayrollMessage] = useState('')
-  const [payrollTab, setPayrollTab] = useState('run')
   const [payrollRuns, setPayrollRuns] = useState([])
   const [selectedRunId, setSelectedRunId] = useState(null)
   const [payrollDetail, setPayrollDetail] = useState(null)
   const [selectedPayrollItemId, setSelectedPayrollItemId] = useState(null)
   const [payrollDetailSearch, setPayrollDetailSearch] = useState('')
-  const [salaryStructures, setSalaryStructures] = useState([])
-  const [loadingSalary, setLoadingSalary] = useState(false)
-  const [salaryForm, setSalaryForm] = useState({
-    employeeId: '',
-    baseSalary: 8000000,
-    allowance: 1000000,
-    deduction: 250000,
-  })
-  const [editingEmployeeId, setEditingEmployeeId] = useState(null)
-  const [editSalaryModal, setEditSalaryModal] = useState({
-    open: false,
-    employeeId: '',
-    employeeName: '',
-    baseSalary: 0,
-    allowance: 0,
-    deduction: 0,
-  })
   const [report, setReport] = useState({
     totalEmployees: 0,
     attendanceRate: 0,
@@ -108,32 +90,6 @@ function App() {
   const canRunPayroll = ['HRD', 'Finance', 'Super Admin'].includes(role)
   const canApproveFinance = ['Finance', 'Super Admin'].includes(role)
   const canReview = ['HRD', 'Super Admin'].includes(role)
-  const canEditSalary = ['HRD', 'Super Admin'].includes(role)
-
-  async function loadSalaryStructures() {
-    setLoadingSalary(true)
-    try {
-      const data = await api('/salary-profiles')
-      setSalaryStructures(
-        data.map((row) => ({
-          profileId: row.profile_id,
-          employeeId: row.employee_id,
-          employeeName: row.employee_name,
-          department: row.department || '-',
-          baseSalary: Number(row.base_salary),
-          allowance: Number(row.allowance),
-          deduction: Number(row.deduction),
-          paymentMethod: row.payment_method,
-          bankName: row.bank_name,
-          bankAccountName: row.bank_account_name,
-          bankAccountNumber: row.bank_account_number,
-        })),
-      )
-    } catch {
-      setSalaryStructures([])
-    }
-    setLoadingSalary(false)
-  }
 
   async function loadDashboardData() {
     try {
@@ -144,9 +100,6 @@ function App() {
     try {
       const employeeData = await api('/employees')
       setEmployees(employeeData)
-      if (!salaryForm.employeeId && employeeData.length > 0) {
-        setSalaryForm((c) => ({ ...c, employeeId: String(employeeData[0].id) }))
-      }
     } catch { /* ignore */ }
   }
 
@@ -161,33 +114,10 @@ function App() {
       try {
         const employeeData = await api('/employees', { signal: ctrl.signal })
         setEmployees(employeeData)
-        if (salaryForm.employeeId === '' && employeeData.length > 0) {
-          setSalaryForm((c) => ({ ...c, employeeId: String(employeeData[0].id) }))
-        }
       } catch { /* ignore */ }
-      try {
-        const salaryData = await api('/salary-profiles', { signal: ctrl.signal })
-        setSalaryStructures(
-          salaryData.map((row) => ({
-            profileId: row.profile_id,
-            employeeId: row.employee_id,
-            employeeName: row.employee_name,
-            department: row.department || '-',
-            baseSalary: Number(row.base_salary),
-            allowance: Number(row.allowance),
-            deduction: Number(row.deduction),
-            paymentMethod: row.payment_method,
-            bankName: row.bank_name,
-            bankAccountName: row.bank_account_name,
-            bankAccountNumber: row.bank_account_number,
-          })),
-        )
-      } catch { setSalaryStructures([]) }
-      setLoadingSalary(false)
     }
     init()
     return () => ctrl.abort()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
   useEffect(() => {
@@ -218,27 +148,9 @@ function App() {
     fetchReports()
   }, [token, activePage])
 
-  useEffect(() => {
-    if (!editSalaryModal.open) return
-    const handleEsc = (event) => {
-      if (event.key === 'Escape') {
-        setEditingEmployeeId(null)
-        setEditSalaryModal({ open: false, employeeId: '', employeeName: '', baseSalary: 0, allowance: 0, deduction: 0 })
-        setPayrollMessage('Mode edit dibatalkan')
-      }
-    }
-    window.addEventListener('keydown', handleEsc)
-    return () => window.removeEventListener('keydown', handleEsc)
-  }, [editSalaryModal.open])
-
   const handleLogout = () => {
     logout()
     setActivePage('dashboard')
-  }
-
-  const resetSalaryForm = () => {
-    const defaultEmployeeId = employees.length > 0 ? String(employees[0].id) : ''
-    setSalaryForm({ employeeId: defaultEmployeeId, baseSalary: 8000000, allowance: 1000000, deduction: 250000 })
   }
 
   async function loadPayrollRuns() {
@@ -258,75 +170,6 @@ function App() {
       setPayrollDetail(data)
       setSelectedPayrollItemId(data.items?.[0]?.id || null)
     } catch { /* ignore */ }
-  }
-
-  const handleSaveSalaryStructure = async () => {
-    const employee = employees.find((e) => String(e.id) === String(salaryForm.employeeId))
-    if (!employee) return
-    if (
-      Number.isNaN(Number(salaryForm.baseSalary)) ||
-      Number.isNaN(Number(salaryForm.allowance)) ||
-      Number.isNaN(Number(salaryForm.deduction))
-    ) {
-      setPayrollMessage('Nominal gaji wajib berupa angka yang valid')
-      return
-    }
-    if (Number(salaryForm.baseSalary) < 0 || Number(salaryForm.allowance) < 0 || Number(salaryForm.deduction) < 0) {
-      setPayrollMessage('Nominal gaji, tunjangan, dan potongan tidak boleh minus')
-      return
-    }
-    try {
-      await api('/salary-profiles', {
-        method: 'POST',
-        body: JSON.stringify({
-          employeeId: Number(salaryForm.employeeId),
-          baseSalary: Number(salaryForm.baseSalary),
-          allowance: Number(salaryForm.allowance),
-          deduction: Number(salaryForm.deduction),
-        }),
-      })
-      setPayrollMessage(`Salary structure untuk ${employee.name} berhasil disimpan`)
-      resetSalaryForm()
-      await loadSalaryStructures()
-    } catch (err) {
-      setPayrollMessage(err.message || 'Gagal menyimpan salary structure')
-    }
-  }
-
-  const handleEditSalaryStructure = (item) => {
-    setEditingEmployeeId(item.employeeId)
-    setEditSalaryModal({
-      open: true,
-      employeeId: String(item.employeeId),
-      employeeName: item.employeeName,
-      baseSalary: Number(item.baseSalary),
-      allowance: Number(item.allowance),
-      deduction: Number(item.deduction),
-    })
-    setPayrollMessage(`Mode edit aktif untuk ${item.employeeName}`)
-  }
-
-  const handleSaveEditedSalary = async () => {
-    if (Number(editSalaryModal.baseSalary) < 0 || Number(editSalaryModal.allowance) < 0 || Number(editSalaryModal.deduction) < 0) {
-      setPayrollMessage('Nominal gaji, tunjangan, dan potongan tidak boleh minus')
-      return
-    }
-    try {
-      await api(`/salary-profiles/${editSalaryModal.employeeId}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          baseSalary: Number(editSalaryModal.baseSalary),
-          allowance: Number(editSalaryModal.allowance),
-          deduction: Number(editSalaryModal.deduction),
-        }),
-      })
-      setEditSalaryModal((prev) => ({ ...prev, open: false }))
-      setPayrollMessage(`Salary structure untuk ${editSalaryModal.employeeName} berhasil diupdate`)
-      setEditingEmployeeId(null)
-      await loadSalaryStructures()
-    } catch (err) {
-      setPayrollMessage(err.message || 'Gagal mengupdate salary structure')
-    }
   }
 
   const handleRunPayroll = async () => {
@@ -417,16 +260,6 @@ function App() {
     }
   }
 
-  const handleDeleteSalaryStructure = async (employeeId) => {
-    try {
-      await api(`/salary-profiles/${employeeId}`, { method: 'DELETE' })
-      setPayrollMessage('Salary structure berhasil dinonaktifkan')
-      await loadSalaryStructures()
-    } catch (err) {
-      setPayrollMessage(err.message || 'Gagal menghapus salary structure')
-    }
-  }
-
   if (!token) {
     return <Login />
   }
@@ -434,11 +267,18 @@ function App() {
   return (
     <div className="dashboard-layout">
       <aside className={`sidebar${sidebarOpen ? '' : ' collapsed'}`}>
-        <div className="brand">
-          <h1>Cloud HRIS</h1>
-          <p>Workspace Console</p>
+        <div className="sidebar-header">
+          <div className="brand">
+            <div className="brand-logo">H</div>
+            <div className="brand-text">
+              <h1>Cloud HRIS</h1>
+              <p>Workspace Console</p>
+            </div>
+          </div>
         </div>
+
         <nav className="menu">
+          <span className="menu-label">Main Menu</span>
           {roleMenus.map((menu) => (
             <button
               key={menu.key}
@@ -449,29 +289,33 @@ function App() {
             </button>
           ))}
         </nav>
-        <div className="user-card">
-          <strong>{employeeName || 'Administrator'}</strong>
-          <p>{role || 'Administrator'}{department ? ` — ${department}` : ''}</p>
-          <button type="button" className="logout-btn" onClick={handleLogout}>
-            Logout
+
+        <div className="sidebar-footer">
+          <div className="user-card">
+            <div className="user-avatar">{employeeName ? employeeName.charAt(0).toUpperCase() : 'A'}</div>
+            <div className="user-info">
+              <strong>{employeeName || 'Administrator'}</strong>
+              <p>{role || 'Administrator'}{department ? ` — ${department}` : ''}</p>
+            </div>
+            <button type="button" className="logout-btn" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
+          <button
+            className="sidebar-toggle"
+            onClick={() => setSidebarOpen((prev) => !prev)}
+            title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+          >
+            <span className="toggle-icon">{sidebarOpen ? '<' : '>'}</span>
           </button>
         </div>
       </aside>
 
       <main className="content">
         <header className="topbar">
-          <div className="topbar-left">
-            <button
-              className="sidebar-toggle"
-              onClick={() => setSidebarOpen((prev) => !prev)}
-              title={sidebarOpen ? 'Sembunyikan sidebar' : 'Tampilkan sidebar'}
-            >
-              {sidebarOpen ? '\u2630' : '\u2630'}
-            </button>
-            <div>
-              <p className="section-label">{roleMenus.find((menu) => menu.key === activePage)?.label}</p>
-              <h2>Human Resource Information System (HRIS) Terpadu Berbasis Cloud</h2>
-            </div>
+          <div>
+            <p className="section-label">{roleMenus.find((menu) => menu.key === activePage)?.label}</p>
+            <h2>Human Resource Information System (HRIS) Terpadu Berbasis Cloud</h2>
           </div>
           <input placeholder="Cari karyawan, payroll, atau approval..." />
         </header>
@@ -484,21 +328,17 @@ function App() {
         {['payroll', 'laporan'].includes(activePage) && (
           <FeaturePages
             activePage={activePage}
-            employees={employees}
             report={report}
             role={role}
             canRunPayroll={canRunPayroll}
             canApproveFinance={canApproveFinance}
             canReview={canReview}
-            canEditSalary={canEditSalary}
             onRunPayroll={handleRunPayroll}
             onFinalizeRun={handleFinalizeRun}
             onReviewRun={handleReviewRun}
             onApproveRun={handleApproveRun}
             onRejectRun={handleRejectRun}
             onValidateRun={handleValidateRun}
-            payrollTab={payrollTab}
-            onChangePayrollTab={setPayrollTab}
             onSelectRun={async (runId) => {
               setSelectedRunId(runId)
               await loadPayrollDetail(runId)
@@ -513,22 +353,6 @@ function App() {
             onSelectPayrollItem={setSelectedPayrollItemId}
             payrollDetailSearch={payrollDetailSearch}
             onPayrollDetailSearchChange={setPayrollDetailSearch}
-            salaryStructures={salaryStructures}
-            loadingSalary={loadingSalary}
-            salaryForm={salaryForm}
-            editingEmployeeId={editingEmployeeId}
-            editSalaryModal={editSalaryModal}
-            onSalaryFormChange={setSalaryForm}
-            onSaveSalaryStructure={handleSaveSalaryStructure}
-            onEditSalaryStructure={handleEditSalaryStructure}
-            onCancelEditSalary={() => {
-              setEditingEmployeeId(null)
-              setEditSalaryModal({ open: false, employeeId: '', employeeName: '', baseSalary: 0, allowance: 0, deduction: 0 })
-              setPayrollMessage('Mode edit dibatalkan')
-            }}
-            onEditSalaryModalChange={setEditSalaryModal}
-            onSaveEditedSalary={handleSaveEditedSalary}
-            onDeleteSalaryStructure={handleDeleteSalaryStructure}
             salaryDistribution={salaryDistribution}
             leaveStats={leaveStats}
             loadingReports={loadingReports}
@@ -541,21 +365,17 @@ function App() {
 
 function FeaturePages({
   activePage,
-  employees,
   report,
   role,
   canRunPayroll,
   canApproveFinance,
   canReview,
-  canEditSalary,
   onRunPayroll,
   onFinalizeRun,
   onReviewRun,
   onApproveRun,
   onRejectRun,
   onValidateRun,
-  payrollTab,
-  onChangePayrollTab,
   onSelectRun,
   payrollMessage,
   runningPayroll,
@@ -567,18 +387,6 @@ function FeaturePages({
   onSelectPayrollItem,
   payrollDetailSearch,
   onPayrollDetailSearchChange,
-  salaryStructures,
-  loadingSalary,
-  salaryForm,
-  editingEmployeeId,
-  editSalaryModal,
-  onSalaryFormChange,
-  onSaveSalaryStructure,
-  onEditSalaryStructure,
-  onCancelEditSalary,
-  onEditSalaryModalChange,
-  onSaveEditedSalary,
-  onDeleteSalaryStructure,
   salaryDistribution,
   leaveStats,
   loadingReports,
@@ -616,24 +424,8 @@ function FeaturePages({
 
     return (
       <section className="feature-layout payroll-layout">
-        <article className="panel payroll-tabs">
-          <button
-            className={`tab-btn ${payrollTab === 'run' ? 'active' : ''}`}
-            onClick={() => onChangePayrollTab('run')}
-          >
-            Payroll Run
-          </button>
-          <button
-            className={`tab-btn ${payrollTab === 'structure' ? 'active' : ''}`}
-            onClick={() => onChangePayrollTab('structure')}
-          >
-            Salary Structure
-          </button>
-        </article>
-
-        {payrollTab === 'run' ? (
-          <>
-            <article className="panel">
+        <>
+          <article className="panel">
               <div className="panel-head">
                 <h3>Payroll Management</h3>
                 {canRunPayroll && (
@@ -799,175 +591,6 @@ function FeaturePages({
               )}
             </article>
           </>
-        ) : (
-          <>
-            <article className="panel">
-              <h3>Atur Salary Structure Karyawan</h3>
-              <p className="section-note">
-                {loadingSalary ? 'Memuat data salary structure...' : 'Data disimpan ke database dan persist saat refresh'}
-              </p>
-              {canEditSalary && (
-                <>
-                  <div className="salary-form-head">
-                    <span>Nama Karyawan</span>
-                    <span>Gaji Pokok</span>
-                    <span>Tunjangan</span>
-                    <span>Potongan</span>
-                    <span>Aksi</span>
-                  </div>
-                  <div className="salary-form">
-                    <select
-                      value={salaryForm.employeeId}
-                      onChange={(event) => onSalaryFormChange((prev) => ({ ...prev, employeeId: event.target.value }))}
-                    >
-                      {employees.map((employee) => (
-                        <option key={employee.id} value={employee.id}>
-                          {employee.name}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="number"
-                      min={0}
-                      value={salaryForm.baseSalary}
-                      onChange={(event) =>
-                        onSalaryFormChange((prev) => ({ ...prev, baseSalary: Number(event.target.value || 0) }))
-                      }
-                      placeholder="Gaji pokok"
-                    />
-                    <input
-                      type="number"
-                      min={0}
-                      value={salaryForm.allowance}
-                      onChange={(event) =>
-                        onSalaryFormChange((prev) => ({ ...prev, allowance: Number(event.target.value || 0) }))
-                      }
-                      placeholder="Tunjangan"
-                    />
-                    <input
-                      type="number"
-                      min={0}
-                      value={salaryForm.deduction}
-                      onChange={(event) =>
-                        onSalaryFormChange((prev) => ({ ...prev, deduction: Number(event.target.value || 0) }))
-                      }
-                      placeholder="Potongan"
-                    />
-                    <button className="primary-btn" onClick={onSaveSalaryStructure}>
-                      Simpan Struktur
-                    </button>
-                  </div>
-                </>
-              )}
-            </article>
-
-            <article className="panel">
-              <h3>Daftar Salary Structure</h3>
-              <p className="section-note">Tabel Salary Structure Karyawan</p>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Karyawan</th>
-                    <th>Departemen</th>
-                    <th>Gaji Pokok</th>
-                    <th>Tunjangan</th>
-                    <th>Potongan</th>
-                    <th>Take Home Pay</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {salaryStructures.map((item) => (
-                    <tr
-                      key={item.employeeId}
-                      className={editingEmployeeId === item.employeeId ? 'editing-row' : ''}
-                    >
-                      <td>{item.employeeName}</td>
-                      <td>{item.department}</td>
-                      <td>{formatRupiah(item.baseSalary)}</td>
-                      <td>{formatRupiah(item.allowance)}</td>
-                      <td>{formatRupiah(item.deduction)}</td>
-                      <td>{formatRupiah(item.baseSalary + item.allowance - item.deduction)}</td>
-                      <td className="action-cell">
-                        {canEditSalary && (
-                          <button className="small-btn" onClick={() => onEditSalaryStructure(item)}>
-                            Edit
-                          </button>
-                        )}
-                        {canEditSalary && (
-                          <button
-                            className="small-btn cancel-btn"
-                            onClick={() => onDeleteSalaryStructure(item.employeeId)}
-                          >
-                            Hapus
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {payrollMessage ? <p className="message">{payrollMessage}</p> : null}
-            </article>
-            {editSalaryModal.open ? (
-              <div className="modal-overlay" onClick={onCancelEditSalary}>
-                <div className="modal-card" onClick={(event) => event.stopPropagation()}>
-                  <h3>Edit Salary Structure</h3>
-                  <p className="section-note">{editSalaryModal.employeeName}</p>
-                  <div className="modal-form">
-                    <label htmlFor="edit-base">Gaji Pokok</label>
-                    <input
-                      id="edit-base"
-                      type="number"
-                      min={0}
-                      value={editSalaryModal.baseSalary}
-                      onChange={(event) =>
-                        onEditSalaryModalChange((prev) => ({
-                          ...prev,
-                          baseSalary: Number(event.target.value || 0),
-                        }))
-                      }
-                    />
-                    <label htmlFor="edit-allowance">Tunjangan</label>
-                    <input
-                      id="edit-allowance"
-                      type="number"
-                      min={0}
-                      value={editSalaryModal.allowance}
-                      onChange={(event) =>
-                        onEditSalaryModalChange((prev) => ({
-                          ...prev,
-                          allowance: Number(event.target.value || 0),
-                        }))
-                      }
-                    />
-                    <label htmlFor="edit-deduction">Potongan</label>
-                    <input
-                      id="edit-deduction"
-                      type="number"
-                      min={0}
-                      value={editSalaryModal.deduction}
-                      onChange={(event) =>
-                        onEditSalaryModalChange((prev) => ({
-                          ...prev,
-                          deduction: Number(event.target.value || 0),
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="modal-actions">
-                    <button className="small-btn cancel-btn" onClick={onCancelEditSalary}>
-                      Batal
-                    </button>
-                    <button className="primary-btn" onClick={onSaveEditedSalary}>
-                      Simpan Perubahan
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </>
-        )}
       </section>
     )
   }
@@ -986,7 +609,7 @@ function FeaturePages({
               onClick={() => exportReportsToPDF(report, salaryDistribution, leaveStats)}
               style={{ padding: '8px 16px', fontSize: '14px' }}
             >
-              📥 Export PDF
+              Export PDF
             </button>
           </div>
           

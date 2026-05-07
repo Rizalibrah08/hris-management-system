@@ -1,36 +1,462 @@
-import { useEmployees } from '../hooks/useEmployees'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { api } from '../api/client'
+import { formatRupiah } from '../utils/formatters'
 import '../styles/global.css'
 import '../styles/karyawan.css'
 
 export default function Karyawan() {
-  const { employees, loading } = useEmployees()
+  const [employees, setEmployees] = useState([])
+  const [departments, setDepartments] = useState([])
+  const [positions, setPositions] = useState([])
+  const [salaryProfiles, setSalaryProfiles] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
+
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showSalaryModal, setShowSalaryModal] = useState(false)
+  const [editingEmployee, setEditingEmployee] = useState(null)
+  const [salaryEmployee, setSalaryEmployee] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const [addForm, setAddForm] = useState({
+    name: '', department_id: '', position_id: '', contract_end: '', email: '', phone: '',
+  })
+  const [editForm, setEditForm] = useState({
+    name: '', department_id: '', position_id: '', contract_end: '', email: '', phone: '', is_active: 1,
+  })
+  const [salaryForm, setSalaryForm] = useState({
+    baseSalary: 0, allowance: 0, deduction: 0,
+  })
+
+  const clearMessages = () => { setMessage(''); setError('') }
+
+  const loadAll = useCallback(async (signal) => {
+    setLoading(true)
+    try {
+      const [emp, dept, pos, sal] = await Promise.all([
+        api('/employees', { signal }),
+        api('/departments', { signal }),
+        api('/positions', { signal }),
+        api('/salary-profiles', { signal }),
+      ])
+      setEmployees(emp)
+      setDepartments(dept)
+      setPositions(pos)
+      setSalaryProfiles(sal.map((s) => ({
+        employeeId: s.employee_id,
+        employeeName: s.employee_name,
+        baseSalary: Number(s.base_salary),
+        allowance: Number(s.allowance),
+        deduction: Number(s.deduction),
+      })))
+    } catch (err) {
+      if (err.name !== 'AbortError') setEmployees([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const ctrl = new AbortController()
+    loadAll(ctrl.signal)
+    return () => ctrl.abort()
+  }, [loadAll])
+
+  const getSalary = (empId) => salaryProfiles.find((s) => s.employeeId === empId)
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return employees
+    const q = search.toLowerCase()
+    return employees.filter((e) =>
+      (e.name || '').toLowerCase().includes(q) ||
+      (e.department || '').toLowerCase().includes(q) ||
+      (e.position || '').toLowerCase().includes(q),
+    )
+  }, [employees, search])
+
+  const contractStatus = (contractEnd) => {
+    if (!contractEnd) return { label: 'Tanpa Kontrak', cls: 'none' }
+    const end = new Date(contractEnd)
+    const now = new Date()
+    const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24))
+    if (days < 0) return { label: 'Berakhir', cls: 'expired' }
+    if (days <= 30) return { label: `${days} hari`, cls: 'expiring' }
+    return { label: 'Aktif', cls: 'active' }
+  }
+
+  const resetAddForm = () => setAddForm({ name: '', department_id: '', position_id: '', contract_end: '', email: '', phone: '' })
+
+  const handleAdd = async (e) => {
+    e.preventDefault()
+    clearMessages()
+    if (!addForm.name.trim()) { setError('Nama wajib diisi'); return }
+    setSubmitting(true)
+    try {
+      await api('/employees', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: addForm.name,
+          department_id: addForm.department_id ? Number(addForm.department_id) : null,
+          position_id: addForm.position_id ? Number(addForm.position_id) : null,
+          contract_end: addForm.contract_end || null,
+          email: addForm.email || null,
+          phone: addForm.phone || null,
+        }),
+      })
+      setMessage('Karyawan berhasil ditambahkan')
+      setShowAddModal(false)
+      resetAddForm()
+      const ctrl = new AbortController()
+      await loadAll(ctrl.signal)
+      ctrl.abort()
+    } catch (err) {
+      setError(err.message || 'Gagal menambah karyawan')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const openEdit = (emp) => {
+    setEditingEmployee(emp)
+    setEditForm({
+      name: emp.name || '',
+      department_id: emp.department_id ? String(emp.department_id) : '',
+      position_id: emp.position_id ? String(emp.position_id) : '',
+      contract_end: emp.contract_end ? emp.contract_end.slice(0, 10) : '',
+      email: emp.email || '',
+      phone: emp.phone || '',
+      is_active: emp.is_active !== undefined ? emp.is_active : 1,
+    })
+    setShowEditModal(true)
+    clearMessages()
+  }
+
+  const handleEdit = async (e) => {
+    e.preventDefault()
+    clearMessages()
+    if (!editForm.name.trim()) { setError('Nama wajib diisi'); return }
+    setSubmitting(true)
+    try {
+      await api(`/employees/${editingEmployee.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          name: editForm.name,
+          department_id: editForm.department_id ? Number(editForm.department_id) : null,
+          position_id: editForm.position_id ? Number(editForm.position_id) : null,
+          contract_end: editForm.contract_end || null,
+          email: editForm.email || null,
+          phone: editForm.phone || null,
+          is_active: editForm.is_active,
+        }),
+      })
+      setMessage(`Data ${editingEmployee.name} berhasil diupdate`)
+      setShowEditModal(false)
+      setEditingEmployee(null)
+      const ctrl = new AbortController()
+      await loadAll(ctrl.signal)
+      ctrl.abort()
+    } catch (err) {
+      setError(err.message || 'Gagal mengupdate karyawan')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleToggleActive = async (emp) => {
+    clearMessages()
+    try {
+      await api(`/employees/${emp.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          name: emp.name,
+          department_id: emp.department_id,
+          position_id: emp.position_id,
+          contract_end: emp.contract_end ? emp.contract_end.slice(0, 10) : null,
+          email: emp.email || null,
+          phone: emp.phone || null,
+          is_active: emp.is_active ? 0 : 1,
+        }),
+      })
+      setMessage(`${emp.name} ${emp.is_active ? 'dinonaktifkan' : 'diaktifkan'}`)
+      const ctrl = new AbortController()
+      await loadAll(ctrl.signal)
+      ctrl.abort()
+    } catch (err) {
+      setError(err.message || 'Gagal mengubah status')
+    }
+  }
+
+  const openSalary = (emp) => {
+    const sal = getSalary(emp.id)
+    setSalaryEmployee(emp)
+    setSalaryForm({
+      baseSalary: sal ? sal.baseSalary : 8000000,
+      allowance: sal ? sal.allowance : 1000000,
+      deduction: sal ? sal.deduction : 250000,
+    })
+    setShowSalaryModal(true)
+    clearMessages()
+  }
+
+  const handleSaveSalary = async (e) => {
+    e.preventDefault()
+    clearMessages()
+    setSubmitting(true)
+    try {
+      await api('/salary-profiles', {
+        method: 'POST',
+        body: JSON.stringify({
+          employeeId: salaryEmployee.id,
+          baseSalary: Number(salaryForm.baseSalary),
+          allowance: Number(salaryForm.allowance),
+          deduction: Number(salaryForm.deduction),
+        }),
+      })
+      setMessage(`Gaji ${salaryEmployee.name} berhasil disimpan`)
+      setShowSalaryModal(false)
+      setSalaryEmployee(null)
+      const ctrl = new AbortController()
+      await loadAll(ctrl.signal)
+      ctrl.abort()
+    } catch (err) {
+      setError(err.message || 'Gagal menyimpan gaji')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <section className="feature-layout">
+      {message && <div className="toast success">{message}</div>}
+      {error && <div className="toast error">{error}</div>}
+
       <article className="panel">
-        <h3>Directory Karyawan</h3>
-        {loading ? <p>Memuat data karyawan...</p> : null}
-        <table>
-          <thead>
-            <tr>
-              <th>Nama</th>
-              <th>Departemen</th>
-              <th>Jabatan</th>
-              <th>Akhir Kontrak</th>
-            </tr>
-          </thead>
-          <tbody>
-            {employees.map((employee) => (
-              <tr key={employee.id}>
-                <td>{employee.name}</td>
-                <td>{employee.department || '-'}</td>
-                <td>{employee.position || '-'}</td>
-                <td>{employee.contract_end ? employee.contract_end.slice(0, 10) : '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="panel-head">
+          <h3>Manajemen Karyawan</h3>
+          <div className="panel-head-actions">
+            <input
+              className="search-input"
+              placeholder="Cari nama, departemen, jabatan..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <button className="primary-btn" onClick={() => { resetAddForm(); setShowAddModal(true); clearMessages() }}>
+              + Tambah Karyawan
+            </button>
+          </div>
+        </div>
       </article>
+
+      <article className="panel">
+        {loading ? (
+          <p className="loading-text">Memuat data karyawan...</p>
+        ) : filtered.length === 0 ? (
+          <p className="empty-text">Tidak ada data karyawan{search ? ' yang cocok' : ''}.</p>
+        ) : (
+          <div className="table-container">
+            <table className="employee-table">
+              <thead>
+                <tr>
+                  <th>Nama</th>
+                  <th>Departemen</th>
+                  <th>Jabatan</th>
+                  <th>Gaji Pokok</th>
+                  <th>Akhir Kontrak</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((emp) => {
+                  const sal = getSalary(emp.id)
+                  const kontrak = contractStatus(emp.contract_end)
+                  return (
+                    <tr key={emp.id} className={!emp.is_active ? 'row-inactive' : ''}>
+                      <td>
+                        <span className="emp-name">{emp.name}</span>
+                        {emp.email && <span className="emp-detail">{emp.email}</span>}
+                      </td>
+                      <td>{emp.department || '-'}</td>
+                      <td>{emp.position || '-'}</td>
+                      <td>
+                        {sal ? (
+                          <span className="salary-cell">{formatRupiah(sal.baseSalary)}</span>
+                        ) : (
+                          <span className="muted-text">Belum diatur</span>
+                        )}
+                      </td>
+                      <td>
+                        <div className="contract-cell">
+                          <span>{emp.contract_end ? emp.contract_end.slice(0, 10) : '-'}</span>
+                          <span className={`contract-badge ${kontrak.cls}`}>{kontrak.label}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`status-badge-sm ${emp.is_active ? 'active' : 'inactive'}`}>
+                          {emp.is_active ? 'Aktif' : 'Nonaktif'}
+                        </span>
+                      </td>
+                      <td className="action-cell">
+                        <button className="small-btn" onClick={() => openEdit(emp)}>Edit</button>
+                        <button className="small-btn salary-btn" onClick={() => openSalary(emp)}>Gaji</button>
+                        <button className="small-btn toggle-btn" onClick={() => handleToggleActive(emp)}>
+                          {emp.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </article>
+
+      {/* Add Employee Modal */}
+      {showAddModal && (
+        <div className="modal-overlay" onClick={() => { setShowAddModal(false); resetAddForm(); clearMessages() }}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h3>Tambah Karyawan Baru</h3>
+            <form onSubmit={handleAdd}>
+              <div className="modal-form">
+                <label htmlFor="add-name">Nama Lengkap</label>
+                <input id="add-name" value={addForm.name} onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))} required />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="add-dept">Departemen</label>
+                    <select id="add-dept" value={addForm.department_id} onChange={(e) => setAddForm((p) => ({ ...p, department_id: e.target.value }))}>
+                      <option value="">-- Pilih --</option>
+                      {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="add-pos">Jabatan</label>
+                    <select id="add-pos" value={addForm.position_id} onChange={(e) => setAddForm((p) => ({ ...p, position_id: e.target.value }))}>
+                      <option value="">-- Pilih --</option>
+                      {positions.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="add-contract">Akhir Kontrak</label>
+                    <input id="add-contract" type="date" value={addForm.contract_end} onChange={(e) => setAddForm((p) => ({ ...p, contract_end: e.target.value }))} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="add-email">Email</label>
+                    <input id="add-email" type="email" value={addForm.email} onChange={(e) => setAddForm((p) => ({ ...p, email: e.target.value }))} placeholder="opsional" />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="add-phone">Telepon</label>
+                  <input id="add-phone" value={addForm.phone} onChange={(e) => setAddForm((p) => ({ ...p, phone: e.target.value }))} placeholder="opsional" />
+                </div>
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="small-btn cancel-btn" onClick={() => { setShowAddModal(false); resetAddForm(); clearMessages() }}>Batal</button>
+                <button type="submit" className="primary-btn" disabled={submitting}>{submitting ? 'Menyimpan...' : 'Simpan'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Employee Modal */}
+      {showEditModal && editingEmployee && (
+        <div className="modal-overlay" onClick={() => { setShowEditModal(false); setEditingEmployee(null); clearMessages() }}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h3>Edit Karyawan</h3>
+            <p className="section-note">{editingEmployee.name}</p>
+            <form onSubmit={handleEdit}>
+              <div className="modal-form">
+                <label htmlFor="edit-name">Nama Lengkap</label>
+                <input id="edit-name" value={editForm.name} onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))} required />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="edit-dept">Departemen</label>
+                    <select id="edit-dept" value={editForm.department_id} onChange={(e) => setEditForm((p) => ({ ...p, department_id: e.target.value }))}>
+                      <option value="">-- Pilih --</option>
+                      {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="edit-pos">Jabatan</label>
+                    <select id="edit-pos" value={editForm.position_id} onChange={(e) => setEditForm((p) => ({ ...p, position_id: e.target.value }))}>
+                      <option value="">-- Pilih --</option>
+                      {positions.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="edit-contract">Akhir Kontrak</label>
+                    <input id="edit-contract" type="date" value={editForm.contract_end} onChange={(e) => setEditForm((p) => ({ ...p, contract_end: e.target.value }))} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="edit-email">Email</label>
+                    <input id="edit-email" type="email" value={editForm.email} onChange={(e) => setEditForm((p) => ({ ...p, email: e.target.value }))} />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="edit-phone">Telepon</label>
+                    <input id="edit-phone" value={editForm.phone} onChange={(e) => setEditForm((p) => ({ ...p, phone: e.target.value }))} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="edit-active">Status</label>
+                    <select id="edit-active" value={editForm.is_active} onChange={(e) => setEditForm((p) => ({ ...p, is_active: Number(e.target.value) }))}>
+                      <option value={1}>Aktif</option>
+                      <option value={0}>Nonaktif</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="small-btn cancel-btn" onClick={() => { setShowEditModal(false); setEditingEmployee(null); clearMessages() }}>Batal</button>
+                <button type="submit" className="primary-btn" disabled={submitting}>{submitting ? 'Menyimpan...' : 'Simpan Perubahan'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Salary Modal */}
+      {showSalaryModal && salaryEmployee && (
+        <div className="modal-overlay" onClick={() => { setShowSalaryModal(false); setSalaryEmployee(null); clearMessages() }}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h3>Atur Gaji — {salaryEmployee.name}</h3>
+            <p className="section-note">Departemen: {salaryEmployee.department || '-'} &middot; Jabatan: {salaryEmployee.position || '-'}</p>
+            <form onSubmit={handleSaveSalary}>
+              <div className="modal-form">
+                <div className="form-group">
+                  <label htmlFor="sal-base">Gaji Pokok</label>
+                  <input id="sal-base" type="number" min={0} step={50000} value={salaryForm.baseSalary} onChange={(e) => setSalaryForm((p) => ({ ...p, baseSalary: Number(e.target.value) || 0 }))} required />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="sal-allowance">Tunjangan</label>
+                    <input id="sal-allowance" type="number" min={0} step={10000} value={salaryForm.allowance} onChange={(e) => setSalaryForm((p) => ({ ...p, allowance: Number(e.target.value) || 0 }))} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="sal-deduction">Potongan</label>
+                    <input id="sal-deduction" type="number" min={0} step={10000} value={salaryForm.deduction} onChange={(e) => setSalaryForm((p) => ({ ...p, deduction: Number(e.target.value) || 0 }))} />
+                  </div>
+                </div>
+                <div className="salary-preview">
+                  <span>Take Home Pay: <strong>{formatRupiah(salaryForm.baseSalary + salaryForm.allowance - salaryForm.deduction)}</strong></span>
+                </div>
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="small-btn cancel-btn" onClick={() => { setShowSalaryModal(false); setSalaryEmployee(null); clearMessages() }}>Batal</button>
+                <button type="submit" className="primary-btn" disabled={submitting}>{submitting ? 'Menyimpan...' : 'Simpan Gaji'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
