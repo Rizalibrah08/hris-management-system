@@ -1,8 +1,0 @@
-=== QA Scenario 1: Frontend Port 5173 ===
-Location: D:\WEB HRIS\docker-compose.override.yml
-
-Match found at line 17:
-      - "5173:5173"
-
-Result: PASS
-

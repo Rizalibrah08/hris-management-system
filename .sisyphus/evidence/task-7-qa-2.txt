@@ -1,8 +1,0 @@
-=== QA Scenario 2: MySQL Port 3306:3306 ===
-Location: D:\WEB HRIS\docker-compose.override.yml
-
-Match found at line 27:
-      - "3306:3306"
-
-Result: PASS
-

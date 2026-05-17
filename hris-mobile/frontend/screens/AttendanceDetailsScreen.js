@@ -57,7 +57,8 @@ export default function AttendanceDetailsScreen() {
   const clockInOut = displayItem.clock_in
     ? `${formatTime(displayItem.clock_in)} — ${displayItem.clock_out ? formatTime(displayItem.clock_out) : 'Now'}`
     : '-';
-  const gpsLocation = displayItem.gps_location || '-';
+  // GPS belum digunakan untuk saat ini
+  // const gpsLocation = displayItem.gps_location || '-';
 
   if (loading) {
     return (
@@ -110,7 +111,8 @@ export default function AttendanceDetailsScreen() {
                 </View>
               )}
               <View style={styles.overlayInfo}>
-                <Text style={styles.overlayText}>{gpsLocation}</Text>
+                {/* GPS belum digunakan */}
+                {/* <Text style={styles.overlayText}>{gpsLocation}</Text> */}
                 <Text style={styles.overlayText}>
                   {displayItem.clock_in
                     ? new Date(displayItem.clock_in).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' GMT +07:00'
@@ -139,10 +141,11 @@ export default function AttendanceDetailsScreen() {
                 <Text style={styles.statLabel}>Status</Text>
                 <Text style={styles.statValue}>{displayItem.status || '-'}</Text>
               </View>
-              <View style={styles.statBox}>
+              {/* GPS belum digunakan */}
+              {/* <View style={styles.statBox}>
                 <Text style={styles.statLabel}>GPS Location</Text>
                 <Text style={styles.statValue}>{gpsLocation}</Text>
-              </View>
+              </View> */}
             </View>
           </View>
         </View>
@@ -163,7 +166,6 @@ export default function AttendanceDetailsScreen() {
               <p><strong>Jam Keluar:</strong> ${formatTime(d.clock_out)}</p>
               <p><strong>Total Jam:</strong> ${formatDuration(d.clock_in, d.clock_out)}</p>
               <p><strong>Status:</strong> ${d.status || '-'}</p>
-              <p><strong>GPS:</strong> ${d.gps_location || '-'}</p>
               <p><strong>Catatan:</strong> ${d.notes || '-'}</p>
             </body></html>`;
             try {

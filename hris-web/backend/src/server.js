@@ -6,6 +6,7 @@ import morgan from 'morgan'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import multer from 'multer'
+import os from 'os'
 import { query } from './db.js'
 import { authRequired, roleRequired, webPortalGuard } from './middleware.js'
 import path from 'path'
@@ -2034,6 +2035,12 @@ app.get('/{*splat}', (req, res) => {
 
 const port = process.env.PORT || 5000
 app.listen(port, '0.0.0.0', () => {
-  console.log(`HRIS API running on http://0.0.0.0:${port}`)
-  console.log(`For mobile access, use ngrok: ngrok http ${port}`)
+  const nets = os.networkInterfaces()
+  const lanIp = Object.values(nets).flat().find(i => i.family === 'IPv4' && !i.internal)?.address || 'unknown'
+  console.log(`\n=== HRIS API Server ===`)
+  console.log(`Local:   http://localhost:${port}`)
+  console.log(`Network: http://${lanIp}:${port}`)
+  console.log(`Health:  http://localhost:${port}/health`)
+  console.log(`\nMobile app akan auto-detect IP: ${lanIp}:${port}`)
+  console.log(`Pastikan HP & PC terhubung ke WiFi yang sama\n`)
 })

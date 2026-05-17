@@ -166,13 +166,12 @@ export default function LoginScreen({ navigation }) {
           <TouchableOpacity style={styles.modalContent} activeOpacity={1}>
             <Text style={styles.modalTitle}>Pengaturan Server</Text>
             <Text style={styles.modalHint}>
-              Gunakan ngrok jika HP & PC beda WiFi:{'\n'}
-              <Text style={styles.modalCode}>ngrok http 5000</Text>
-              {'\n'}Lalu salin URL https://xxxx.ngrok.io ke sini.
+              Biasanya otomatis terdeteksi (HP & PC satu WiFi).{'\n'}
+              Jika perlu, masukkan URL backend manual di sini.
             </Text>
             <TextInput
               style={styles.modalInput}
-              placeholder="https://xxxx.ngrok-free.app"
+              placeholder="http://192.168.x.x:5000"
               value={serverInput}
               onChangeText={setServerInput}
               autoCapitalize="none"

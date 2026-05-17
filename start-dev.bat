@@ -1,90 +1,69 @@
 @echo off
 chcp 65001 >nul
 echo ================================================
-echo   HRIS Development Server Launcher
+echo   HRIS Development Server (XAMPP)
 echo ================================================
 echo.
-echo  This script will start:
-echo   1. Backend API (Node.js + Express)
-echo   2. ngrok tunnel (for mobile access)
-echo   3. Expo Mobile App
+
+:: Detect LAN IP
+for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do (
+    set "LAN_IP=%%a"
+    goto :found_ip
+)
+:found_ip
+set "LAN_IP=%LAN_IP: =%"
+
+echo  IP LAN Anda: %LAN_IP%
 echo.
-echo  Make sure you have:
-echo   - ngrok installed: npm install -g ngrok
-echo   - ngrok authtoken configured
-echo   - MySQL running
+echo  Pastikan sebelum mulai:
+echo   - XAMPP MySQL sudah running
+echo   - HP dan PC terhubung ke WiFi yang sama
 echo.
 pause
 echo.
 
-:: Check if ngrok is installed
-where ngrok >nul 2>nul
+:: Check MySQL connection
+echo [*] Mengecek koneksi MySQL...
+mysql -u root -e "SELECT 1" >nul 2>nul
 if %errorlevel% neq 0 (
-    echo [ERROR] ngrok not found!
-    echo Please install ngrok first:
-    echo   npm install -g ngrok
-    echo   ngrok config add-authtoken YOUR_TOKEN
-    echo.
-    echo Get your token from: https://dashboard.ngrok.com
+    echo [!] MySQL tidak terdeteksi. Pastikan XAMPP MySQL sudah START.
+    echo     Buka XAMPP Control Panel ^> Start MySQL
     pause
     exit /b 1
 )
-
-echo [✓] ngrok found
+echo [OK] MySQL connected
 echo.
 
 :: Terminal 1: Backend API
-echo [1/4] Starting Backend API...
-echo     Location: D:\WEB HRIS\hris-web
-echo     Command: npm run dev:server
-echo.
-start "HRIS Backend API" cmd /k "cd /d D:\WEB HRIS\hris-web && echo Starting Backend API... && npm run dev:server"
+echo [1/3] Starting Backend API (port 5000)...
+start "HRIS Backend" cmd /k "cd /d "%~dp0hris-web" && echo === Backend API === && echo URL: http://localhost:5000 && echo LAN: http://%LAN_IP%:5000 && echo. && npm run dev:server"
 
-:: Wait for backend to start
-timeout /t 5 /nobreak >nul
-
-:: Terminal 2: ngrok
-echo [2/4] Starting ngrok tunnel...
-echo     Command: ngrok http 5000
-echo.
-echo     IMPORTANT: Copy the https:// URL from ngrok window
-echo     and update NGROK_URL in mobile/services/api.js
-echo.
-start "ngrok Tunnel" cmd /k "cd /d D:\WEB HRIS\hris-web && echo Starting ngrok... && echo. && echo Copy the https:// URL below and update mobile/services/api.js && echo. && ngrok http 5000"
-
-:: Wait for ngrok to start
 timeout /t 3 /nobreak >nul
 
-:: Terminal 3: Web Frontend (optional)
-echo [3/4] Starting Web Frontend...
-echo     Location: D:\WEB HRIS\hris-web
-echo     Command: npm run dev
-echo.
-start "HRIS Web Frontend" cmd /k "cd /d D:\WEB HRIS\hris-web && echo Starting Web Frontend... && npm run dev"
+:: Terminal 2: Web Frontend
+echo [2/3] Starting Web Frontend (port 5173)...
+start "HRIS Web" cmd /k "cd /d "%~dp0hris-web" && echo === Web Frontend === && echo URL: http://localhost:5173 && echo LAN: http://%LAN_IP%:5173 && echo. && npm run dev"
 
-:: Wait for web to start
-timeout /t 3 /nobreak >nul
+timeout /t 2 /nobreak >nul
 
-:: Terminal 4: Expo Mobile
-echo [4/4] Starting Expo Mobile App...
-echo     Location: D:\WEB HRIS\hris-mobile\frontend
-echo     Command: npx expo start
-echo.
-start "Expo Mobile" cmd /k "cd /d D:\WEB HRIS\hris-mobile\frontend && echo Starting Expo... && npx expo start"
+:: Terminal 3: Expo Mobile
+echo [3/3] Starting Expo Mobile...
+start "HRIS Mobile" cmd /k "cd /d "%~dp0hris-mobile\frontend" && echo === Expo Mobile === && echo Mobile akan auto-detect backend di: http://%LAN_IP%:5000 && echo. && npx expo start"
 
 echo.
 echo ================================================
-echo   All servers started!
+echo   Semua server started!
 echo ================================================
 echo.
-echo  Next steps:
-echo   1. Copy ngrok https:// URL from ngrok window
-echo   2. Open mobile/services/api.js
-echo   3. Replace YOUR_NGROK_URL_HERE with your URL
-echo   4. Scan QR code in Expo window with Expo Go app
+echo  Akses:
+echo   Web:     http://localhost:5173
+echo   API:     http://localhost:5000
+echo   Mobile:  Scan QR di Expo window (HP satu WiFi)
 echo.
-echo  Default login (if using seed data):
-echo   NIK: ADM001
-echo   Password: admin123
+echo  Login default:
+echo   NIK: ADM001 / Password: admin123
+echo.
+echo  Mobile otomatis konek ke backend via LAN IP.
+echo  Tidak perlu ngrok!
 echo.
 pause

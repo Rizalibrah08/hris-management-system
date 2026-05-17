@@ -1,3 +1,0 @@
-QA Scenario 2: grep web docker-compose.yml
-Result: PASS
-Output: web service is defined at line 22

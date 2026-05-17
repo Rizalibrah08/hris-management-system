@@ -1,3 +1,0 @@
-QA Scenario 1: grep mysql docker-compose.yml
-Result: PASS
-Output: mysql service is defined at line 4

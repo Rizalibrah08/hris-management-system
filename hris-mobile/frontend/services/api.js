@@ -8,9 +8,8 @@
 //   3. Production URL (PROD_URL)
 //
 // Setup:
-//   - HP & PC satu WiFi → auto LAN, tidak perlu ngrok
-//   - HP beda jaringan → setel URL ngrok via setServerUrl() atau
-//     AsyncStorage key 'api_server_url'
+//   - HP & PC satu WiFi → auto LAN, tidak perlu konfigurasi
+//   - HP beda jaringan → setel URL manual via setServerUrl()
 // ============================================================
 
 import Constants from 'expo-constants';
@@ -111,7 +110,7 @@ async function request(endpoint, options = {}) {
         'Cannot connect to server. Please check:\n' +
         '1. Backend is running (npm run dev:server)\n' +
         '2. Device & PC on same WiFi (LAN mode)\n' +
-        '3. Or set custom URL via setServerUrl() for ngrok'
+        '3. Or set custom URL via Settings'
       );
     }
     throw error;
