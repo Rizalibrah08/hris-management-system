@@ -55,6 +55,7 @@ export default function Absensi() {
       gps: a.gps_location,
       gpsDisplay: formatGps(a.gps_location),
       hasGps: !!parseGps(a.gps_location),
+      selfie: a.selfie,
       status: a.status || 'Aktif',
     }))
   }, [attendanceData])
@@ -93,6 +94,7 @@ export default function Absensi() {
                 <th>Departemen</th>
                 <th>Clock In</th>
                 <th>Clock Out</th>
+                <th>Selfie</th>
                 <th>Lokasi GPS</th>
                 <th>Status</th>
               </tr>
@@ -104,6 +106,13 @@ export default function Absensi() {
                   <td>{row.dept}</td>
                   <td>{row.clockIn}</td>
                   <td className={row.clockOut === 'Belum' ? 'muted' : ''}>{row.clockOut}</td>
+                  <td>
+                    {row.selfie ? (
+                      <a href={`http://localhost:5000${row.selfie}`} target="_blank" rel="noopener noreferrer">
+                        <img src={`http://localhost:5000${row.selfie}`} alt="selfie" style={{ width: 40, height: 40, borderRadius: 4, objectFit: 'cover' }} />
+                      </a>
+                    ) : <span className="muted">-</span>}
+                  </td>
                   <td>
                     {row.hasGps ? (
                       <span className="gps-badge valid">{row.gpsDisplay}</span>

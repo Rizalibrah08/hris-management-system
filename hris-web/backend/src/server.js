@@ -482,7 +482,7 @@ app.delete('/leave/:id', authRequired, async (req, res) => {
 app.get('/attendance/today', authRequired, roleRequired('HRD', 'Super Admin'), async (_, res) => {
   const rows = await query(
     `SELECT a.id, a.employee_id, e.name AS employee_name, d.name AS department,
-            a.clock_in, a.clock_out, a.status, a.gps_location
+            a.clock_in, a.clock_out, a.status, a.gps_location, a.selfie
      FROM attendance a
      JOIN employees e ON e.id = a.employee_id
      LEFT JOIN departments d ON d.id = e.department_id
