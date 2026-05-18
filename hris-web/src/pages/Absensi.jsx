@@ -43,32 +43,20 @@ export default function Absensi() {
   }, [])
 
   const attendanceRows = useMemo(() => {
-    if (attendanceData.length > 0) {
-      return attendanceData.map((a) => ({
-        name: a.employee_name,
-        dept: a.department || '-',
-        clockIn: a.clock_in
-          ? new Date(a.clock_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-          : '-',
-        clockOut: a.clock_out
-          ? new Date(a.clock_out).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-          : 'Belum',
-        gps: a.gps_location,
-        gpsDisplay: formatGps(a.gps_location),
-        hasGps: !!parseGps(a.gps_location),
-        status: a.status || 'Aktif',
-      }))
-    }
-    return [
-      { name: 'Aditia Pratama', dept: 'Engineering', clockIn: '07:55', clockOut: '17:05', gpsDisplay: '-', hasGps: false, status: 'Aktif' },
-      { name: 'Nadia Putri', dept: 'HRD', clockIn: '08:10', clockOut: '17:20', gpsDisplay: '-', hasGps: false, status: 'Aktif' },
-      { name: 'Rizky Maulana', dept: 'Finance', clockIn: '08:22', clockOut: '17:15', gpsDisplay: '-', hasGps: false, status: 'Aktif' },
-      { name: 'Salsa Wijaya', dept: 'Marketing', clockIn: '09:01', clockOut: '17:30', gpsDisplay: '-', hasGps: false, status: 'Terlambat' },
-      { name: 'Budi Santoso', dept: 'Operations', clockIn: '07:50', clockOut: '17:00', gpsDisplay: '-', hasGps: false, status: 'Aktif' },
-      { name: 'Intan Lestari', dept: 'Engineering', clockIn: '08:05', clockOut: 'Belum', gpsDisplay: '-', hasGps: false, status: 'Aktif' },
-      { name: 'Dini Prameswari', dept: 'HRD', clockIn: '08:00', clockOut: '17:10', gpsDisplay: '-', hasGps: false, status: 'Aktif' },
-      { name: 'Maya Sari', dept: 'Finance', clockIn: '07:45', clockOut: '17:00', gpsDisplay: '-', hasGps: false, status: 'Aktif' },
-    ]
+    return attendanceData.map((a) => ({
+      name: a.employee_name,
+      dept: a.department || '-',
+      clockIn: a.clock_in
+        ? new Date(a.clock_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        : '-',
+      clockOut: a.clock_out
+        ? new Date(a.clock_out).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        : 'Belum',
+      gps: a.gps_location,
+      gpsDisplay: formatGps(a.gps_location),
+      hasGps: !!parseGps(a.gps_location),
+      status: a.status || 'Aktif',
+    }))
   }, [attendanceData])
 
   const lateCount = attendanceRows.filter((r) => r.status === 'Terlambat').length

@@ -1,0 +1,11 @@
+nama,departemen,jabatan,email,telepon,akhir_kontrak,nik,password,role,gaji_pokok,metode_bayar,nama_bank,no_rekening,nama_rekening
+Aditia Pratama,Engineering,Senior Software Engineer,aditia@company.com,081234567890,2028-06-30,EMP001,admin123,Employee,12000000,bank_transfer,BCA,0123456789,Aditia Pratama
+Nadia Putri,HRD,HR Specialist,nadia@company.com,081234567891,2027-12-31,HRD002,admin123,HRD,9500000,bank_transfer,Mandiri,1122334455,Nadia Putri
+Rizky Maulana,Finance,Payroll Analyst,rizky@company.com,081234567892,2027-11-30,FIN002,admin123,Finance,10000000,bank_transfer,BNI,2233445566,Rizky Maulana
+Salsa Wijaya,Marketing,Marketing Lead,salsa@company.com,081234567893,2026-12-31,EMP002,admin123,Employee,8500000,bank_transfer,BCA,3344556677,Salsa Wijaya
+Budi Santoso,Operations,Operations Manager,budi@company.com,081234567894,2028-03-15,MGR002,admin123,Manager,11000000,bank_transfer,BRI,4455667788,Budi Santoso
+Intan Lestari,Engineering,Software Engineer,intan@company.com,081234567895,2027-09-30,EMP003,admin123,Employee,8000000,bank_transfer,Mandiri,5566778899,Intan Lestari
+Dini Prameswari,HRD,HR Manager,dini@company.com,081234567896,2028-01-31,HRD003,admin123,HRD,13000000,bank_transfer,BCA,6677889900,Dini Prameswari
+Fajar Hidayat,Engineering,UI/UX Designer,fajar@company.com,081234567897,2027-08-20,EMP004,admin123,Employee,7500000,bank_transfer,BNI,7788990011,Fajar Hidayat
+Maya Sari,Finance,Finance Manager,maya@company.com,081234567898,2028-04-30,FIN003,admin123,Finance,11500000,bank_transfer,Mandiri,8899001122,Maya Sari
+Arif Rahman,Product,Product Manager,arif@company.com,081234567899,2027-10-31,EMP005,admin123,Employee,10500000,bank_transfer,BCA,9900112233,Arif Rahman

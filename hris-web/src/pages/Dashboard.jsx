@@ -61,25 +61,13 @@ export default function Dashboard() {
   )
 
   const attendanceRows = useMemo(() => {
-    if (attendanceData.length > 0) {
-      return attendanceData.map((a) => ({
-        name: a.employee_name,
-        dept: a.department || '-',
-        clockIn: a.clock_in ? new Date(a.clock_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-',
-        clockOut: a.clock_out ? new Date(a.clock_out).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : 'Belum',
-        status: a.status || 'Aktif',
-      }))
-    }
-    return [
-      { name: 'Aditia Pratama', dept: 'Engineering', clockIn: '07:55', clockOut: '17:05', status: 'Aktif' },
-      { name: 'Nadia Putri', dept: 'HRD', clockIn: '08:10', clockOut: '17:20', status: 'Aktif' },
-      { name: 'Rizky Maulana', dept: 'Finance', clockIn: '08:22', clockOut: '17:15', status: 'Aktif' },
-      { name: 'Salsa Wijaya', dept: 'Marketing', clockIn: '09:01', clockOut: '17:30', status: 'Terlambat' },
-      { name: 'Budi Santoso', dept: 'Operations', clockIn: '07:50', clockOut: '17:00', status: 'Aktif' },
-      { name: 'Intan Lestari', dept: 'Engineering', clockIn: '08:05', clockOut: 'Belum', status: 'Aktif' },
-      { name: 'Dini Prameswari', dept: 'HRD', clockIn: '08:00', clockOut: '17:10', status: 'Aktif' },
-      { name: 'Maya Sari', dept: 'Finance', clockIn: '07:45', clockOut: '17:00', status: 'Aktif' },
-    ]
+    return attendanceData.map((a) => ({
+      name: a.employee_name,
+      dept: a.department || '-',
+      clockIn: a.clock_in ? new Date(a.clock_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-',
+      clockOut: a.clock_out ? new Date(a.clock_out).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : 'Belum',
+      status: a.status || 'Aktif',
+    }))
   }, [attendanceData])
 
   const pendingLeaves = useMemo(() => leaveData.filter((l) => l.status === 'Pending'), [leaveData])

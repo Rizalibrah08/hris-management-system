@@ -20,6 +20,7 @@ export default function Karyawan() {
   const [editingEmployee, setEditingEmployee] = useState(null)
   const [salaryEmployee, setSalaryEmployee] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   const [addForm, setAddForm] = useState({
     name: '', department_id: '', position_id: '', contract_end: '', email: '', phone: '',
@@ -85,6 +86,36 @@ export default function Karyawan() {
     if (days < 0) return { label: 'Berakhir', cls: 'expired' }
     if (days <= 30) return { label: `${days} hari`, cls: 'expiring' }
     return { label: 'Aktif', cls: 'active' }
+  }
+
+  const handleImport = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    clearMessages()
+    setImporting(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const token = localStorage.getItem('hris_token')
+      const API = import.meta.env.VITE_API_URL || '/api'
+      const res = await fetch(`${API}/employees/import`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message)
+      setMessage(data.message)
+      if (data.errors?.length) setError(data.errors.join('\n'))
+      const ctrl = new AbortController()
+      await loadAll(ctrl.signal)
+      ctrl.abort()
+    } catch (err) {
+      setError(err.message || 'Gagal import')
+    } finally {
+      setImporting(false)
+      e.target.value = ''
+    }
   }
 
   const resetAddForm = () => setAddForm({ name: '', department_id: '', position_id: '', contract_end: '', email: '', phone: '' })
@@ -243,6 +274,10 @@ export default function Karyawan() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <label className="primary-btn" style={{ cursor: importing ? 'wait' : 'pointer' }}>
+              {importing ? 'Importing...' : '📥 Import CSV'}
+              <input type="file" accept=".csv" onChange={handleImport} hidden disabled={importing} />
+            </label>
             <button className="primary-btn" onClick={() => { resetAddForm(); setShowAddModal(true); clearMessages() }}>
               + Tambah Karyawan
             </button>
@@ -261,6 +296,8 @@ export default function Karyawan() {
               <thead>
                 <tr>
                   <th>Nama</th>
+                  <th>NIK</th>
+                  <th>Password</th>
                   <th>Departemen</th>
                   <th>Jabatan</th>
                   <th>Gaji Pokok</th>
@@ -279,6 +316,8 @@ export default function Karyawan() {
                         <span className="emp-name">{emp.name}</span>
                         {emp.email && <span className="emp-detail">{emp.email}</span>}
                       </td>
+                      <td><code>{emp.nik || '-'}</code></td>
+                      <td><code>{emp.nik ? 'admin123' : '-'}</code></td>
                       <td>{emp.department || '-'}</td>
                       <td>{emp.position || '-'}</td>
                       <td>

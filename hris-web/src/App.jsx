@@ -63,13 +63,14 @@ function App() {
   }
 
   const roleMenus = useMemo(() => {
-    const adminKeys = ['laporan', 'lokasi', 'masterdata']
+    const adminKeys = ['laporan', 'masterdata']
     const base = menus.filter(m => !['role', ...adminKeys].includes(m.key))
     if (['HRD', 'Finance', 'Super Admin'].includes(role)) {
-      adminKeys.forEach(k => base.push(menus.find(m => m.key === k)))
+      adminKeys.forEach(k => { const found = menus.find(m => m.key === k); if (found) base.push(found) })
     }
     if (role === 'Super Admin') {
-      base.push(menus.find(m => m.key === 'role'))
+      const roleMenu = menus.find(m => m.key === 'role')
+      if (roleMenu) base.push(roleMenu)
     }
     return base.sort((a, b) => menus.indexOf(a) - menus.indexOf(b))
   }, [role])

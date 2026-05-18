@@ -211,10 +211,11 @@ app.put('/employees/me', authRequired, async (req, res) => {
 app.get('/employees', authRequired, roleRequired('HRD', 'Super Admin'), async (_, res) => {
   const rows = await query(
     `SELECT e.id, e.name, e.department_id, e.position_id, d.name department, p.name position,
-            e.contract_end, e.email, e.phone, e.is_active
+            e.contract_end, e.email, e.phone, e.is_active, u.nik
      FROM employees e
      LEFT JOIN departments d ON d.id = e.department_id
      LEFT JOIN positions p ON p.id = e.position_id
+     LEFT JOIN users u ON u.employee_id = e.id
      ORDER BY e.name ASC`,
   )
   res.json(rows)
@@ -248,6 +249,90 @@ app.put('/employees/:id', authRequired, roleRequired('HRD', 'Super Admin'), asyn
 app.delete('/employees/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
   await query('DELETE FROM employees WHERE id=?', [req.params.id])
   res.status(204).end()
+})
+
+// === EMPLOYEE IMPORT (CSV) ===
+app.post('/employees/import', authRequired, roleRequired('HRD', 'Super Admin'), uploadSelfie.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: 'File CSV wajib diupload' })
+
+  const fs = await import('node:fs/promises')
+  const csvText = await fs.readFile(req.file.path, 'utf8')
+  const lines = csvText.split('\n').map(l => l.trim()).filter(Boolean)
+  if (lines.length < 2) return res.status(400).json({ message: 'File CSV kosong atau hanya header' })
+
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+  const rows = lines.slice(1).map(line => {
+    const vals = line.split(',').map(v => v.trim())
+    const obj = {}
+    headers.forEach((h, i) => { obj[h] = vals[i] || '' })
+    return obj
+  })
+
+  const results = { success: 0, errors: [] }
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]
+    const rowNum = i + 2
+    try {
+      if (!row.nama) { results.errors.push(`Baris ${rowNum}: nama kosong`); continue }
+
+      // Get or create department
+      let deptId = null
+      if (row.departemen) {
+        const depts = await query('SELECT id FROM departments WHERE name=?', [row.departemen])
+        if (depts.length) { deptId = depts[0].id }
+        else {
+          const ins = await query('INSERT INTO departments(name) VALUES (?)', [row.departemen])
+          deptId = ins.insertId
+        }
+      }
+
+      // Get or create position
+      let posId = null
+      if (row.jabatan) {
+        const poss = await query('SELECT id FROM positions WHERE name=?', [row.jabatan])
+        if (poss.length) { posId = poss[0].id }
+        else {
+          const ins = await query('INSERT INTO positions(name) VALUES (?)', [row.jabatan])
+          posId = ins.insertId
+        }
+      }
+
+      // Insert employee
+      const empResult = await query(
+        'INSERT INTO employees(name, department_id, position_id, contract_end, email, phone) VALUES (?,?,?,?,?,?)',
+        [row.nama, deptId, posId, row.akhir_kontrak || null, row.email || null, row.telepon || null]
+      )
+      const empId = empResult.insertId
+
+      // Create user account if nik provided
+      if (row.nik) {
+        const roleName = row.role || 'Employee'
+        const roles = await query('SELECT id FROM roles WHERE name=?', [roleName])
+        const roleId = roles.length ? roles[0].id : (await query('SELECT id FROM roles WHERE name="Employee"'))[0].id
+        const hashedPw = await bcrypt.hash(row.password || 'admin123', 10)
+        await query('INSERT INTO users(nik, password, role_id, employee_id, email, phone) VALUES (?,?,?,?,?,?)',
+          [row.nik, hashedPw, roleId, empId, row.email || null, row.telepon || null])
+      }
+
+      // Create salary profile if gaji_pokok provided
+      if (row.gaji_pokok && Number(row.gaji_pokok) > 0) {
+        await query(
+          `INSERT INTO employee_salary_profiles(employee_id, effective_date, base_salary, payment_method, bank_name, bank_account_name, bank_account_number, is_active)
+           VALUES (?, CURDATE(), ?, ?, ?, ?, ?, 1)`,
+          [empId, Number(row.gaji_pokok), row.metode_bayar || 'bank_transfer', row.nama_bank || null, row.nama_rekening || null, row.no_rekening || null]
+        )
+      }
+
+      results.success++
+    } catch (err) {
+      results.errors.push(`Baris ${rowNum} (${row.nama}): ${err.message}`)
+    }
+  }
+
+  try { await fs.unlink(req.file.path) } catch { /* ignore */ }
+
+  res.json({ message: `Import selesai: ${results.success} berhasil, ${results.errors.length} gagal`, ...results })
 })
 
 app.post('/attendance/clockin', authRequired, uploadSelfie.single('selfie'), async (req, res) => {

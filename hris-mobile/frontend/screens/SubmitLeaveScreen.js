@@ -23,7 +23,7 @@ export default function SubmitLeaveScreen() {
   const [isSubmitConfirmVisible, setIsSubmitConfirmVisible] = useState(false);
   const [isSubmitSuccessVisible, setIsSubmitSuccessVisible] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [leaveCategories, setLeaveCategories] = useState(['Cuti Tahunan', 'Izin Sakit', 'Izin', 'Cuti Khusus', 'Izin Pribadi']);
+  const [leaveCategories, setLeaveCategories] = useState(['Cuti Tahunan', 'Cuti Sakit', 'Cuti Melahirkan', 'Cuti Menikah', 'Izin Pribadi', 'Izin Mendadak', 'Lainnya']);
   const [taskDelegations, setTaskDelegations] = useState([]);
   const [leaveQuotas, setLeaveQuotas] = useState([]);
 
@@ -37,12 +37,9 @@ export default function SubmitLeaveScreen() {
           if (data?.quotas) setLeaveQuotas(data.quotas);
         })
         .catch(() => {});
-      api.leave.myList()
+      api.leave.types()
         .then(data => {
-          if (Array.isArray(data)) {
-            const types = [...new Set(data.map(d => d.leave_type).filter(Boolean))];
-            if (types.length > 0) setLeaveCategories(types);
-          }
+          if (Array.isArray(data) && data.length > 0) setLeaveCategories(data.map(t => t.name));
         })
         .catch(() => {});
     }
@@ -550,7 +547,7 @@ export default function SubmitLeaveScreen() {
                   style={styles.btnPrimaryFull} 
                   onPress={() => {
                     setIsSubmitSuccessVisible(false);
-                    navigation.navigate('Leave');
+                    navigation.navigate('Main', { screen: 'Leave' });
                   }}
                 >
                   <Text style={styles.btnPrimaryText}>View Leave History</Text>

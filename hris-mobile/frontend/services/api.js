@@ -204,16 +204,14 @@ export const api = {
   attendance: {
     clockIn: async (employeeId, _gpsLocation, selfieUri) => {
       if (selfieUri && (selfieUri.startsWith('file://') || selfieUri.startsWith('content://'))) {
-        try {
-          const blobResponse = await fetch(selfieUri);
-          const blob = await blobResponse.blob();
-          const formData = new FormData();
-          formData.append('employee_id', String(employeeId));
-          formData.append('selfie', blob, `selfie-${Date.now()}.jpg`);
-          return requestMultipart('/attendance/clockin', formData);
-        } catch {
-          // fallback: kirim tanpa selfie jika blob gagal
-        }
+        const formData = new FormData();
+        formData.append('employee_id', String(employeeId));
+        formData.append('selfie', {
+          uri: selfieUri,
+          type: 'image/jpeg',
+          name: `selfie-${Date.now()}.jpg`,
+        });
+        return requestMultipart('/attendance/clockin', formData);
       }
       return request('/attendance/clockin', {
         method: 'POST',
@@ -234,6 +232,7 @@ export const api = {
 
   leave: {
     myList: () => request('/leave/my'),
+    types: () => request('/leave-types'),
     submit: (employeeId, leaveType, startDate, endDate, reason) =>
       request('/leave', {
         method: 'POST',
