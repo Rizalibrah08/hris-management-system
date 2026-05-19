@@ -61,6 +61,7 @@ export async function getServerUrl() {
 }
 
 let authToken = null;
+let onUnauthorizedCallback = null;
 
 export function setAuthToken(token) {
   authToken = token;
@@ -72,6 +73,10 @@ export function getAuthToken() {
 
 export function clearAuthToken() {
   authToken = null;
+}
+
+export function setOnUnauthorized(callback) {
+  onUnauthorizedCallback = callback;
 }
 
 async function request(endpoint, options = {}) {
@@ -96,6 +101,9 @@ async function request(endpoint, options = {}) {
         const body = await response.json();
         message = body.message || message;
       } catch {}
+      if (response.status === 401 && onUnauthorizedCallback) {
+        onUnauthorizedCallback();
+      }
       const error = new Error(message);
       error.status = response.status;
       throw error;

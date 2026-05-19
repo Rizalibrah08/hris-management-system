@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { setAuthToken, clearAuthToken as clearApiToken, api } from '../services/api';
+import { setAuthToken, clearAuthToken as clearApiToken, setOnUnauthorized, api } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -64,6 +64,15 @@ export function AuthProvider({ children }) {
     await AsyncStorage.removeItem('auth_token');
     await AsyncStorage.removeItem(USER_KEY);
     setUser(null);
+  }, []);
+
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      clearApiToken();
+      AsyncStorage.removeItem('auth_token');
+      AsyncStorage.removeItem(USER_KEY);
+      setUser(null);
+    });
   }, []);
 
   const refreshUser = useCallback(async () => {
