@@ -70,10 +70,13 @@ activate api
 api -> ps : reviewPayrollRun(runId)
 activate ps
 
-ps -> db : UPDATE payroll_runs SET status='reviewed' WHERE id=runId
-activate db
-db --> ps : ok
-deactivate db
+ps -> ps : validatePayrollRun(runId)
+
+alt Validation passes
+  ps -> db : UPDATE payroll_runs SET status='reviewed' WHERE id=runId
+  activate db
+  db --> ps : ok
+  deactivate db
 
 ps -> db : INSERT INTO payroll_audit_logs\n{action: 'review'}
 activate db
@@ -82,8 +85,12 @@ deactivate db
 
 ps --> api : PayrollRun{status: 'reviewed'}
 deactivate ps
+  api --> hrd : 200 PayrollRun reviewed
+else Validation fails
+  ps --> api : Error: Validasi gagal
+  api --> hrd : 400 Bad Request
+end
 
-api --> hrd : 200 PayrollRun reviewed
 deactivate api
 
 == Approve Payroll Run ==
@@ -128,30 +135,23 @@ activate db
 db --> ps : items[]
 deactivate db
 
-ps -> ps : validateNoNegativeNet(items)
+ps -> db : UPDATE payroll_runs SET status='finalized',\nfinalized_at=NOW(), finalized_by=userId
+activate db
+db --> ps : ok
+deactivate db
 
-alt Validation passes
-  ps -> db : UPDATE payroll_runs SET status='finalized',\nfinalized_at=NOW(), finalized_by=userId
-  activate db
-  db --> ps : ok
-  deactivate db
+ps -> db : INSERT INTO payslips (batch)
+activate db
+db --> ps : ok
+deactivate db
 
-  ps -> db : INSERT INTO payslips (batch)
-  activate db
-  db --> ps : ok
-  deactivate db
+ps -> db : INSERT INTO payroll_audit_logs\n{action: 'finalize'}
+activate db
+db --> ps : ok
+deactivate db
 
-  ps -> db : INSERT INTO payroll_audit_logs\n{action: 'finalize'}
-  activate db
-  db --> ps : ok
-  deactivate db
-
-  ps --> api : PayrollRun{status: 'finalized'}
-  api --> fin : 200 PayrollRun finalized
-else Validation fails - negative net
-  ps --> api : Error: Negative net pay detected
-  api --> fin : 400 Validation failed
-end
+ps --> api : PayrollRun{status: 'finalized'}
+api --> fin : 200 PayrollRun finalized
 
 deactivate ps
 deactivate api

@@ -115,6 +115,17 @@ Tidak perlu ngrok atau konfigurasi IP manual.
 | GET | `/payroll/my-runs` | Riwayat payroll |
 | GET | `/health` | Health check |
 
+## Panduan & Dokumentasi Lengkap
+
+Untuk mempermudah pemahaman arsitektur dan fungsionalitas sistem, kami telah memecah dokumentasi ke dalam beberapa berkas terpisah di direktori `docs/project_manual/`:
+
+1. [01. System Architecture](docs/project_manual/01_System_Architecture.md)
+2. [02. Modules and Features](docs/project_manual/02_Modules_and_Features.md)
+3. [03. Directory Structure](docs/project_manual/03_Directory_Structure.md)
+4. [04. Deployment Guide](docs/project_manual/04_Deployment_Guide.md)
+5. [05. API Documentation](docs/project_manual/05_API_Documentation.md)
+6. [Functional Testing Report](docs/project_manual/Functional_Testing_Report.md)
+
 ## Troubleshooting
 
 | Masalah | Solusi |

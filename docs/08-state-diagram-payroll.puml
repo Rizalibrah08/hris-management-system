@@ -9,7 +9,15 @@ state Draft {
   Calculated --> Ready_For_Review : HRD initiates review
 }
 
-Draft --> Reviewed : HRD submits for review
+state Reviewing {
+  [*] --> Validation_Check
+  Validation_Check --> Validated : No missing profiles\nNo zero gross pay
+  Validation_Check --> Validation_Failed : Missing profiles\nor zero gross pay
+}
+
+Draft --> Reviewing : HRD submits for review
+Reviewing --> Reviewed : Validation passed
+Reviewing --> Draft : Validation failed
 
 state Reviewed {
   [*] --> Pending_Finance_Approval
@@ -20,14 +28,7 @@ state Reviewed {
 Reviewed --> Approved : Finance approves
 Reviewed --> Draft : Rejected by Finance\n(returns to draft)
 
-state Approved {
-  [*] --> Validation_Check
-  Validation_Check --> Validated : No negative net pay\nAll profiles complete
-  Validation_Check --> Validation_Failed : Negative net pay\ndetected\nor missing profiles
-}
-
-Approved --> Finalized : Finance finalizes\n(validation passed)
-Approved --> Reviewed : Validation failed\n(return for review)
+Approved --> Finalized : Finance finalizes
 
 state Finalized {
   [*] --> Payslips_Generated

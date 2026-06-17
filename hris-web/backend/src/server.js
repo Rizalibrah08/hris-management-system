@@ -905,7 +905,7 @@ app.post('/payroll/runs/generate', authRequired, roleRequired('HRD', 'Finance', 
   )
 
   const runId = runInsert.insertId
-  const employeeRows = await query('SELECT id FROM employees ORDER BY id')
+  const employeeRows = await query('SELECT id FROM employees WHERE is_active = 1 ORDER BY id')
 
   for (const employee of employeeRows) {
     let baseSalary = 0
