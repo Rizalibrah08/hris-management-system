@@ -6,12 +6,7 @@
 <title>Profil - HRIS Mobile</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #e8ecf2;
-  display: flex; justify-content: center; align-items: center;
-  min-height: 100vh; padding: 20px;
-}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #F3F4F6; margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
 .phone-container { position: relative; }
 .phone-frame {
   width: 399px; height: 852px;
@@ -34,10 +29,8 @@ body {
   width: 134px; height: 5px; background: #999; border-radius: 3px;
   position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
 }
-.scroll-area { flex: 1; overflow-y: auto; }
-.profile-header {
-  background: #4b3ac3; padding: 60px 16px 30px;
-}
+.scroll-area { flex: 1; overflow-y: auto; padding-bottom: 80px; }
+.profile-header { background: #4b3ac3; padding: 40px 16px 20px; }
 .profile-header h2 {
   color: #fff; font-size: 20px; font-weight: 700; text-align: center;
 }
@@ -93,12 +86,7 @@ body {
   cursor: pointer; margin: 0 16px 20px;
   display: flex; align-items: center; justify-content: center; gap: 8px;
 }
-.tab-bar {
-  display: flex; background: #fff;
-  padding: 8px 12px 20px;
-  border-top: 1px solid #f3f4f6;
-  justify-content: space-around;
-}
+.tab-bar { display: flex; background: #fff; padding: 12px 12px 20px; border-top: 1px solid #f3f4f6; justify-content: space-around; position: fixed; bottom: 0; width: 100%; z-index: 100; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
 .tab-item {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   cursor: pointer; text-decoration: none;
@@ -109,60 +97,49 @@ body {
 </style>
 </head>
 <body>
-<div class="phone-container">
-  <div class="phone-frame">
-    <div class="phone-notch"></div>
-    <div class="phone-screen">
+
       <div class="scroll-area">
-        <div class="profile-header">
-          <h2>Profil</h2>
+        <div style="background: #8B5CF6; padding: 50px 20px 20px; display: flex; justify-content: space-between; align-items: center; color: #FFF;">
+          <div style="font-size: 20px; font-weight: bold;">&lt;</div>
+          <h2 style="font-size: 18px; font-weight: bold;">My Profile</h2>
+          <div style="font-size: 20px; font-weight: bold;">&#128682;</div>
         </div>
 
         <div class="avatar-section">
-          <div class="avatar-large"><span>AP</span></div>
+          <div class="avatar-large" style="background: #EDEBFE; color: #8B5CF6; font-size: 48px; border: none;">&#128100;</div>
           <div class="profile-name">
             <span>Aditia Pratama</span>
-            <span class="verified">&#10003;</span>
+            <span class="verified" style="color: #3B82F6;">&#10003;</span>
           </div>
+          <div class="profile-dept">Senior Developer</div>
           <div class="profile-dept">Engineering</div>
         </div>
 
         <div class="info-section">
-          <div class="section-label">INFORMASI KONTAK</div>
+          <div class="section-label">CONTACT</div>
           <div class="info-card">
             <div class="info-item">
-              <span class="info-icon">&#9993;</span>
+              <span class="info-icon" style="color: #8B5CF6;">&#9993;</span>
               <span class="info-text">aditia.pratama@cloudhris.id</span>
             </div>
             <div class="info-item">
-              <span class="info-icon">&#9742;</span>
+              <span class="info-icon" style="color: #8B5CF6;">&#9742;</span>
               <span class="info-text">+62 812-3456-7890</span>
             </div>
           </div>
 
-          <div class="section-label">INFORMASI KEPEGAWAIAN</div>
+          <div class="section-label">EMPLOYMENT</div>
           <div class="info-card">
             <div class="info-item">
-              <span class="info-icon">&#128196;</span>
-              <span class="info-text">NIK: EMP-2024001</span>
-            </div>
-            <div class="info-item">
-              <span class="info-icon">&#127970;</span>
+              <span class="info-icon" style="color: #8B5CF6;">&#127970;</span>
               <span class="info-text">Engineering</span>
             </div>
             <div class="info-item">
-              <span class="info-icon">&#128188;</span>
+              <span class="info-icon" style="color: #8B5CF6;">&#128188;</span>
               <span class="info-text">Senior Developer</span>
-            </div>
-            <div class="info-item">
-              <span class="info-icon">&#128197;</span>
-              <span class="info-text">Kontrak s/d 31 Desember 2026</span>
             </div>
           </div>
         </div>
-
-        <button class="edit-btn">&#9998; Edit Profil</button>
-        <button class="logout-btn">&#128682; Keluar</button>
       </div>
 
       <div class="tab-bar">
@@ -187,9 +164,5 @@ body {
           <span class="tab-label">Profil</span>
         </div>
       </div>
-    </div>
-    <div class="phone-home-bar"></div>
-  </div>
-</div>
-</body>
+    </body>
 </html>

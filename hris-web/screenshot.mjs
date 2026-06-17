@@ -26,7 +26,17 @@ const srcDirs = [
       try {
         await page.goto(fileUrl, { waitUntil: 'networkidle0' });
         const outPath = path.resolve(dir.out, file.replace('.html', '.jpg'));
-        await page.screenshot({ path: outPath, type: 'jpeg', fullPage: true, quality: 90 });
+        
+        if (dir.viewport.isMobile) {
+          const element = await page.$('.phone-frame');
+          if (element) {
+            await element.screenshot({ path: outPath, type: 'jpeg', quality: 100 });
+          } else {
+            await page.screenshot({ path: outPath, type: 'jpeg', fullPage: true, quality: 100 });
+          }
+        } else {
+          await page.screenshot({ path: outPath, type: 'jpeg', fullPage: true, quality: 100 });
+        }
         console.log('Saved:', outPath);
       } catch (err) {
         console.error('Failed to screenshot:', file, err);
