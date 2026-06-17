@@ -150,75 +150,189 @@ body {
             </div>
           </div>
           <div class="header-actions">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - HRIS Mobile</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #e8ecf2;
+  display: flex; justify-content: center; align-items: center;
+  min-height: 100vh; padding: 20px;
+}
+.phone-container { position: relative; }
+.phone-frame {
+  width: 399px; height: 852px;
+  background: #1a1a1a;
+  border-radius: 44px; padding: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 0 6px rgba(255,255,255,0.15);
+}
+.phone-notch {
+  width: 120px; height: 28px; background: #1a1a1a;
+  border-radius: 0 0 18px 18px;
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10;
+}
+.phone-screen {
+  width: 375px; height: 812px;
+  background: #F3F4F6; border-radius: 32px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.phone-home-bar {
+  width: 134px; height: 5px; background: #999; border-radius: 3px;
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+}
+.scroll-area {
+  flex: 1; overflow-y: auto;
+  padding: 60px 16px 16px;
+}
+.header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.user-info { display: flex; align-items: center; gap: 10px; }
+.avatar {
+  width: 44px; height: 44px; border-radius: 22px;
+  background: #EDEBFE;
+  display: flex; align-items: center; justify-content: center;
+}
+.avatar svg { width: 24px; height: 24px; stroke: #4b3ac3; fill: none; stroke-width: 2; }
+.user-text { display: flex; flex-direction: column; }
+.user-greeting { font-size: 12px; color: #6b7280; }
+.user-name { font-size: 15px; font-weight: 700; color: #111827; }
+.header-actions { display: flex; gap: 8px; }
+.icon-btn {
+  width: 38px; height: 38px; border-radius: 19px; background: #fff;
+  border: none; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.icon-btn svg { width: 18px; height: 18px; stroke: #4b3ac3; fill: none; stroke-width: 2; }
+.stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin-bottom: 16px;
+}
+.stat-card {
+  background: #fff; border-radius: 14px; padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.stat-card-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 8px;
+}
+.stat-card-value { font-size: 22px; font-weight: 700; color: #111827; margin-bottom: 2px; }
+.stat-card-label { font-size: 11px; color: #6b7280; }
+.activity-card {
+  background: #fff; border-radius: 14px; padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 10px;
+}
+.activity-title { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 12px; }
+.tab-bar {
+  display: flex; background: #fff;
+  padding: 8px 12px 20px;
+  border-top: 1px solid #f3f4f6;
+  justify-content: space-around;
+}
+.tab-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; cursor: pointer; text-decoration: none;
+}
+.tab-icon { font-size: 20px; }
+.tab-label { font-size: 10px; color: #9ca3af; font-weight: 500; }
+.tab-item.active .tab-label { color: #4b3ac3; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="phone-container">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="scroll-area">
+        <div class="header">
+          <div class="user-info">
+            <div class="avatar">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/></svg>
+            </div>
+            <div class="user-text">
+              <span class="user-greeting">Selamat datang,</span>
+              <span class="user-name">Aditia Pratama</span>
+            </div>
+          </div>
+          <div class="header-actions">
             <button class="icon-btn">
               <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
             </button>
           </div>
         </div>
 
-        <div class="summary-banner">
-          <div class="banner-text">
-            <h3>My Work Summary</h3>
-            <p>Sudah clock in hari ini</p>
-          </div>
-          <span class="banner-icon">&#9200;</span>
-        </div>
-
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-card-icon icon-purple">
-              <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <div class="stat-card-icon" style="background: #EDEBFE; color: #8B5CF6;">
+              &#128197;
             </div>
-            <div class="stat-card-value">85%</div>
-            <div class="stat-card-label">Kehadiran Hari Ini</div>
+            <div class="stat-card-value">100%</div>
+            <div class="stat-card-label">Kehadiran</div>
           </div>
           <div class="stat-card">
-            <div class="stat-card-icon icon-green">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <div class="stat-card-icon" style="background: #CCFBF1; color: #14B8A6;">
+              &#127965;
             </div>
-            <div class="stat-card-value">07:55</div>
-            <div class="stat-card-label">Status Clock In</div>
+            <div class="stat-card-value">2</div>
+            <div class="stat-card-label">Total Cuti</div>
           </div>
           <div class="stat-card">
-            <div class="stat-card-icon icon-amber">
-              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <div class="stat-card-icon" style="background: #D1FAE5; color: #10B981;">
+              &#128176;
             </div>
-            <div class="stat-card-value">12 hari</div>
-            <div class="stat-card-label">Cuti Tersisa</div>
+            <div class="stat-card-value">Draft</div>
+            <div class="stat-card-label">Status Gaji</div>
           </div>
           <div class="stat-card">
-            <div class="stat-card-icon icon-teal">
-              <svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4"/></svg>
+            <div class="stat-card-icon" style="background: #FEF3C7; color: #F59E0B;">
+              &#128196;
             </div>
-            <div class="stat-card-value">Rp 8.500.000</div>
-            <div class="stat-card-label">Gaji Bulan Ini</div>
+            <div class="stat-card-value">0</div>
+            <div class="stat-card-label">Cuti Pending</div>
           </div>
         </div>
 
-        <button class="clock-btn clock-in-btn">&#9200; Clock In</button>
+        <div class="activity-card">
+          <div class="activity-title">Attendance Hari Ini</div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <div>
+              <div style="font-size: 13px; color: #6b7280;">Clock In</div>
+              <div style="font-size: 18px; font-weight: bold; color: #111827;">07:55</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 13px; color: #6b7280;">Clock Out</div>
+              <div style="font-size: 18px; font-weight: bold; color: #111827;">-</div>
+            </div>
+          </div>
+        </div>
 
         <div class="activity-card">
-          <div class="activity-title">Aktivitas Terbaru</div>
-          <div class="activity-item">
-            <div class="activity-left">
-              <span class="activity-dot dot-in"></span>
-              <span class="activity-label">Clock In</span>
+          <div class="activity-title">Quick Actions</div>
+          <div style="display: flex; justify-content: space-between; padding: 0 10px;">
+            <div style="text-align: center;">
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: #EDEBFE; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; font-size: 24px;">&#128197;</div>
+              <div style="font-size: 12px; color: #4B5563;">Kehadiran</div>
             </div>
-            <span class="activity-time">Hari ini, 07:55</span>
-          </div>
-          <div class="activity-item">
-            <div class="activity-left">
-              <span class="activity-dot dot-out"></span>
-              <span class="activity-label">Clock Out</span>
+            <div style="text-align: center;">
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: #FEF3C7; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; font-size: 24px;">&#128196;</div>
+              <div style="font-size: 12px; color: #4B5563;">Cuti</div>
             </div>
-            <span class="activity-time">Kemarin, 17:05</span>
-          </div>
-          <div class="activity-item">
-            <div class="activity-left">
-              <span class="activity-dot dot-in"></span>
-              <span class="activity-label">Clock In</span>
+            <div style="text-align: center;">
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: #D1FAE5; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; font-size: 24px;">&#128176;</div>
+              <div style="font-size: 12px; color: #4B5563;">Gaji</div>
             </div>
-            <span class="activity-time">Kemarin, 07:48</span>
+            <div style="text-align: center;">
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: #FEE2E2; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; font-size: 24px;">&#128100;</div>
+              <div style="font-size: 12px; color: #4B5563;">Profil</div>
+            </div>
           </div>
         </div>
       </div>
@@ -233,12 +347,12 @@ body {
           <span class="tab-label">Absensi</span>
         </div>
         <div class="tab-item">
-          <span class="tab-icon">&#127965;</span>
-          <span class="tab-label">Cuti</span>
-        </div>
-        <div class="tab-item">
           <span class="tab-icon">&#128176;</span>
           <span class="tab-label">Payroll</span>
+        </div>
+        <div class="tab-item">
+          <span class="tab-icon">&#127965;</span>
+          <span class="tab-label">Cuti</span>
         </div>
         <div class="tab-item">
           <span class="tab-icon">&#128100;</span>
