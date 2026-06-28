@@ -95,6 +95,16 @@ app.use((req, res, next) => {
 
 app.get('/health', (_, res) => res.json({ status: 'ok' }))
 
+// Haversine formula to calculate distance between two GPS coordinates in meters
+function haversineDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371000
+  const toRad = (deg) => (deg * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
 app.post('/auth/login', async (req, res) => {
   const { nik, password } = req.body
   const users = await query(
@@ -389,6 +399,36 @@ app.post('/attendance/clockin', authRequired, uploadSelfie.single('selfie'), asy
     [empId],
   )
   if (active.length > 0) return res.status(409).json({ message: 'Sudah clock in hari ini', attendance: active[0] })
+
+  // Geofence validation
+  if (_gps_location) {
+    try {
+      const [latStr, lngStr] = _gps_location.split(',').map(s => s.trim())
+      const userLat = parseFloat(latStr)
+      const userLng = parseFloat(lngStr)
+      if (!isNaN(userLat) && !isNaN(userLng)) {
+        const locSettings = await query(
+          "SELECT setting_key, setting_value FROM company_settings WHERE setting_key IN ('office_latitude', 'office_longitude', 'office_radius')"
+        )
+        const locMap = {}
+        locSettings.forEach(r => { locMap[r.setting_key] = r.setting_value })
+        const officeLat = parseFloat(locMap.office_latitude) || -6.2088
+        const officeLng = parseFloat(locMap.office_longitude) || 106.8456
+        const officeRadius = parseInt(locMap.office_radius) || 500
+        const dist = Math.round(haversineDistance(userLat, userLng, officeLat, officeLng))
+        if (dist > officeRadius) {
+          return res.status(403).json({
+            message: `Anda berada di luar area kantor (jarak: ${dist}m, maksimal: ${officeRadius}m)`,
+            distance: dist,
+            radius: officeRadius,
+          })
+        }
+      }
+    } catch (e) {
+      console.warn('GPS parse warning:', e.message)
+    }
+  }
+
   const inserted = await query(
     `INSERT INTO attendance(employee_id, clock_in, gps_location, selfie, status)
      VALUES (?, NOW(), ?, ?, 'Aktif')`,
@@ -2146,6 +2186,47 @@ app.use((req, res, next) => {
     return res.status(404).json({ message: 'Endpoint not found', path: req.path })
   }
   next()
+})
+
+// ==================== COMPANY SETTINGS ====================
+
+app.get('/company-settings', authRequired, async (req, res) => {
+  const rows = await query('SELECT setting_key, setting_value FROM company_settings')
+  const settings = {}
+  rows.forEach(r => { settings[r.setting_key] = r.setting_value })
+  res.json(settings)
+})
+
+app.put('/company-settings', authRequired, roleRequired('Super Admin', 'HRD'), async (req, res) => {
+  const { settings } = req.body
+  if (!settings || typeof settings !== 'object') {
+    return res.status(400).json({ message: 'Format settings tidak valid' })
+  }
+  for (const [key, value] of Object.entries(settings)) {
+    await query(
+      'INSERT INTO company_settings(setting_key, setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)',
+      [key, String(value)],
+    )
+  }
+  const rows = await query('SELECT setting_key, setting_value FROM company_settings')
+  const result = {}
+  rows.forEach(r => { result[r.setting_key] = r.setting_value })
+  res.json(result)
+})
+
+app.get('/company-settings/location', authRequired, async (req, res) => {
+  const rows = await query(
+    "SELECT setting_key, setting_value FROM company_settings WHERE setting_key IN ('office_latitude', 'office_longitude', 'office_radius', 'company_name', 'company_address')"
+  )
+  const map = {}
+  rows.forEach(r => { map[r.setting_key] = r.setting_value })
+  res.json({
+    latitude: parseFloat(map.office_latitude) || -6.2088,
+    longitude: parseFloat(map.office_longitude) || 106.8456,
+    radius: parseInt(map.office_radius) || 500,
+    companyName: map.company_name || 'PT HRIS Indonesia',
+    companyAddress: map.company_address || 'Jakarta, Indonesia',
+  })
 })
 
 // SPA fallback: serve index.html for non-API routes

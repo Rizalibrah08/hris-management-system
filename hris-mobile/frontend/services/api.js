@@ -239,6 +239,10 @@ export const api = {
     today: () => request('/attendance/today'),
   },
 
+  company: {
+    getLocation: () => request('/company-settings/location'),
+  },
+
   leave: {
     myList: () => request('/leave/my'),
     types: () => request('/leave-types'),

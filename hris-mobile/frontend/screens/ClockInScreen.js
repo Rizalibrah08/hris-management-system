@@ -10,17 +10,11 @@ import { api } from '../services/api';
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
 
-// Default office location (contoh: Jakarta)
-const OFFICE_LAT = -6.2088;
-const OFFICE_LNG = 106.8456;
-const OFFICE_RADIUS = 500; // meter
+// Default fallback office location if API fails
+const FALLBACK_OFFICE_LAT = -6.2088;
+const FALLBACK_OFFICE_LNG = 106.8456;
+const FALLBACK_OFFICE_RADIUS = 500;
 
-const OFFICE_LOCATION = {
-  latitude: OFFICE_LAT,
-  longitude: OFFICE_LNG,
-  latitudeDelta: 0.01,
-  longitudeDelta: 0.01,
-};
 
 export default function ClockInScreen() {
   const navigation = useNavigation();
@@ -31,12 +25,23 @@ export default function ClockInScreen() {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
   const [distance, setDistance] = useState(null);
+  const [officeLat, setOfficeLat] = useState(FALLBACK_OFFICE_LAT);
+  const [officeLng, setOfficeLng] = useState(FALLBACK_OFFICE_LNG);
+  const [officeRadius, setOfficeRadius] = useState(FALLBACK_OFFICE_RADIUS);
 
   const fetchStatus = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.attendance.myStatus();
+      const [data, locData] = await Promise.all([
+        api.attendance.myStatus(),
+        api.company.getLocation().catch(() => null)
+      ]);
       setStatus(data);
+      if (locData) {
+        setOfficeLat(locData.latitude || FALLBACK_OFFICE_LAT);
+        setOfficeLng(locData.longitude || FALLBACK_OFFICE_LNG);
+        setOfficeRadius(locData.radius || FALLBACK_OFFICE_RADIUS);
+      }
     } catch {
       setStatus(null);
     } finally {
@@ -65,12 +70,12 @@ export default function ClockInScreen() {
       setErrorMsg(null);
 
       // Hitung jarak ke kantor (meter)
-      const dist = haversineDistance(coords.latitude, coords.longitude, OFFICE_LAT, OFFICE_LNG);
+      const dist = haversineDistance(coords.latitude, coords.longitude, officeLat, officeLng);
       setDistance(Math.round(dist));
     } catch (err) {
       setErrorMsg('Gagal mendapatkan lokasi');
     }
-  }, []);
+  }, [officeLat, officeLng]);
 
   useEffect(() => {
     if (isFocused) {
@@ -87,7 +92,7 @@ export default function ClockInScreen() {
   const isClockedIn = hasClockedIn && !hasClockedOut;
 
   const gpsString = location ? `${location.latitude}, ${location.longitude}` : null;
-  const isInRange = distance !== null && distance <= OFFICE_RADIUS;
+  const isInRange = distance !== null && distance <= officeRadius;
 
   const handleClockInPress = () => {
     if (hasClockedOut) {
@@ -127,13 +132,13 @@ export default function ClockInScreen() {
               pinColor="#8B5CF6"
             />
             <Marker
-              coordinate={{ latitude: OFFICE_LAT, longitude: OFFICE_LNG }}
+              coordinate={{ latitude: officeLat, longitude: officeLng }}
               title="Kantor"
               pinColor="#EF4444"
             />
             <Circle
-              center={{ latitude: OFFICE_LAT, longitude: OFFICE_LNG }}
-              radius={OFFICE_RADIUS}
+              center={{ latitude: officeLat, longitude: officeLng }}
+              radius={officeRadius}
               strokeColor="rgba(239, 68, 68, 0.6)"
               fillColor="rgba(239, 68, 68, 0.1)"
             />

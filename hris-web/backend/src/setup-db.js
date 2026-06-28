@@ -116,6 +116,21 @@ async function run() {
     )
   }
 
+  // === DEFAULT COMPANY SETTINGS ===
+  const defaultSettings = [
+    ['company_name', 'PT HRIS Indonesia'],
+    ['company_address', 'Jakarta, Indonesia'],
+    ['office_latitude', '-6.2088'],
+    ['office_longitude', '106.8456'],
+    ['office_radius', '500'],
+  ]
+  for (const [key, value] of defaultSettings) {
+    await conn.execute(
+      'INSERT INTO company_settings(setting_key, setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)',
+      [key, value],
+    )
+  }
+
   await conn.end()
   console.log(`\nDatabase "${database}" siap (${host}:${port})`)
   console.log(`  Master: ${roles.length} roles, ${departments.length} dept, ${positions.length} posisi, ${leaveTypes.length} jenis cuti, ${components.length} komponen payroll`)
