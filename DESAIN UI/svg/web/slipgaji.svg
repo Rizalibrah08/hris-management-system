@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+  <defs><linearGradient id="sb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4937bf"/><stop offset="1" stop-color="#31238c"/></linearGradient></defs>
+  <rect width="1440" height="900" fill="#f6f8ff"/>
+  <rect x="0" y="0" width="260" height="900" fill="url(#sb)"/>
+  <rect x="14" y="14" width="36" height="36" rx="8" fill="#ffffff2e"/><text x="32" y="38" text-anchor="middle" fill="#fff" font-size="18" font-weight="700">H</text>
+  <text x="60" y="34" fill="#fff" font-size="16" font-weight="700">Cloud HRIS</text><text x="60" y="50" fill="#ffffffa6" font-size="11">Workspace Console</text>
+  <rect x="250" y="22" width="34" height="34" rx="8" fill="#ffffff1a" stroke="#ffffff38"/><text x="267" y="44" text-anchor="middle" fill="#ffffffd9" font-size="18">‹</text>
+  <text x="18" y="84" fill="#ffffff73" font-size="10" letter-spacing="1" font-weight="700">MAIN MENU</text>
+  <g font-size="13" font-weight="500" fill="#ffffffb8"><text x="26" y="121">Dashboard</text><text x="26" y="158">Karyawan</text><text x="26" y="194">Absensi</text><text x="26" y="230">Cuti &amp; Izin</text><text x="26" y="266">Payroll</text><text x="26" y="302" fill="#fff" font-weight="600">Slip Gaji</text><text x="26" y="338">Laporan</text><text x="26" y="374">Master Data</text><text x="26" y="410">Role Management</text></g>
+  <rect x="14" y="288" width="232" height="36" rx="8" fill="#ffffff29"/>
+  <rect x="14" y="838" width="232" height="52" rx="10" fill="#ffffff14"/><rect x="22" y="850" width="34" height="34" rx="8" fill="#ffffff33"/><text x="39" y="872" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">R</text><text x="64" y="864" fill="#fff" font-size="13" font-weight="600">Rani Amelia</text><text x="64" y="880" fill="#ffffffa6" font-size="11">HRD</text><rect x="208" y="858" width="38" height="22" rx="6" fill="#ffffff24"/><text x="227" y="873" text-anchor="middle" fill="#fff" font-size="11">Logout</text>
+
+  <rect x="286" y="26" width="1128" height="76" rx="16" fill="#fff" filter="drop-shadow(0 10px 30px rgba(31,49,113,0.08))"/>
+  <text x="306" y="58" fill="#6874a8" font-size="12" letter-spacing="1" font-weight="700">SLIP GAJI</text>
+  <text x="306" y="82" fill="#1d2340" font-size="20" font-weight="700">Human Resource Information System (HRIS) Terpadu Berbasis Cloud</text>
+
+  <rect x="286" y="126" width="1128" height="92" rx="16" fill="#fff" filter="drop-shadow(0 8px 24px rgba(31,49,113,0.06))"/>
+  <text x="306" y="158" fill="#1d2340" font-size="16" font-weight="700">Generate Slip Gaji</text>
+  <rect x="306" y="170" width="600" height="40" rx="8" fill="#fff" stroke="#d1d5db"/><text x="322" y="194" fill="#9ca3af" font-size="13">-- Pilih Payroll Run --</text>
+  <rect x="916" y="170" width="170" height="40" rx="8" fill="#4b3ac3"/><text x="1001" y="194" text-anchor="middle" fill="#fff" font-size="13" font-weight="600">Generate Slip Gaji</text>
+
+  <rect x="286" y="238" width="1128" height="190" rx="16" fill="#fff" filter="drop-shadow(0 8px 24px rgba(31,49,113,0.06))"/>
+  <text x="306" y="270" fill="#1d2340" font-size="16" font-weight="700">Daftar Slip Gaji</text>
+  <g font-size="11" letter-spacing="1" font-weight="700" fill="#6874a8"><text x="306" y="302">KARYAWAN</text><text x="540" y="302">NO. SLIP</text><text x="730" y="302">PERIODE</text><text x="830" y="302">PENDAPATAN</text><text x="980" y="302">POTONGAN</text><text x="1130" y="302">TAKE HOME PAY</text><text x="1290" y="302">AKSI</text></g>
+  <line x1="306" y1="314" x2="1390" y2="314" stroke="#edf0fb"/>
+  <g font-size="13" fill="#1d2340"><text x="306" y="336">Andi Pratama</text><text x="540" y="336" font-family="ui-monospace,Consolas,monospace">SLP-202605-001</text><text x="730" y="336">2026-05</text><text x="830" y="336">Rp 25.000.000</text><text x="980" y="336">Rp 3.500.000</text><text x="1130" y="336" font-weight="600">Rp 21.500.000</text><rect x="1290" y="324" width="50" height="20" rx="6" fill="#eef2ff"/><text x="1315" y="338" text-anchor="middle" fill="#3730a3" font-size="11" font-weight="600">Detail</text><rect x="1346" y="324" width="38" height="20" rx="6" fill="#eef2ff"/><text x="1365" y="338" text-anchor="middle" fill="#3730a3" font-size="11" font-weight="600">PDF</text></g>
+  <line x1="306" y1="346" x2="1390" y2="346" stroke="#edf0fb"/>
+  <g font-size="13" fill="#1d2340"><text x="306" y="368">Budi Santoso</text><text x="540" y="368" font-family="ui-monospace,Consolas,monospace">SLP-202605-002</text><text x="730" y="368">2026-05</text><text x="830" y="368">Rp 12.000.000</text><text x="980" y="368">Rp 1.800.000</text><text x="1130" y="368" font-weight="600">Rp 10.200.000</text><rect x="1290" y="356" width="50" height="20" rx="6" fill="#eef2ff"/><text x="1315" y="370" text-anchor="middle" fill="#3730a3" font-size="11" font-weight="600">Detail</text><rect x="1346" y="356" width="38" height="20" rx="6" fill="#eef2ff"/><text x="1365" y="370" text-anchor="middle" fill="#3730a3" font-size="11" font-weight="600">PDF</text></g>
+  <line x1="306" y1="378" x2="1390" y2="378" stroke="#edf0fb"/>
+  <g font-size="13" fill="#1d2340"><text x="306" y="400">Citra Dewi</text><text x="540" y="400" font-family="ui-monospace,Consolas,monospace">SLP-202605-003</text><text x="730" y="400">2026-05</text><text x="830" y="400">Rp 8.500.000</text><text x="980" y="400">Rp 1.200.000</text><text x="1130" y="400" font-weight="600">Rp 7.300.000</text><rect x="1290" y="388" width="50" height="20" rx="6" fill="#eef2ff"/><text x="1315" y="402" text-anchor="middle" fill="#3730a3" font-size="11" font-weight="600">Detail</text><rect x="1346" y="388" width="38" height="20" rx="6" fill="#eef2ff"/><text x="1365" y="402" text-anchor="middle" fill="#3730a3" font-size="11" font-weight="600">PDF</text></g>
+
+  <rect x="286" y="448" width="1128" height="416" rx="16" fill="#fff" filter="drop-shadow(0 24px 44px rgba(17,26,58,0.28))"/>
+  <rect x="306" y="470" width="250" height="80" rx="12" fill="#1d2340"/>
+  <text x="318" y="500" fill="#fff" font-family="ui-monospace,Consolas,monospace" font-size="14" font-weight="700">SLP-202605-001</text>
+  <text x="318" y="522" fill="#ffffffa6" font-size="13" font-weight="700">Slip Gaji</text>
+  <g font-size="13"><text x="540" y="502" fill="#6b7280">Periode</text><text x="640" y="502" text-anchor="end" fill="#1d2340" font-weight="500">2026-05</text><text x="540" y="524" fill="#6b7280">Nama</text><text x="640" y="524" text-anchor="end" fill="#1d2340" font-weight="500">Andi Pratama</text></g>
+  <line x1="306" y1="560" x2="1390" y2="560" stroke="#edf0fb"/>
+  <text x="306" y="590" fill="#4b3ac3" font-size="14" font-weight="700">Pendapatan</text>
+  <g font-size="13" fill="#374151"><text x="306" y="618">Gaji Pokok</text><text x="1390" y="618" text-anchor="end">Rp 18.000.000</text><line x1="306" y1="628" x2="1390" y2="628" stroke="#f3f4f6"/><text x="306" y="652">Tunjangan Jabatan</text><text x="1390" y="652" text-anchor="end">Rp 5.000.000</text><line x1="306" y1="662" x2="1390" y2="662" stroke="#f3f4f6"/><text x="306" y="686">Tunjangan Transport</text><text x="1390" y="686" text-anchor="end">Rp 2.000.000</text></g>
+  <line x1="306" y1="700" x2="1390" y2="700" stroke="#edf0fb"/>
+  <g font-size="14" font-weight="700"><text x="306" y="724" fill="#1d2340">Total Pendapatan</text><text x="1390" y="724" text-anchor="end" fill="#10B981">Rp 25.000.000</text></g>
+
+  <text x="306" y="768" fill="#EF4444" font-size="14" font-weight="700">Potongan</text>
+  <g font-size="13" fill="#374151"><text x="306" y="796">BPJS Ketenagakerjaan</text><text x="1390" y="796" text-anchor="end" fill="#EF4444">-Rp 1.000.000</text><line x1="306" y1="806" x2="1390" y2="806" stroke="#f3f4f6"/><text x="306" y="830">BPJS Kesehatan</text><text x="1390" y="830" text-anchor="end" fill="#EF4444">-Rp 500.000</text></g>
+  <line x1="306" y1="840" x2="1390" y2="840" stroke="#edf0fb"/>
+</svg>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+  <defs><linearGradient id="sb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4937bf"/><stop offset="1" stop-color="#31238c"/></linearGradient></defs>
+  <rect width="1440" height="900" fill="#f6f8ff"/>
+  <rect x="0" y="0" width="260" height="900" fill="url(#sb)"/>
+  <rect x="14" y="14" width="36" height="36" rx="8" fill="#ffffff2e"/><text x="32" y="38" text-anchor="middle" fill="#fff" font-size="18" font-weight="700">H</text>
+  <text x="60" y="34" fill="#fff" font-size="16" font-weight="700">Cloud HRIS</text><text x="60" y="50" fill="#ffffffa6" font-size="11">Workspace Console</text>
+  <rect x="250" y="22" width="34" height="34" rx="8" fill="#ffffff1a" stroke="#ffffff38"/><text x="267" y="44" text-anchor="middle" fill="#ffffffd9" font-size="18">‹</text>
+  <text x="18" y="84" fill="#ffffff73" font-size="10" letter-spacing="1" font-weight="700">MAIN MENU</text>
+  <g font-size="13" font-weight="500" fill="#ffffffb8"><text x="26" y="121">Dashboard</text><text x="26" y="158">Karyawan</text><text x="26" y="194" fill="#fff" font-weight="600">Absensi</text><text x="26" y="230">Cuti &amp; Izin</text><text x="26" y="266">Payroll</text><text x="26" y="302">Slip Gaji</text><text x="26" y="338">Laporan</text><text x="26" y="374">Master Data</text><text x="26" y="410">Role Management</text></g>
+  <rect x="14" y="180" width="232" height="36" rx="8" fill="#ffffff29"/>
+  <rect x="14" y="838" width="232" height="52" rx="10" fill="#ffffff14"/><rect x="22" y="850" width="34" height="34" rx="8" fill="#ffffff33"/><text x="39" y="872" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">R</text><text x="64" y="864" fill="#fff" font-size="13" font-weight="600">Rani Amelia</text><text x="64" y="880" fill="#ffffffa6" font-size="11">HRD</text><rect x="208" y="858" width="38" height="22" rx="6" fill="#ffffff24"/><text x="227" y="873" text-anchor="middle" fill="#fff" font-size="11">Logout</text>
+
+  <rect x="286" y="26" width="1128" height="76" rx="16" fill="#fff" filter="drop-shadow(0 10px 30px rgba(31,49,113,0.08))"/>
+  <text x="306" y="58" fill="#6874a8" font-size="12" letter-spacing="1" font-weight="700">ABSENSI</text>
+  <text x="306" y="82" fill="#1d2340" font-size="20" font-weight="700">Human Resource Information System (HRIS) Terpadu Berbasis Cloud</text>
+
+  <rect x="286" y="126" width="1128" height="120" rx="16" fill="#fff" filter="drop-shadow(0 8px 24px rgba(31,49,113,0.06))"/>
+  <text x="306" y="158" fill="#1d2340" font-size="16" font-weight="700">Absensi Digital (GPS + Selfie)</text>
+  <line x1="306" y1="170" x2="1390" y2="170" stroke="#edf0fb"/>
+  <rect x="306" y="182" width="370" height="50" rx="12" fill="#fff" stroke="#edf0fb"/><text x="322" y="202" fill="#6b7280" font-size="12">Kehadiran Hari Ini</text><text x="322" y="224" fill="#1d2340" font-size="22" font-weight="700">85%</text>
+  <rect x="688" y="182" width="370" height="50" rx="12" fill="#fff" stroke="#edf0fb"/><text x="704" y="202" fill="#6b7280" font-size="12">Hadir Tepat Waktu</text><text x="704" y="224" fill="#1d2340" font-size="22" font-weight="700">7 orang</text>
+  <rect x="1070" y="182" width="320" height="50" rx="12" fill="#fff" stroke="#edf0fb"/><text x="1086" y="202" fill="#6b7280" font-size="12">Terlambat</text><text x="1086" y="224" fill="#1d2340" font-size="22" font-weight="700">1 orang</text>
+
+  <rect x="286" y="266" width="1128" height="470" rx="16" fill="#fff" filter="drop-shadow(0 8px 24px rgba(31,49,113,0.06))"/>
+  <text x="306" y="298" fill="#1d2340" font-size="16" font-weight="700">Log Kehadiran Hari Ini</text>
+  <g font-size="11" letter-spacing="1" font-weight="700" fill="#6874a8"><text x="306" y="330">NAMA</text><text x="490" y="330">DEPARTEMEN</text><text x="640" y="330">CLOCK IN</text><text x="730" y="330">CLOCK OUT</text><text x="830" y="330">SELFIE</text><text x="950" y="330">LOKASI GPS</text><text x="1300" y="330">STATUS</text></g>
+  <line x1="306" y1="342" x2="1390" y2="342" stroke="#edf0fb"/>
+  <g font-size="13" fill="#1d2340">
+    <text x="306" y="364">Aditia Pratama</text><text x="490" y="364">Engineering</text><text x="640" y="364">07:55</text><text x="730" y="364">17:05</text>
+    <rect x="830" y="352" width="32" height="24" rx="4" fill="#eef2ff"/>
+    <rect x="950" y="352" width="170" height="22" rx="6" fill="#d1fae5"/><text x="962" y="367" fill="#065f46" font-size="11" font-weight="600">-6.20876, 106.84560</text>
+    <rect x="1300" y="352" width="50" height="22" rx="11" fill="#d1fae5"/><text x="1325" y="367" text-anchor="middle" fill="#065f46" font-size="11" font-weight="600">Aktif</text>
+    <line x1="306" y1="382" x2="1390" y2="382" stroke="#edf0fb"/>
+    <text x="306" y="404">Nadia Putri</text><text x="490" y="404">HRD</text><text x="640" y="404">08:10</text><text x="730" y="404">17:20</text>
+    <text x="836" y="404" fill="#6b7280">-</text><text x="950" y="404" fill="#6b7280">-</text>
+    <rect x="1300" y="392" width="50" height="22" rx="11" fill="#d1fae5"/><text x="1325" y="407" text-anchor="middle" fill="#065f46" font-size="11" font-weight="600">Aktif</text>
+    <line x1="306" y1="422" x2="1390" y2="422" stroke="#edf0fb"/>
+    <text x="306" y="444">Salsa Wijaya</text><text x="490" y="444">Marketing</text><text x="640" y="444">09:01</text><text x="730" y="444">17:30</text>
+    <text x="836" y="444" fill="#6b7280">-</text><text x="950" y="444" fill="#6b7280">-</text>
+    <rect x="1294" y="432" width="62" height="22" rx="11" fill="#fff8e1"/><text x="1325" y="447" text-anchor="middle" fill="#92400e" font-size="11" font-weight="600">Terlambat</text>
+    <line x1="306" y1="462" x2="1390" y2="462" stroke="#edf0fb"/>
+    <text x="306" y="484">Intan Lestari</text><text x="490" y="484">Engineering</text><text x="640" y="484">08:05</text><text x="730" y="484" fill="#6b7280">Belum</text>
+    <text x="836" y="484" fill="#6b7280">-</text><text x="950" y="484" fill="#6b7280">-</text>
+    <rect x="1300" y="472" width="50" height="22" rx="11" fill="#d1fae5"/><text x="1325" y="487" text-anchor="middle" fill="#065f46" font-size="11" font-weight="600">Aktif</text>
+  </g>
+</svg>

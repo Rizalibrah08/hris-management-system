@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRIS — Desain UI/UX (SVG)</title>
+<style>
+:root {
+  --primary: #4b3ac3;
+  --primary-light: #eef2ff;
+  --bg-page: #f6f8ff;
+  --bg-panel: #fff;
+  --text-primary: #1d2340;
+  --text-muted: #6b7280;
+  --text-label: #6874a8;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-panel: 0 8px 24px rgba(31, 49, 113, 0.06);
+  --transition-fast: 0.15s ease;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+header {
+  background: linear-gradient(135deg, #4937bf, #31238c);
+  color: #fff;
+  padding: 40px 26px 32px;
+  text-align: center;
+}
+header h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+header p { margin: 6px 0 0; opacity: 0.75; font-size: 15px; }
+.container { max-width: 1280px; margin: 0 auto; padding: 28px 20px 60px; }
+
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.view-toggle button {
+  border: 1px solid #d1d5db;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  padding: 10px 22px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+.view-toggle button.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 28px 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title .icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+.section-subtitle {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.grid {
+  display: grid;
+  gap: 22px;
+}
+.grid.mobile { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.grid.web { grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); }
+
+.card {
+  background: var(--bg-panel);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  box-shadow: var(--shadow-panel);
+  transition: transform var(--transition-fast);
+}
+.card:hover { transform: translateY(-2px); }
+.card .frame {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #fff;
+}
+.card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.card .meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding: 0 4px;
+}
+.card .meta .num {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.card .meta strong { font-size: 14px; }
+.card .meta small {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+[hidden] { display: none !important; }
+
+footer {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>HRIS — Desain UI/UX</h1>
+  <p>Mockup SVG seluruh halaman (referensi langsung dari kode project hris-web &amp; hris-mobile)</p>
+</header>
+
+<div class="container">
+  <div class="view-toggle">
+    <button id="btn-both" class="active">Semua</button>
+    <button id="btn-mobile">Mobile</button>
+    <button id="btn-web">Web</button>
+  </div>
+
+  <div id="mobile-section">
+    <h2 class="section-title"><span class="icon">M</span>Mobile — Curated HR (Karyawan)</h2>
+    <p class="section-subtitle">React Native (Expo SDK 54) · 5 tab bar: Home, Attendance, Payroll, Leave, Profile · Dark tab bar #1E1E1E · Primary #8B5CF6</p>
+    <div class="grid mobile" id="mobile-grid"></div>
+  </div>
+
+  <div id="web-section">
+    <h2 class="section-title"><span class="icon">W</span>Web — Cloud HRIS Workspace Console (HR/Finance)</h2>
+    <p class="section-subtitle">React 19 + Vite · Sidebar gradient #4937bf→#31238c · Topbar "Human Resource Information System (HRIS) Terpadu Berbasis Cloud" · Primary #4b3ac3</p>
+    <div class="grid web" id="web-grid"></div>
+  </div>
+</div>
+
+<footer>Cloud HRIS © 2026 — Human Capital Management System</footer>
+
+<script>
+const mobile = [
+  { file: 'mobile/login.svg', label: 'Login', num: 1 },
+  { file: 'mobile/dashboard.svg', label: 'Dashboard (Home)', num: 2 },
+  { file: 'mobile/absensi.svg', label: 'Attendance (Absensi)', num: 3 },
+  { file: 'mobile/cuti.svg', label: 'Leave (Cuti)', num: 4 },
+  { file: 'mobile/payroll.svg', label: 'Payroll and Tax', num: 5 },
+  { file: 'mobile/slipgaji.svg', label: 'Slip Gaji (Payroll Details)', num: 6 },
+  { file: 'mobile/profil.svg', label: 'Profile', num: 7 },
+];
+const web = [
+  { file: 'web/login.svg', label: 'Login', num: 1 },
+  { file: 'web/dashboard.svg', label: 'Dashboard', num: 2 },
+  { file: 'web/karyawan.svg', label: 'Karyawan (Manajemen Karyawan)', num: 3 },
+  { file: 'web/absensi.svg', label: 'Absensi', num: 4 },
+  { file: 'web/cuti.svg', label: 'Cuti & Izin', num: 5 },
+  { file: 'web/payroll.svg', label: 'Payroll', num: 6 },
+  { file: 'web/slipgaji.svg', label: 'Slip Gaji', num: 7 },
+  { file: 'web/laporan.svg', label: 'Laporan & Analitik', num: 8 },
+  { file: 'web/masterdata.svg', label: 'Master Data', num: 9 },
+  { file: 'web/role-management.svg', label: 'Role Management', num: 10 },
+];
+
+function render(list, targetId) {
+  const grid = document.getElementById(targetId);
+  grid.innerHTML = list.map(function (item) {
+    return '<div class="card">'
+      + '<div class="frame"><img src="' + item.file + '" alt="' + item.label + '" loading="lazy"></div>'
+      + '<div class="meta"><span class="num">' + item.num + '</span><strong>' + item.label + '</strong><small>' + item.file + '</small></div>'
+      + '</div>';
+  }).join('');
+}
+
+render(mobile, 'mobile-grid');
+render(web, 'web-grid');
+
+var btnBoth = document.getElementById('btn-both');
+var btnMobile = document.getElementById('btn-mobile');
+var btnWeb = document.getElementById('btn-web');
+var secMobile = document.getElementById('mobile-section');
+var secWeb = document.getElementById('web-section');
+
+function setView(view) {
+  btnBoth.classList.toggle('active', view === 'both');
+  btnMobile.classList.toggle('active', view === 'mobile');
+  btnWeb.classList.toggle('active', view === 'web');
+  secMobile.hidden = (view === 'web');
+  secWeb.hidden = (view === 'mobile');
+}
+
+btnBoth.addEventListener('click', function () { setView('both'); });
+btnMobile.addEventListener('click', function () { setView('mobile'); });
+btnWeb.addEventListener('click', function () { setView('web'); });
+</script>
+</body>
+</html>

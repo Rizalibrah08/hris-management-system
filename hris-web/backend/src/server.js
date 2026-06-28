@@ -98,7 +98,7 @@ app.get('/health', (_, res) => res.json({ status: 'ok' }))
 app.post('/auth/login', async (req, res) => {
   const { nik, password } = req.body
   const users = await query(
-    `SELECT u.id, u.nik, u.password, r.name AS role, u.employee_id
+    `SELECT u.id, u.nik, u.password, r.name AS role, u.employee_id, u.email, u.phone
      FROM users u
      JOIN roles r ON r.id = u.role_id
      WHERE u.nik = ?`,
@@ -110,7 +110,19 @@ app.post('/auth/login', async (req, res) => {
   const valid = await bcrypt.compare(password, user.password)
   if (!valid) return res.status(401).json({ message: 'Password salah' })
 
-  const token = jwt.sign({ sub: user.id, nik: user.nik, role: user.role, employeeId: user.employee_id }, process.env.JWT_SECRET, {
+  // Auto-create employee record if user has none (safety net)
+  let employeeId = user.employee_id
+  if (!employeeId) {
+    const result = await query(
+      'INSERT INTO employees(name, email, phone) VALUES (?,?,?)',
+      [user.nik, user.email || null, user.phone || null],
+    )
+    employeeId = result.insertId
+    await query('UPDATE users SET employee_id = ? WHERE id = ?', [employeeId, user.id])
+    console.log(`[Auto-fix] Created employee record #${employeeId} for user ${user.nik}`)
+  }
+
+  const token = jwt.sign({ sub: user.id, nik: user.nik, role: user.role, employeeId }, process.env.JWT_SECRET, {
     expiresIn: '1d',
   })
 
@@ -119,21 +131,19 @@ app.post('/auth/login', async (req, res) => {
 
   let employeeName = null
   let department = null
-  if (user.employee_id) {
-    const empRows = await query(
-      `SELECT e.name, d.name AS department FROM employees e LEFT JOIN departments d ON d.id = e.department_id WHERE e.id = ?`,
-      [user.employee_id],
-    )
-    if (empRows.length > 0) {
-      employeeName = empRows[0].name
-      department = empRows[0].department
-    }
+  const empRows = await query(
+    `SELECT e.name, d.name AS department FROM employees e LEFT JOIN departments d ON d.id = e.department_id WHERE e.id = ?`,
+    [employeeId],
+  )
+  if (empRows.length > 0) {
+    employeeName = empRows[0].name
+    department = empRows[0].department
   }
 
   return res.json({
     token,
     role: user.role,
-    employeeId: user.employee_id,
+    employeeId,
     employeeName,
     department,
     allowedPortals,

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800" font-family="-apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f8ff"/><stop offset="1" stop-color="#eef2ff"/></linearGradient>
+    <linearGradient id="logo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4937bf"/><stop offset="1" stop-color="#6c5ce7"/></linearGradient>
+  </defs>
+  <rect width="1280" height="800" fill="url(#bg)"/>
+  <g transform="translate(430,170)">
+    <rect width="420" height="460" rx="12" fill="#fff" filter="drop-shadow(0 8px 24px rgba(31,49,113,0.08))"/>
+    <rect x="170" y="30" width="80" height="80" rx="20" fill="url(#logo)"/>
+    <text x="210" y="84" text-anchor="middle" fill="#fff" font-size="40" font-weight="800">H</text>
+    <text x="210" y="140" text-anchor="middle" fill="#1d2340" font-size="24" font-weight="700">HRIS Login</text>
+    <text x="210" y="166" text-anchor="middle" fill="#6b7280" font-size="14">Gunakan akun seed default untuk mulai eksplorasi backend.</text>
+
+    <text x="40" y="210" fill="#1d2340" font-size="13" font-weight="500">NIK</text>
+    <rect x="40" y="220" width="340" height="42" rx="8" fill="#fff" stroke="#d1d5db"/>
+    <text x="56" y="247" fill="#1d2340" font-size="14">EMP001</text>
+
+    <text x="40" y="288" fill="#1d2340" font-size="13" font-weight="500">Password</text>
+    <rect x="40" y="298" width="340" height="42" rx="8" fill="#fff" stroke="#d1d5db"/>
+    <circle cx="56" cy="319" r="2" fill="#9ca3af"/><circle cx="64" cy="319" r="2" fill="#9ca3af"/><circle cx="72" cy="319" r="2" fill="#9ca3af"/><circle cx="80" cy="319" r="2" fill="#9ca3af"/><circle cx="88" cy="319" r="2" fill="#9ca3af"/><circle cx="96" cy="319" r="2" fill="#9ca3af"/><circle cx="104" cy="319" r="2" fill="#9ca3af"/><circle cx="112" cy="319" r="2" fill="#9ca3af"/>
+
+    <rect x="40" y="360" width="16" height="16" rx="4" fill="#4b3ac3"/>
+    <text x="48" y="372" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">&#10003;</text>
+    <text x="64" y="372" fill="#6b7280" font-size="13">Simpan login</text>
+
+    <rect x="40" y="396" width="340" height="44" rx="8" fill="#4b3ac3"/>
+    <text x="210" y="424" text-anchor="middle" fill="#fff" font-size="14" font-weight="600">Masuk</text>
+  </g>
+</svg>

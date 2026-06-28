@@ -88,19 +88,32 @@ async function run() {
     await conn.execute('INSERT INTO payroll_components(code, name, type, taxable) VALUES (?,?,?,?)', [code, name, type, taxable])
   }
 
-  // === ADMIN USERS ===
+  // === ADMIN USERS (with employee records) ===
   const getRoleId = async (name) => { const [rows] = await conn.execute('SELECT id FROM roles WHERE name=?', [name]); return rows[0]?.id }
+  const getDeptId = async (name) => { const [rows] = await conn.execute('SELECT id FROM departments WHERE name=?', [name]); return rows[0]?.id }
+  const getPosId = async (name) => { const [rows] = await conn.execute('SELECT id FROM positions WHERE name=?', [name]); return rows[0]?.id }
 
   // bcrypt hash for 'admin123'
   const hash = '$2b$10$2Y8uPaG8pBSGyd7fwqcLbOY67TEKq/qjvlUr9XwJG0DP4I92G1.rW'
   const adminUsers = [
-    ['ADM001', 'Super Admin'],
-    ['HRD001', 'HRD'],
-    ['FIN001', 'Finance'],
-    ['MGR001', 'Manager'],
+    // [nik, roleName, employeeName, departmentName, positionName, email]
+    ['ADM001', 'Super Admin', 'Administrator', 'IT Support', 'IT Support Specialist', 'admin@hris.local'],
+    ['HRD001', 'HRD', 'HRD Staff', 'HRD', 'HR Manager', 'hrd@hris.local'],
+    ['FIN001', 'Finance', 'Finance Staff', 'Finance', 'Finance Manager', 'finance@hris.local'],
+    ['MGR001', 'Manager', 'Manager Staff', 'Engineering', 'Engineering Manager', 'manager@hris.local'],
   ]
-  for (const [nik, roleName] of adminUsers) {
-    await conn.execute('INSERT INTO users(nik, password, role_id, employee_id) VALUES (?,?,?,?)', [nik, hash, await getRoleId(roleName), null])
+  for (const [nik, roleName, empName, deptName, posName, email] of adminUsers) {
+    // Create employee record first
+    const [empResult] = await conn.execute(
+      'INSERT INTO employees(name, department_id, position_id, email) VALUES (?,?,?,?)',
+      [empName, await getDeptId(deptName), await getPosId(posName), email],
+    )
+    const empId = empResult.insertId
+    // Create user linked to the employee
+    await conn.execute(
+      'INSERT INTO users(nik, email, password, role_id, employee_id) VALUES (?,?,?,?,?)',
+      [nik, email, hash, await getRoleId(roleName), empId],
+    )
   }
 
   await conn.end()
