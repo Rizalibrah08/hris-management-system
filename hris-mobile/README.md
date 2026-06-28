@@ -1,143 +1,233 @@
-# Workmate - HR Management System
+# Workmate — HRIS Mobile App
 
-Workmate adalah aplikasi HRIS (Human Resource Information System) modern yang dirancang untuk membantu karyawan mengelola perjalanan kerja mereka dengan lebih efisien dan mudah.
+Aplikasi mobile HRIS (Human Resource Information System) berbasis **React Native (Expo)** untuk karyawan. Terhubung ke backend dari project `hris-web` (port 5000) dan menyediakan absensi selfie + GPS, pengajuan cuti, slip gaji, notifikasi, serta dashboard karyawan.
 
-## 🚀 Fitur Utama (Saat Ini)
+> Pada layar login app ini ditampilkan dengan judul **"Curated HR"**; package Android: `com.hris.workmate`.
 
-### Frontend (Mobile App)
+---
 
-- **Onboarding Experience**: Perkenalan fitur aplikasi melalui slide interaktif yang informatif dengan animasi halus.
+## Daftar Isi
 
-- **Sistem Autentikasi**:
-    - **Sign In**: Mendukung login melalui Email, Employee ID, atau nomor telepon.
-    - **Sign Up**: Pendaftaran akun baru dengan validasi Company ID dan integrasi Syarat & Ketentuan (slide-up modal).
-    - **Verifikasi Email**: Sistem verifikasi menggunakan kode OTP (One-Time Password) setelah pendaftaran.
-    - **Lupa Password (3-Step Flow)**:
-        - **Step 1 – Email Input**: Slide-up modal untuk memasukkan email. Tombol Submit terkunci hingga email terisi.
-        - **Step 2 – Kode Verifikasi**: Input 6-digit OTP dengan auto-focus antar kolom dan validasi saat submit.
-        - **Step 3 – New Password**: Form input password baru dan konfirmasi password, dilengkapi ikon mata (show/hide) yang tidak menutup keyboard secara tidak sengaja, serta ikon gembok di setiap field.
+- [Fitur Utama](#fitur-utama)
+- [Tech Stack](#tech-stack)
+- [Struktur Proyek](#struktur-proyek)
+- [Konfigurasi Koneksi API](#konfigurasi-koneksi-api)
+- [Cara Menjalankan](#cara-menjalankan)
+- [Build APK](#build-apk)
+- [Catatan Pengembangan](#catatan-pengembangan)
+- [Roadmap](#roadmap)
 
-- **UI/UX Modern**: Desain bersih menggunakan skema warna ungu (Lavender/Violet) dengan navigasi yang intuitif.
+---
 
-- **Attendance Module**:
-    - **Dashboard Kehadiran**: Pemantauan jam kerja terintegrasi dan daftar riwayat aktivitas presensi karyawan.
-    - **Selfie Verification**: Integrasi kamera depan (`expo-camera`) untuk memvalidasi absensi lengkap dengan *Geo-location* (Lat/Long) dan *Timestamp*.
-    - **State Management Dinamis**: Status UI interaktif sesuai kondisi harian (*Clock In Now* → *Clock Out* → *Clocked Out*).
-    - **Attendance Details**: Rekap detail laporan jam kerja secara spesifik pada masing-masing hari dan tersedianya aksi simulasi *Export As PDF*.
+## Fitur Utama
 
-- **Profile Module**:
-    - **User Profile**: Layar profil karyawan modern yang menyediakan manajemen pengaturan dan navigasi akun.
-    - **Personal Data**: Tampilan dan pengelolaan data pribadi karyawan.
-    - **Office Assets**: Layar daftar aset kantor yang dipinjam karyawan, dapat diakses dari halaman profil.
-    - **Payroll & Tax Management**: Daftar rekapitulasi gaji bulanan yang menyajikan *Total Hours*, *Received Amount*, dan parameter pajak.
-    - **Payroll Details/Slip**: Dokumen rinci spesifikasi penggajian (Basic Salary, Reimbursement, Overtime, Tax, dll) disertai integrasi cetak/pdf.
+### Onboarding
+- Slide perkenalan fitur interaktif (4 slide) dengan animasi halus dan tombol skip/get-started (`OnboardingScreen.js`).
 
-- **Expense Summary Module**:
-    - Menu bawaan yang terpasang pada navigasi bawah untuk melihat rincian klaim (*Review*, *Approved*, *Rejected*). Mendukung transisi UX mulus dan *Empty State*.
+### Autentikasi
+- **Login NIK + Password** menggantikan alur lama (email/employee ID/telepon, sign up, OTP, dan forgot password telah dihapus).
+- Toggle show/hide password, opsi "Simpan login", dan error box inline.
+- **Pengaturan Server** (slide-up modal): tampilkan URL aktif, ubah/reset URL backend manual, atau gunakan auto-detect LAN.
+- **Sesi Persisten**: token disimpan di AsyncStorage; saat app dibuka kembali, `AuthContext` memanggil `/auth/me` untuk memvalidasi sesi.
+- **Auto Logout**: respons `401` dari API otomatis memicu logout (via `setOnUnauthorized`).
 
-- **Leave Module**:
-    - **Leave Screen**: Tampilan daftar pengajuan cuti dengan status (*Pending*, *Approved*, *Rejected*) dan riwayat cuti.
-    - **Submit Leave**: Form pengajuan cuti baru dengan slide-up modal interaktif untuk:
-        - Pilihan kategori cuti (Annual Leave, Sick Leave, dll).
-        - Pemilihan rentang tanggal (*date range*) secara visual.
-    - **UX**: Tombol Submit terkunci hingga semua field terisi dengan benar.
+### Dashboard (Home Tab)
+- Menampilkan data dari endpoint `/dashboard/mobile`: kartu sambutan, info clock-in hari ini, statistik (total karyawan, attendance rate, pending leave), dan aksi cepat.
+- Mendukung pull-to-refresh.
 
-- **Task Module** ⭐ *Baru*:
-    - **Task Screen**: Halaman utama tugas yang dapat diakses via tombol tengah bottom navigation (tab khusus).
-    - **Header Ilustrasi**: Header berwarna ungu dengan ilustrasi clipboard dan bintang dinamis.
-    - **Summary of Work**: Kartu ringkasan progres tugas yang menampilkan *To Do*, *In Progress*, dan *Done*.
-    - **Burnout Stats Card**: Kartu indikator tingkat burnout karyawan (Good/Warning/Critical) dengan progress bar visual. Dapat diklik untuk membuka halaman detail.
-    - **Filter Tugas**: Tab filter (*All*, *In Progress*, *Finish*) untuk menyortir daftar tugas.
-    - **Empty State**: Ilustrasi informatif ketika tidak ada tugas untuk hari ini.
-    - **Create Task Button**: Tombol *floating* untuk membuat tugas baru.
+### Attendance (Tab)
+- Status absensi harian (`my-status`) dengan tombol dinamis *Clock In Now* → *Clock Out* → *Clocked Out*.
+- **Selfie Verification**: kamera depan (`expo-camera`) + GPS (`expo-location`) untuk clock-in; upload via multipart form.
+- Konfirmasi clock-out melalui modal sukses.
+- Riwayat absensi bulanan (`my-history`) dan **Kalender Absensi** per bulan (`AttendanceCalendarScreen.js`) dengan penanda hari kerja.
+- Detail absensi per hari + simulasi export PDF (`AttendanceDetailsScreen.js`).
 
-- **Burnout Stats Screen** ⭐ *Baru*:
-    - **Header + Navigasi**: Header dengan judul "Burnout Stats" dan tombol kembali (back button).
-    - **Burnout Stats Card**: Status burnout saat ini (badge "Good") dengan emoji dan progress bar hijau.
-    - **Working Level Chart**: Visualisasi grafik batang (*bar chart*) riwayat *story point* per Sprint (Sprint 1-5), dengan penyorotan Sprint aktif menggunakan warna ungu.
-    - **Working Period Chart**: Visualisasi area/garis (*line area chart*) yang menampilkan rata-rata jam kerja per bulan (May–Sept) dengan titik data dan gradient halus.
+### Leave (Tab)
+- Daftar pengajuan cuti dengan status (Pending/Approved/Rejected) dari `/leave/my`.
+- **Submit Leave** (`SubmitLeaveScreen.js`): slide-up modal untuk pilih kategori cuti (`/leave-types`), rentang tanggal, dan alasan. Tombol submit terkunci sampai semua field valid.
+- Info kuota cuti (`/leave/quota`).
 
-- **Global UX Improvements**:
-    - **Interactive & Dismissible Modals**: Penggunaan ekstensif *Slide-up Modal bottom-sheets* interaktif. Seluruh modal mendukung gestur "ketuk-di-luar" (*click-outside-to-dismiss*) untuk otomatis kembali/keluar.
-    - Optimasi *Top Padding* layar di bawah Status Bar (*Notch*) untuk memastikan komponen selalu rekat nyaman secara *cross-platform*.
-    - **SafeAreaView**: Seluruh layar menggunakan `SafeAreaView` dari `react-native-safe-area-context` (bukan dari `react-native`) sesuai rekomendasi terbaru.
-    - **Navigation Bar**: Konfigurasi navigasi bar Android dioptimalkan untuk menghindari white space pada layout.
+### Payroll (Tab)
+- Daftar rekap gaji (`/payroll/my`, `/payroll/my-runs`).
+- **Payroll Details/Slip** (`PayrollDetailsScreen.js`): rincian gaji (basic salary, reimbursement, overtime, tax, dll) + aksi cetak/share PDF via `expo-print` & `expo-sharing`.
 
-## 🛠️ Tech Stack
+### Profile (Tab)
+- Profil karyawan dari `/employees/me`: nama, jabatan, departemen, email, telepon, dan akhir kontrak.
+- **Personal Data** (`PersonalDataScreen.js`): pengelolaan & update data pribadi, termasuk upload foto profil (`/employees/me/photo`, multipart).
+- Logout dengan konfirmasi.
+
+### Notifications
+- Daftar notifikasi pengguna (`/notifications/my`) dengan refresh, mark read per item, dan mark-all-read (`NotificationScreen.js`).
+
+### UX Global
+- **SafeAreaView** dari `react-native-safe-area-context` di seluruh layar (bukan `react-native`).
+- **Slide-up Modals** interaktif dengan click-outside-to-dismiss.
+- **ErrorBoundary** global + **Toast** untuk notifikasi feedback.
+- **React Query** untuk caching & state data API (`QueryClient` dengan retry & staleTime default).
+- **Loading screen** "Memulihkan sesi..." saat validasi token di awal.
+- Android navigation bar di-*hidden* via `expo-navigation-bar` untuk layout edge-to-edge.
+
+---
+
+## Tech Stack
 
 ### Frontend
-- **React Native** (Expo SDK 54)
-- **React Navigation** (Native Stack / Bottom Tabs)
-- **react-native-safe-area-context** (Safe area handling)
-- **Expo Camera** (Akses sensor perangkat keras)
-- **Expo Linear Gradient** (Efek visual gradasi)
-- **Expo Navigation Bar** (Kontrol Android navigation bar)
-- **Vector Icons** (Ionicons)
+| Kategori | Teknologi |
+|----------|----------|
+| Framework | React Native 0.81.5, Expo SDK 54, React 19.1 |
+| Navigation | `@react-navigation/native`, `native-stack`, `bottom-tabs` |
+| State / Data | `@tanstack/react-query`, Context API (`AuthContext`) |
+| Storage | `@react-native-async-storage/async-storage` (token, user, server URL, NIK tersimpan) |
+| Kamera & Media | `expo-camera`, `expo-image-picker`, `expo-image-manipulator` |
+| Lokasi | `expo-location`, `react-native-maps` |
+| Output | `expo-print`, `expo-sharing` (PDF payslip / slip gaji) |
+| UI | `expo-linear-gradient`, `@expo/vector-icons` (Ionicons), `react-native-safe-area-context`, `expo-status-bar`, `expo-navigation-bar` |
 
-## 📂 Struktur Proyek
+> Mengaktifkan **New Architecture** (`newArchEnabled: true` di `app.json`).
+
+### Izin Android (`app.json`)
+- `CAMERA`
+- `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`
+- `usesCleartextTraffic: true` (untuk HTTP ke backend lokal/VPS)
+- `edgeToEdgeEnabled: true`
+
+### Backend
+- Tidak ada di repo ini. Dipakai dari project `hris-web` (port 5000). Daftar endpoint yang dipakai ada di `frontend/services/api.js`.
+
+---
+
+## Struktur Proyek
 
 ```text
-workmate-hr-app/
-├── frontend/                   # Aplikasi React Native (Expo)
-│   ├── assets/                 # Gambar dan icon
+hris-mobile/
+├── frontend/                              # Aplikasi React Native (Expo)
+│   ├── assets/                           # Icon, splash, dan onboarding images
+│   ├── components/
+│   │   ├── ErrorBoundary.js              # Boundary error global
+│   │   └── Toast.js                       # Sistem toast notifikasi
+│   ├── contexts/
+│   │   └── AuthContext.js                # Provider auth: login, logout, refreshUser, sesi
+│   ├── services/
+│   │   └── api.js                         # Klien API (auth, employees, attendance,
+│   │                                      #   company, leave, payroll, payslips,
+│   │                                      #   dashboard, notifications) + auto-LAN URL
 │   ├── screens/
-│   │   ├── OnboardingScreen.js      # Onboarding + Lupa Password (3-step)
-│   │   ├── SignUpScreen.js          # Registrasi akun
-│   │   ├── DashboardScreen.js       # Dashboard utama
-│   │   ├── AttendanceScreen.js      # Absensi & riwayat
-│   │   ├── AttendanceDetailsScreen.js
-│   │   ├── CameraScreen.js          # Selfie clock-in
-│   │   ├── SubmitClockInScreen.js
-│   │   ├── ClockInScreen.js
-│   │   ├── ProfileScreen.js         # Profil karyawan
-│   │   ├── PersonalDataScreen.js
-│   │   ├── OfficeAssetsScreen.js    # Aset kantor
-│   │   ├── PayrollTaxScreen.js
-│   │   ├── PayrollDetailsScreen.js
-│   │   ├── ExpenseScreen.js
-│   │   ├── LeaveScreen.js           # Manajemen cuti
-│   │   ├── SubmitLeaveScreen.js
-│   │   ├── TaskScreen.js            # ⭐ Modul Task (Baru)
-│   │   └── BurnoutStatsScreen.js    # ⭐ Detail Burnout Stats (Baru)
-│   └── App.js                  # Entry point & navigasi frontend
+│   │   ├── OnboardingScreen.js           # Slide perkenalan
+│   │   ├── LoginScreen.js                # Login NIK + pengaturan server
+│   │   ├── DashboardScreen.js            # Home tab
+│   │   ├── AttendanceScreen.js           # Absensi + status + history
+│   │   ├── ClockInScreen.js              # Konfirmasi sebelum selfie
+│   │   ├── CameraScreen.js               # Selfie clock-in
+│   │   ├── SubmitClockInScreen.js        # Submit clock-in (GPS + foto)
+│   │   ├── AttendanceDetailsScreen.js    # Detail & export PDF
+│   │   ├── AttendanceCalendarScreen.js   # Kalender absensi bulanan
+│   │   ├── LeaveScreen.js                # Daftar cuti
+│   │   ├── SubmitLeaveScreen.js          # Form pengajuan cuti
+│   │   ├── PayrollTaxScreen.js           # Daftar payroll
+│   │   ├── PayrollDetailsScreen.js       # Slip gaji + cetak PDF
+│   │   ├── ProfileScreen.js              # Profil karyawan + logout
+│   │   ├── PersonalDataScreen.js         # Edit data pribadi & upload foto
+│   │   └── NotificationScreen.js         # Daftar notifikasi
+│   ├── android/                          # Output `expo prebuild` (native project)
+│   ├── dist/                             # Bundle build output
+│   ├── App.js                            # Entry point: navigasi + provider tree
+│   ├── app.json                          # Konfigurasi Expo
+│   ├── eas.json                          # Konfigurasi EAS Build
+│   ├── metro.config.js
+│   ├── index.js
+│   └── package.json
+├── package-lock.json                     # Root package (untuk deploy Render)
 └── README.md
 ```
 
-## ⚙️ Cara Menjalankan
+### Navigasi (App.js)
+- **Stack**: `Onboarding` → `Login` → `Main` (Bottom Tabs)
+- **Bottom Tabs (urutan)**: `Home`, `Attendance`, `Payroll`, `Leave`, `Profile`
+- **Stack Screens tambahan**: `ClockIn`, `Camera`, `SubmitClockIn`, `AttendanceDetails`, `PayrollTax`, `PayrollDetails`, `PersonalData`, `SubmitLeave`, `Notifications`, `AttendanceCalendar`
 
-### 1. Prasyarat
-- Node.js terinstall.
-- Expo Go di perangkat mobile atau Emulator (Android/iOS).
+---
 
-### 2. Menjalankan Frontend
+## Konfigurasi Koneksi API
+
+`frontend/services/api.js` menentukan base URL dengan prioritas:
+
+1. **Custom URL** — disimpan manual via modal "Pengaturan Server" di LoginScreen (AsyncStorage key `api_server_url`). Dipakai jika HP & PC beda jaringan.
+2. **Auto-detect LAN** — di mode `__DEV__`, ambil IP dev machine dari `Constants.expoConfig.hostUri` + port `5000`. Otomatis saat HP & PC satu WiFi.
+3. **Production URL** — `process.env.EXPO_PUBLIC_API_URL` atau fallback `https://your-production-api.com`.
+
+Helper publik: `setServerUrl(url)`, `getServerUrl()`, `setAuthToken()`, `clearAuthToken()`, `setOnUnauthorized()`.
+
+Untuk build APK production, set env saat build:
+```bash
+export EXPO_PUBLIC_API_URL=https://api.yourcompany.com
+```
+atau edit `PROD_URL` di `services/api.js`.
+
+---
+
+## Cara Menjalankan
+
+### Prasyarat
+- Node.js 18+
+- Expo Go di HP, atau emulator Android/iOS
+
+### Menjalankan Frontend
 ```bash
 cd frontend
 npm install
 npx expo start
 ```
 
-> Untuk membersihkan cache bundler jika ada error:
-> ```bash
-> npx expo start --clear
-> ```
+Bersihkan cache bila ada error:
+```bash
+npx expo start --clear
+```
 
-### 3. Menjalankan Backend (Web)
-> **Catatan**: Mobile app menggunakan backend dari project `hris-web` (port 5000).
-
-Pastikan backend web sudah berjalan:
+### Menjalankan Backend (Web)
+Mobile app bergantung pada backend dari `hris-web` di port 5000:
 ```bash
 cd ../hris-web
 npm install
-npm run dev:all  # Menjalankan frontend + backend bersamaan
+npm run dev:all
+```
+Backend berjalan di `http://localhost:5000`.
+
+> Saat dipakai di HP fisik di jaringan yang sama dengan PC, app otomatis menemukan IP backend (mode LAN). Jika tidak, buka modal "Pengaturan Server" di layar login dan isi URL backend secara manual.
+
+---
+
+## Build APK
+
+Panduan lengkap (prebuild, release/debug, signing, troubleshooting) ada di [`frontend/BUILD-APK.md`](frontend/BUILD-APK.md).
+
+Ringkasan alur release:
+```bash
+# 1. Set EXPO_PUBLIC_API_URL atau edit PROD_URL di services/api.js
+cd frontend
+npm install
+npx expo prebuild --platform android
+cd android
+./gradlew assembleRelease
+adb install app/build/outputs/apk/release/app-release-unsigned.apk
 ```
 
-Backend akan berjalan di `http://localhost:5000`.
+Output:
+- Debug: `android/app/build/outputs/apk/debug/app-debug.apk`
+- Release: `android/app/build/outputs/apk/release/app-release-unsigned.apk`
 
-## 📝 Catatan Pengembangan
-- Semua modul (Attendance, Leave, Payroll, dll.) sudah terhubung ke API backend web (hris-web).
-- Task Module dan Burnout Stats menggunakan data statis (mockup) — fitur ini masih dalam pengembangan.
+---
 
-## 🗺️ Roadmap (Next Steps)
-- [ ] Form **Create Task** — layar input untuk membuat tugas baru.
-- [ ] Integrasi Task Screen dengan API backend (filter & list tugas nyata).
-- [ ] Integrasi Burnout Stats dengan data dinamis dari server.
+## Catatan Pengembangan
+- Seluruh modul (Attendance, Leave, Payroll, Profile, Notifications) sudah terhubung ke backend `hris-web`.
+- Modul lama (SignUp + OTP, Forgot Password 3-step, Expense Summary, Office Assets, Task, Burnout Stats) telah **dihapus** dari basis kode ini.
+- Penanganan sesi: token di AsyncStorage + validasi via `/auth/me`; `401` otomatis logout.
+- Error terkonsolidasi via `ErrorBoundary` dan `Toast`.
+
+---
+
+## Roadmap
+- [ ] Push notification real-time (saat ini hanya in-app list via `/notifications/my`).
+- [ ] Sinkron kalender absensi offline-first.
+- [ ] Ekspor slip gaji PDF dengan lokasi penyimpanan kustom.
+- [ ] Dukungan multi-bahasa (i18n) ID/EN.
+- [ ] Signed release build + AAB untuk Play Store.
