@@ -16,7 +16,7 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEY = 'api_server_url';
-const PROD_URL = 'https://your-production-api.com';
+const PROD_URL = process.env.EXPO_PUBLIC_API_URL || 'https://your-production-api.com';
 
 let _baseUrl = null;
 

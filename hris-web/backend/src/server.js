@@ -7,8 +7,10 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import multer from 'multer'
 import os from 'os'
+import fs from 'node:fs'
+import { v2 as cloudinary } from 'cloudinary'
 import { query } from './db.js'
-import { authRequired, roleRequired, webPortalGuard } from './middleware.js'
+import { authRequired, roleRequired } from './middleware.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -17,35 +19,50 @@ const __dirname = path.dirname(__filename)
 
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '..', '.env') })
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+})
+
+function uploadToCloudinary(buffer, folder) {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream({ folder, resource_type: 'image' }, (err, result) => {
+        if (err) return reject(err)
+        resolve(result.secure_url)
+      })
+      .end(buffer)
+  })
+}
+
 const app = express()
-app.use(cors())
+app.use(cors({
+  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : true,
+}))
 app.use(helmet())
 app.use(morgan('dev'))
 app.use(express.json({ limit: '10mb' }))
 
 const uploadsDir = path.join(__dirname, 'uploads')
-const selfieStorage = multer.diskStorage({
-  destination: path.join(uploadsDir, 'selfies'),
-  filename: (_req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
-})
-const uploadSelfie = multer({ storage: selfieStorage, limits: { fileSize: 5 * 1024 * 1024 } })
 
-const photoStorage = multer.diskStorage({
-  destination: path.join(uploadsDir, 'photos'),
+// Selfie & profile photo → Cloudinary (memory storage)
+const uploadSelfie = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } })
+const uploadPhoto = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } })
+
+// CSV import → local temp disk, deleted after processing
+const importStorage = multer.diskStorage({
+  destination: path.join(uploadsDir, 'imports'),
   filename: (_req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 })
-const uploadPhoto = multer({ storage: photoStorage, limits: { fileSize: 5 * 1024 * 1024 } })
+const uploadImport = multer({ storage: importStorage, limits: { fileSize: 5 * 1024 * 1024 } })
 
 app.use('/uploads', express.static(uploadsDir))
 
-function optionalMulter(multerInstance, fieldName) {
-  return (req, res, next) => {
-    const contentType = req.headers['content-type'] || ''
-    if (contentType.includes('multipart/form-data')) {
-      return multerInstance.single(fieldName)(req, res, next)
-    }
-    next()
-  }
+// Ensure upload directories exist
+for (const sub of ['imports']) {
+  fs.mkdirSync(path.join(uploadsDir, sub), { recursive: true })
 }
 
 await query(`CREATE TABLE IF NOT EXISTS notifications (
@@ -252,7 +269,7 @@ app.delete('/employees/:id', authRequired, roleRequired('HRD', 'Super Admin'), a
 })
 
 // === EMPLOYEE IMPORT (CSV) ===
-app.post('/employees/import', authRequired, roleRequired('HRD', 'Super Admin'), uploadSelfie.single('file'), async (req, res) => {
+app.post('/employees/import', authRequired, roleRequired('HRD', 'Super Admin'), uploadImport.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'File CSV wajib diupload' })
 
   const fs = await import('node:fs/promises')
@@ -337,10 +354,15 @@ app.post('/employees/import', authRequired, roleRequired('HRD', 'Super Admin'), 
 
 app.post('/attendance/clockin', authRequired, uploadSelfie.single('selfie'), async (req, res) => {
   const employee_id = req.body.employee_id
-  const gps_location = req.body.gps_location
+  const _gps_location = req.body.gps_location
   let selfie = null
   if (req.file) {
-    selfie = `/uploads/selfies/${req.file.filename}`
+    try {
+      selfie = await uploadToCloudinary(req.file.buffer, 'hris/selfies')
+    } catch (err) {
+      console.error('Cloudinary upload error:', err)
+      return res.status(500).json({ message: 'Gagal mengunggah foto selfie' })
+    }
   } else if (req.body.selfie) {
     selfie = req.body.selfie
   }
@@ -360,14 +382,14 @@ app.post('/attendance/clockin', authRequired, uploadSelfie.single('selfie'), asy
   const inserted = await query(
     `INSERT INTO attendance(employee_id, clock_in, gps_location, selfie, status)
      VALUES (?, NOW(), ?, ?, 'Aktif')`,
-    [empId, gps_location || null, selfie || null],
+     [empId, _gps_location || null, selfie || null],
   )
   const created = await query('SELECT * FROM attendance WHERE id = ?', [inserted.insertId])
   res.status(201).json(created[0])
 })
 
 app.post('/attendance/clockout', authRequired, async (req, res) => {
-  const { attendance_id, gps_location } = req.body
+  const { attendance_id, gps_location: _gps_location } = req.body
   const empId = req.user.employeeId
   let attId = attendance_id
   if (!attId && empId) {
@@ -1677,8 +1699,6 @@ app.get('/roles', authRequired, async (_, res) => {
   res.json(rows)
 })
 
-const adminRefRequired = (authRequired, roleRequired('HRD', 'Super Admin'))
-
 // === Departments CRUD ===
 app.post('/departments', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
   const { name } = req.body
@@ -1904,9 +1924,14 @@ app.post('/employees/me/photo', authRequired, uploadPhoto.single('photo'), async
   if (!employeeId) return res.status(404).json({ message: 'User tidak memiliki data karyawan' })
   if (!req.file) return res.status(400).json({ message: 'File foto wajib diupload' })
 
-  const photoUrl = `/uploads/photos/${req.file.filename}`
-  await query('UPDATE employees SET photo_url = ? WHERE id = ?', [photoUrl, employeeId])
-  res.json({ photoUrl, message: 'Foto profil berhasil diupload' })
+  try {
+    const photoUrl = await uploadToCloudinary(req.file.buffer, 'hris/photos')
+    await query('UPDATE employees SET photo_url = ? WHERE id = ?', [photoUrl, employeeId])
+    res.json({ photoUrl, message: 'Foto profil berhasil diupload' })
+  } catch (err) {
+    console.error('Cloudinary upload error:', err)
+    res.status(500).json({ message: 'Gagal mengunggah foto profil' })
+  }
 })
 
 app.get('/employees/me/photo', authRequired, async (req, res) => {

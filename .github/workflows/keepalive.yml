@@ -1,0 +1,13 @@
+name: Keep Backend Alive
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+
+jobs:
+  ping:
+    name: Ping Render Health
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /health
+        run: curl -sS --fail "https://${{ secrets.RENDER_SERVICE_URL }}/health"

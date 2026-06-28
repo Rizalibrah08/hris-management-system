@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useReports } from '../hooks/useReports'
-import { useAuth } from '../contexts/AuthContext'
 import { api } from '../api/client'
 import { formatRupiah } from '../utils/formatters'
 import MetricsGrid from '../components/MetricsGrid'
@@ -8,14 +7,11 @@ import '../styles/global.css'
 import '../styles/dashboard.css'
 
 export default function Dashboard() {
-  const { role } = useAuth()
   const { report, loading: loadingReports } = useReports()
   const [attendanceData, setAttendanceData] = useState([])
   const [leaveData, setLeaveData] = useState([])
   const [loadingAttendance, setLoadingAttendance] = useState(false)
   const [loadingLeave, setLoadingLeave] = useState(false)
-
-  const isAdmin = ['HRD', 'Super Admin'].includes(role)
 
   useEffect(() => {
     let ignore = false

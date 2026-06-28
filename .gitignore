@@ -5,6 +5,8 @@ node_modules/
 dist/
 dist-ssr/
 build/
+.vercel/
+.turbo/
 
 # Environment variables
 .env
@@ -51,6 +53,9 @@ desktop.ini
 
 # Local config
 *.local
+
+# Local uploaded files
+hris-web/backend/src/uploads/
 
 # React Native / Expo (hris-mobile)
 .expo/
