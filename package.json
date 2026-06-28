@@ -1,0 +1,12 @@
+{
+  "name": "hris-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "build": "cd hris-web && npm install",
+    "start": "cd hris-web && npm run start:server"
+  }
+}

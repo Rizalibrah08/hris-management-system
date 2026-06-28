@@ -109,8 +109,8 @@ export default function Absensi() {
                   <td className={row.clockOut === 'Belum' ? 'muted' : ''}>{row.clockOut}</td>
                   <td>
                     {row.selfie ? (
-                      <a href={`http://localhost:5000${row.selfie}`} target="_blank" rel="noopener noreferrer">
-                        <img src={`http://localhost:5000${row.selfie}`} alt="selfie" style={{ width: 40, height: 40, borderRadius: 4, objectFit: 'cover' }} />
+                      <a href={row.selfie.startsWith('http') ? row.selfie : `${import.meta.env.VITE_UPLOADS_URL || ''}${row.selfie}`} target="_blank" rel="noopener noreferrer">
+                        <img src={row.selfie.startsWith('http') ? row.selfie : `${import.meta.env.VITE_UPLOADS_URL || ''}${row.selfie}`} alt="selfie" style={{ width: 40, height: 40, borderRadius: 4, objectFit: 'cover' }} />
                       </a>
                     ) : <span className="muted">-</span>}
                   </td>
