@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as Location from 'expo-location';
-import MapView, { Marker, Circle } from 'react-native-maps';
+import MapView, { Marker, Circle, UrlTile } from 'react-native-maps';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 
@@ -114,7 +114,13 @@ export default function ClockInScreen() {
             }}
             showsUserLocation={true}
             followsUserLocation={true}
+            mapType="none"
           >
+            <UrlTile
+              urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+              maximumZ={19}
+              flipY={false}
+            />
             <Marker
               coordinate={{ latitude: location.latitude, longitude: location.longitude }}
               title="Posisi Anda"

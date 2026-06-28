@@ -117,7 +117,7 @@ export default function Absensi() {
                   <td>
                     {row.hasGps ? (
                       <a
-                        href={`https://www.google.com/maps?q=${row.gpsCoords.lat},${row.gpsCoords.lng}`}
+                        href={`https://www.openstreetmap.org/?mlat=${row.gpsCoords.lat}&mlon=${row.gpsCoords.lng}#map=17/${row.gpsCoords.lat}/${row.gpsCoords.lng}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="gps-badge valid"
