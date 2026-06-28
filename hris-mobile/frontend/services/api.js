@@ -210,10 +210,11 @@ export const api = {
   },
 
   attendance: {
-    clockIn: async (employeeId, _gpsLocation, selfieUri) => {
+    clockIn: async (employeeId, gpsLocation, selfieUri) => {
       if (selfieUri && (selfieUri.startsWith('file://') || selfieUri.startsWith('content://'))) {
         const formData = new FormData();
         formData.append('employee_id', String(employeeId));
+        if (gpsLocation) formData.append('gps_location', gpsLocation);
         formData.append('selfie', {
           uri: selfieUri,
           type: 'image/jpeg',
@@ -223,7 +224,7 @@ export const api = {
       }
       return request('/attendance/clockin', {
         method: 'POST',
-        body: JSON.stringify({ employee_id: employeeId }),
+        body: JSON.stringify({ employee_id: employeeId, gps_location: gpsLocation }),
       });
     },
 

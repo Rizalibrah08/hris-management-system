@@ -19,6 +19,7 @@ export default function SubmitClockInScreen() {
   const photoUri = route.params?.photoUri || '';
   const action = route.params?.action || 'clockin';
   const attendanceId = route.params?.attendanceId;
+  const gps = route.params?.gps || null;
   const isClockOut = action === 'clockout';
   
   const [notes, setNotes] = useState('');
@@ -55,7 +56,7 @@ export default function SubmitClockInScreen() {
           [{ resize: { width: 800 } }],
           { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG },
         );
-        await api.attendance.clockIn(user.employeeId, null, compressed.uri);
+        await api.attendance.clockIn(user.employeeId, gps, compressed.uri);
         setIsSuccessVisible(true);
       } catch (err) {
         Alert.alert('Gagal', err.message || 'Clock in gagal');

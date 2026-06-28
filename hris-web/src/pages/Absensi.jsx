@@ -55,6 +55,7 @@ export default function Absensi() {
       gps: a.gps_location,
       gpsDisplay: formatGps(a.gps_location),
       hasGps: !!parseGps(a.gps_location),
+      gpsCoords: parseGps(a.gps_location),
       selfie: a.selfie,
       status: a.status || 'Aktif',
     }))
@@ -115,7 +116,15 @@ export default function Absensi() {
                   </td>
                   <td>
                     {row.hasGps ? (
-                      <span className="gps-badge valid">{row.gpsDisplay}</span>
+                      <a
+                        href={`https://www.google.com/maps?q=${row.gpsCoords.lat},${row.gpsCoords.lng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="gps-badge valid"
+                        title="Lihat di Google Maps"
+                      >
+                        {row.gpsDisplay}
+                      </a>
                     ) : (
                       <span className="gps-badge none">{row.gpsDisplay}</span>
                     )}
