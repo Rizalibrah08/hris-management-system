@@ -169,7 +169,7 @@ export default function LeaveScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F3F4F6' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { paddingBottom: 110 },
+  scrollContent: { paddingBottom: 140 },
   headerBackground: { paddingTop: 40, paddingBottom: 60, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
   headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 20, position: 'relative' },
   headerTextContainer: { flex: 1, zIndex: 2 },
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   recordLabel: { fontSize: 12, color: '#6B7280', marginBottom: 4 },
   recordValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
   recordReason: { fontSize: 12, color: '#6B7280', marginTop: 4 },
-  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#F3F4F6', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 },
+  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#F3F4F6', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 90 },
   submitBtn: { backgroundColor: '#8B5CF6', paddingVertical: 16, borderRadius: 30, alignItems: 'center', shadowColor: '#8B5CF6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 5 },
   submitBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: 'bold' },
 });

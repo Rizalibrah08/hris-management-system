@@ -50,7 +50,6 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#8B5CF6" />
       <View style={styles.headerBackground}>
         <SafeAreaView>
           <View style={styles.headerTop}>

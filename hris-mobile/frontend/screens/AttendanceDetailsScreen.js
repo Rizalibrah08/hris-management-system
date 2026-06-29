@@ -28,6 +28,7 @@ export default function AttendanceDetailsScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const isFocused = useIsFocused();
+  const { user } = useAuth();
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
 
