@@ -126,7 +126,7 @@ export default function Karyawan() {
     if (!addForm.name.trim()) { setError('Nama wajib diisi'); return }
     setSubmitting(true)
     try {
-      await api('/employees', {
+      const created = await api('/employees', {
         method: 'POST',
         body: JSON.stringify({
           name: addForm.name,
@@ -137,7 +137,7 @@ export default function Karyawan() {
           phone: addForm.phone || null,
         }),
       })
-      setMessage('Karyawan berhasil ditambahkan')
+      setMessage(`Karyawan berhasil ditambahkan. NIK: ${created.nik} | Password: ${created.defaultPassword}`)
       setShowAddModal(false)
       resetAddForm()
       const ctrl = new AbortController()
@@ -359,6 +359,7 @@ export default function Karyawan() {
         <div className="modal-overlay" onClick={() => { setShowAddModal(false); resetAddForm(); clearMessages() }}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <h3>Tambah Karyawan Baru</h3>
+            <p className="section-note">NIK dan Password akan di-generate secara otomatis setelah disimpan.</p>
             <form onSubmit={handleAdd}>
               <div className="modal-form">
                 <label htmlFor="add-name">Nama Lengkap</label>

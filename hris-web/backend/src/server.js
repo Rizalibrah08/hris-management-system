@@ -261,13 +261,51 @@ app.get('/employees', authRequired, roleRequired('HRD', 'Super Admin'), async (_
 app.post('/employees', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
   const { name, department_id, position_id, contract_end, email, phone } = req.body
   if (!name) return res.status(400).json({ message: 'Nama wajib diisi' })
+  
+  // 1. Insert ke tabel employees
   const inserted = await query(
     `INSERT INTO employees(name, department_id, position_id, contract_end, email, phone)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [name, department_id || null, position_id || null, contract_end || null, email || null, phone || null],
   )
-  const created = await query('SELECT * FROM employees WHERE id = ?', [inserted.insertId])
-  res.status(201).json(created[0])
+  const empId = inserted.insertId
+  
+  // 2. Generate NIK (EMP-YYYYMMDD-XXX)
+  const now = new Date()
+  const dateStr = now.getFullYear().toString() + 
+                  String(now.getMonth() + 1).padStart(2, '0') + 
+                  String(now.getDate()).padStart(2, '0')
+  const prefix = `EMP-${dateStr}-`
+  const lastUser = await query('SELECT nik FROM users WHERE nik LIKE ? ORDER BY nik DESC LIMIT 1', [`${prefix}%`])
+  
+  let sequence = 1
+  if (lastUser.length > 0) {
+    const lastNik = lastUser[0].nik
+    const lastSeq = parseInt(lastNik.split('-')[2], 10)
+    if (!isNaN(lastSeq)) sequence = lastSeq + 1
+  }
+  const nik = `${prefix}${String(sequence).padStart(3, '0')}`
+
+  // 3. Buat default password "admin123"
+  const defaultPassword = 'admin123'
+  const hashedPassword = await bcrypt.hash(defaultPassword, 10)
+  
+  // 4. Cari role_id untuk "Employee"
+  const roles = await query('SELECT id FROM roles WHERE name="Employee"')
+  const roleId = roles.length > 0 ? roles[0].id : 1
+  
+  // 5. Insert ke tabel users
+  await query(
+    'INSERT INTO users(nik, password, role_id, employee_id, email, phone) VALUES (?,?,?,?,?,?)',
+    [nik, hashedPassword, roleId, empId, email || null, phone || null]
+  )
+
+  const created = await query('SELECT * FROM employees WHERE id = ?', [empId])
+  res.status(201).json({
+    ...created[0],
+    nik,
+    defaultPassword
+  })
 })
 
 app.put('/employees/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
@@ -1043,6 +1081,25 @@ app.get('/payroll/runs', authRequired, roleRequired('HRD', 'Finance', 'Super Adm
     ? await query('SELECT * FROM payroll_runs WHERE period_month = ? ORDER BY id DESC', [period])
     : await query('SELECT * FROM payroll_runs ORDER BY id DESC LIMIT 24')
   return res.json(rows)
+})
+
+app.delete('/payroll/runs/:runId', authRequired, roleRequired('HRD', 'Finance', 'Super Admin'), async (req, res) => {
+  const { runId } = req.params
+  const run = await query('SELECT status FROM payroll_runs WHERE id = ?', [runId])
+  if (run.length === 0) return res.status(404).json({ message: 'Run tidak ditemukan' })
+  if (run[0].status !== 'draft') return res.status(400).json({ message: 'Hanya payroll dengan status draft yang dapat dihapus' })
+
+  // Hapus semua dependensi payroll run
+  await query('DELETE FROM payroll_audit_logs WHERE payroll_run_id = ?', [runId])
+  await query('DELETE FROM payroll_approvals WHERE payroll_run_id = ?', [runId])
+  await query('DELETE FROM payslips WHERE payroll_run_id = ?', [runId])
+  await query(`DELETE c FROM payroll_run_item_components c
+               INNER JOIN payroll_run_items i ON c.payroll_run_item_id = i.id
+               WHERE i.payroll_run_id = ?`, [runId])
+  await query('DELETE FROM payroll_run_items WHERE payroll_run_id = ?', [runId])
+  await query('DELETE FROM payroll_runs WHERE id = ?', [runId])
+  
+  res.json({ message: 'Draft payroll berhasil dihapus' })
 })
 
 app.get('/payroll/runs/:runId', authRequired, roleRequired('HRD', 'Finance', 'Super Admin'), async (req, res) => {

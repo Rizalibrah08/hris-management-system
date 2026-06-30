@@ -3,6 +3,7 @@ import { usePayroll } from '../hooks/usePayroll'
 import { useAuth } from '../contexts/AuthContext'
 import Modal from '../components/Modal'
 import PayrollItemBreakdown from '../components/PayrollItemBreakdown'
+import { api } from '../api/client'
 import '../styles/global.css'
 import '../styles/payroll.css'
 
@@ -12,6 +13,18 @@ function formatRupiah(n) {
 }
 
 function RunTab({ payrollRuns, selectedRunId, loadPayrollDetail, payrollDetail, selectedPayrollItemId, payrollDetailSearch, setPayrollDetailSearch, runningPayroll, role }) {
+  const handleDeleteDraft = async (e, runId) => {
+    e.stopPropagation()
+    if (!window.confirm('Yakin ingin menghapus draft ini?')) return
+    try {
+      await api(`/payroll/runs/${runId}`, { method: 'DELETE' })
+      alert('Draft berhasil dihapus')
+      window.location.reload()
+    } catch (err) {
+      alert(err.message || 'Gagal menghapus draft')
+    }
+  }
+
   return (
     <section className="panel payroll-run-section">
       <div className="panel-head">
@@ -42,6 +55,9 @@ function RunTab({ payrollRuns, selectedRunId, loadPayrollDetail, payrollDetail, 
                     <td>{formatRupiah(r.total_net)}</td>
                     <td>
                       <button className="small-btn" onClick={(e) => { e.stopPropagation(); loadPayrollDetail?.(r.id) }}>Detail</button>
+                      {r.status === 'draft' && role && ['HRD', 'Finance', 'Super Admin'].includes(role) && (
+                        <button className="small-btn cancel-btn" style={{ marginLeft: '4px' }} onClick={(e) => handleDeleteDraft(e, r.id)}>Hapus Draft</button>
+                      )}
                     </td>
                   </tr>
                 ))
