@@ -10,7 +10,7 @@ export async function seedDummyData(conn) {
 
   const hash = '$2b$10$2Y8uPaG8pBSGyd7fwqcLbOY67TEKq/qjvlUr9XwJG0DP4I92G1.rW' // 'admin123'
 
-  // 1. Employees (21 new employees)
+  // 1. Employees (21 new employees)aaa
   const employeeData = [
     // Engineering
     { name: 'Budi Santoso', dept: 'Engineering', pos: 'Senior Software Engineer', role: 'Employee', email: 'budi@hris.local', nik: 'EMP001' },
