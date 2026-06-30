@@ -131,6 +131,9 @@ async function run() {
     )
   }
 
+  const { seedDummyData } = await import('./seed-dummy.js')
+  await seedDummyData(conn)
+
   await conn.end()
   console.log(`\nDatabase "${database}" siap (${host}:${port})`)
   console.log(`  Master: ${roles.length} roles, ${departments.length} dept, ${positions.length} posisi, ${leaveTypes.length} jenis cuti, ${components.length} komponen payroll`)
