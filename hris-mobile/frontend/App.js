@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as NavigationBar from 'expo-navigation-bar';
-import { NavigationContainer, CommonActions } from '@react-navigation/native';
+import { NavigationContainer, CommonActions, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -52,7 +52,7 @@ function MainTabs() {
         tabBarStyle: {
           backgroundColor: '#1E1E1E',
           borderTopWidth: 0,
-          height: 70,
+          minHeight: 70,
           paddingBottom: 10,
           paddingTop: 10,
         },
@@ -108,8 +108,16 @@ function AppContent() {
     );
   }
 
+  const MyTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: '#1E1E1E',
+    },
+  };
+
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} theme={MyTheme}>
       <Stack.Navigator initialRouteName={user ? 'Main' : 'Onboarding'}>
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />

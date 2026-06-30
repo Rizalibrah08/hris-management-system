@@ -76,7 +76,7 @@ export default function LoginScreen({ navigation }) {
     setServerSaving(false);
   };
 
-  const isCustomUrl = serverUrl && !serverUrl.includes(':5000') || serverUrl && serverUrl.startsWith('https://');
+  const isCustomUrl = serverUrl && (!serverUrl.includes(':5000') || serverUrl.startsWith('https://'));
 
   return (
     <SafeAreaView style={styles.container}>

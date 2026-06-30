@@ -14,6 +14,7 @@
 
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system/legacy';
 
 const STORAGE_KEY = 'api_server_url';
 const PROD_URL = process.env.EXPO_PUBLIC_API_URL || 'https://your-production-api.com';
@@ -179,6 +180,52 @@ async function requestMultipart(endpoint, formData) {
   }
 }
 
+async function uploadFileAsync(endpoint, fileUri, fieldName, parameters = {}) {
+  const baseUrl = await resolveBaseUrl();
+  const url = `${baseUrl}${endpoint}`;
+  
+  const headers = {};
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+
+  console.log(`[API Upload] POST ${url}`);
+
+  try {
+    const response = await FileSystem.uploadAsync(url, fileUri, {
+      httpMethod: 'POST',
+      uploadType: 1, // 1 = MULTIPART
+      fieldName,
+      headers,
+      parameters,
+    });
+
+    if (response.status < 200 || response.status >= 300) {
+      let message = `Upload failed (${response.status})`;
+      try {
+        const body = JSON.parse(response.body);
+        message = body.message || message;
+      } catch {}
+      const error = new Error(message);
+      error.status = response.status;
+      throw error;
+    }
+
+    return response.body ? JSON.parse(response.body) : null;
+  } catch (error) {
+    console.error(`[API Error] ${error.message}`);
+    if (error.message && error.message.includes('Network request failed')) {
+      throw new Error(
+        'Gagal terhubung ke server. Pastikan:\n' +
+        '1. Server HRIS berjalan\n' +
+        '2. HP & PC di WiFi yang sama\n' +
+        '3. Coba reload aplikasi'
+      );
+    }
+    throw error;
+  }
+}
+
 export const api = {
   auth: {
     login: (nik, password) =>
@@ -198,13 +245,7 @@ export const api = {
       request('/employees/me', { method: 'PUT', body: JSON.stringify(data) }),
     delegationList: () => request('/employees/delegation-list'),
     uploadPhoto: async (photoUri) => {
-      const formData = new FormData();
-      formData.append('photo', {
-        uri: photoUri,
-        type: 'image/jpeg',
-        name: 'profile.jpg',
-      });
-      return requestMultipart('/employees/me/photo', formData);
+      return uploadFileAsync('/employees/me/photo', photoUri, 'photo');
     },
     getPhoto: () => request('/employees/me/photo'),
   },
@@ -212,15 +253,9 @@ export const api = {
   attendance: {
     clockIn: async (employeeId, gpsLocation, selfieUri) => {
       if (selfieUri && (selfieUri.startsWith('file://') || selfieUri.startsWith('content://'))) {
-        const formData = new FormData();
-        formData.append('employee_id', String(employeeId));
-        if (gpsLocation) formData.append('gps_location', gpsLocation);
-        formData.append('selfie', {
-          uri: selfieUri,
-          type: 'image/jpeg',
-          name: `selfie-${Date.now()}.jpg`,
-        });
-        return requestMultipart('/attendance/clockin', formData);
+        const parameters = { employee_id: String(employeeId) };
+        if (gpsLocation) parameters.gps_location = gpsLocation;
+        return uploadFileAsync('/attendance/clockin', selfieUri, 'selfie', parameters);
       }
       return request('/attendance/clockin', {
         method: 'POST',

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Image, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Image, Modal, ActivityIndicator, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -12,6 +12,9 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day: 'nu
 export default function PersonalDataScreen() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
+  const topInset = insets.top > 0 ? insets.top : 40;
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 20;
   const { user, refreshUser } = useAuth();
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -79,8 +82,8 @@ export default function PersonalDataScreen() {
 
   if (loading && !employee) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
+      <View style={styles.safeArea}>
+        <View style={[styles.header, { paddingTop: topInset }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={24} color="#8B5CF6" />
           </TouchableOpacity>
@@ -90,217 +93,212 @@ export default function PersonalDataScreen() {
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#8B5CF6" />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={24} color="#8B5CF6" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Personal Data</Text>
-          <View style={{ width: 40 }} />
-        </View>
+    <View style={styles.safeArea}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: topInset }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={24} color="#8B5CF6" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Personal Data</Text>
+        <View style={{ width: 40 }} />
+      </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        
+        {/* Card 1: My Personal Data */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>My Personal Data</Text>
+          <Text style={styles.cardSubtitle}>Details about my personal data</Text>
           
-          {/* Card 1: My Personal Data */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>My Personal Data</Text>
-            <Text style={styles.cardSubtitle}>Details about my personal data</Text>
-            
-            {/* Avatar Section */}
-            <View style={styles.avatarSection}>
-              <View style={styles.avatarWrapper}>
-                {avatarUri ? (
-                  <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
-                ) : (
-                  <View style={[StyleSheet.absoluteFill, { backgroundColor: '#C4B5FD', zIndex: -1, alignItems: 'center', justifyContent: 'center', borderRadius: 20 }]}>
-                    <Ionicons name="person" size={50} color="#FFFFFF" />
-                  </View>
-                )}
-                <View style={[StyleSheet.absoluteFill, avatarUri ? null : { backgroundColor: '#C4B5FD', zIndex: -1 }]} />
-                <TouchableOpacity
-                  style={styles.uploadIconBadge}
-                  onPress={async () => {
-                    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-                    if (!perm.granted) {
-                      Alert.alert('Izin Diperlukan', 'Izinkan akses ke galeri untuk upload foto profil.');
-                      return;
-                    }
-                    const result = await ImagePicker.launchImageLibraryAsync({
-                      mediaTypes: ['images'],
-                      allowsEditing: true,
-                      aspect: [1, 1],
-                      quality: 0.8,
-                    });
-                    if (!result.canceled && result.assets[0]) {
-                      try {
-                        await api.employees.uploadPhoto(result.assets[0].uri);
-                        await refreshUser();
-                        await fetchEmployee();
-                        Alert.alert('Berhasil', 'Foto profil berhasil diupload.');
-                      } catch (err) {
-                        Alert.alert('Gagal', err.message || 'Upload foto gagal.');
-                      }
-                    }
-                  }}
-                >
-                  <Ionicons name="sync" size={16} color="#FFFFFF" />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.uploadTitle}>Upload Photo</Text>
-              <Text style={styles.uploadSubtitle}>Format .jpeg .png minimal{'\n'}800x800px maks 5MB</Text>
-            </View>
-
-            {/* Name fields (read-only) */}
-            <DropdownInput label="First Name" value={firstName} iconName="person-outline" />
-            <DropdownInput label="Last Name" value={lastName} iconName="person-outline" />
-            <DropdownInput label="Position" value={position} iconName="hardware-chip-outline" />
-            <DropdownInput label="Department" value={department} iconName="business-outline" />
-          </View>
-
-          {/* Card 2: Contact & Contract */}
-          <View style={[styles.card, { marginTop: 16 }]}>
-            <Text style={styles.cardTitle}>Contact & Contract</Text>
-            <Text style={styles.cardSubtitle}>Editable contact info and contract details</Text>
-
-            <View style={styles.inputWrapper}>
-              <Text style={styles.inputLabel}>Email</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="mail-outline" size={20} color="#8B5CF6" style={styles.inputIcon} />
-                <TextInput 
-                  style={styles.textInput} 
-                  value={email} 
-                  onChangeText={setEmail}
-                  placeholder="Email"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputWrapper}>
-              <Text style={styles.inputLabel}>Phone</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="call-outline" size={20} color="#8B5CF6" style={styles.inputIcon} />
-                <TextInput 
-                  style={styles.textInput} 
-                  value={phone} 
-                  onChangeText={setPhone}
-                  placeholder="Phone number"
-                  keyboardType="phone-pad"
-                />
-              </View>
-            </View>
-
-            <DropdownInput label="Contract End Date" value={formatDate(contractEnd)} iconName="calendar-outline" />
-          </View>
-
-        </ScrollView>
-
-        {/* Footer Button */}
-        <View style={styles.footer}>
-          <TouchableOpacity 
-            style={styles.updateButton}
-            onPress={() => setIsUpdateVisible(true)}
-            disabled={saving}
-          >
-            <Text style={styles.updateButtonText}>{saving ? 'Saving...' : 'Update'}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Update Confirmation Modal */}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={isUpdateVisible}
-          onRequestClose={() => setIsUpdateVisible(false)}
-        >
-          <TouchableOpacity 
-            style={styles.modalOverlay} 
-            activeOpacity={1} 
-            onPressOut={() => setIsUpdateVisible(false)}
-          >
-            <TouchableOpacity activeOpacity={1} style={styles.bottomSheet}>
-              <View style={styles.floatingIconContainer}>
-                <View style={styles.floatingIconBox}>
-                  <Ionicons name="person" size={40} color="#FFFFFF" />
+          {/* Avatar Section */}
+          <View style={styles.avatarSection}>
+            <View style={styles.avatarWrapper}>
+              {avatarUri ? (
+                <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+              ) : (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: '#C4B5FD', zIndex: -1, alignItems: 'center', justifyContent: 'center', borderRadius: 20 }]}>
+                  <Ionicons name="person" size={50} color="#FFFFFF" />
                 </View>
-              </View>
-
-              <Text style={styles.modalTitle}>Update Profile</Text>
-              <Text style={styles.modalSubtitle}>
-                Are you sure you want to update your profile? This will help us improve your experience and provide personalized features.
-              </Text>
-
-              <TouchableOpacity 
-                style={styles.btnPrimary}
-                onPress={handleUpdate}
-                disabled={saving}
-              >
-                <Text style={styles.btnPrimaryText}>{saving ? 'Saving...' : 'Yes, Update Profile'}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.btnSecondary}
-                onPress={() => setIsUpdateVisible(false)}
-              >
-                <Text style={styles.btnSecondaryText}>No, Let me check</Text>
-              </TouchableOpacity>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </Modal>
-
-        {/* Success Modal */}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={isSuccessVisible}
-          onRequestClose={() => setIsSuccessVisible(false)}
-        >
-          <TouchableOpacity 
-            style={styles.modalOverlay} 
-            activeOpacity={1} 
-            onPressOut={() => {
-              setIsSuccessVisible(false);
-              navigation.goBack();
-            }}
-          >
-            <TouchableOpacity activeOpacity={1} style={styles.bottomSheet}>
-              <View style={styles.floatingIconContainer}>
-                <View style={styles.floatingIconBox}>
-                  <Ionicons name="checkmark-circle" size={40} color="#FFFFFF" />
-                </View>
-              </View>
-
-              <Text style={styles.modalTitle}>Profile Updated!</Text>
-              <Text style={styles.modalSubtitle}>
-                Your profile has been successfully updated. We're excited to see you take this step!
-              </Text>
-
-              <TouchableOpacity 
-                style={styles.btnPrimary}
-                onPress={() => {
-                  setIsSuccessVisible(false);
-                  navigation.goBack();
+              )}
+              <View style={[StyleSheet.absoluteFill, avatarUri ? null : { backgroundColor: '#C4B5FD', zIndex: -1 }]} />
+              <TouchableOpacity
+                style={styles.uploadIconBadge}
+                onPress={async () => {
+                  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                  if (!perm.granted) {
+                    Alert.alert('Izin Diperlukan', 'Izinkan akses ke galeri untuk upload foto profil.');
+                    return;
+                  }
+                  const result = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ['images'],
+                    allowsEditing: true,
+                    aspect: [1, 1],
+                    quality: 0.8,
+                  });
+                  if (!result.canceled && result.assets[0]) {
+                    try {
+                      await api.employees.uploadPhoto(result.assets[0].uri);
+                      await refreshUser();
+                      await fetchEmployee();
+                      Alert.alert('Berhasil', 'Foto profil berhasil diupload.');
+                    } catch (err) {
+                      Alert.alert('Gagal', err.message || 'Upload foto gagal.');
+                    }
+                  }
                 }}
               >
-                <Text style={styles.btnPrimaryText}>View My Profile</Text>
+                <Ionicons name="sync" size={16} color="#FFFFFF" />
               </TouchableOpacity>
+            </View>
+            <Text style={styles.uploadTitle}>Upload Photo</Text>
+            <Text style={styles.uploadSubtitle}>Format .jpeg .png minimal{'\n'}800x800px maks 5MB</Text>
+          </View>
+
+          {/* Name fields (read-only) */}
+          <DropdownInput label="First Name" value={firstName} iconName="person-outline" />
+          <DropdownInput label="Last Name" value={lastName} iconName="person-outline" />
+          <DropdownInput label="Position" value={position} iconName="hardware-chip-outline" />
+          <DropdownInput label="Department" value={department} iconName="business-outline" />
+        </View>
+
+        {/* Card 2: Contact & Contract */}
+        <View style={[styles.card, { marginTop: 16 }]}>
+          <Text style={styles.cardTitle}>Contact & Contract</Text>
+          <Text style={styles.cardSubtitle}>Editable contact info and contract details</Text>
+
+          <View style={styles.inputWrapper}>
+            <Text style={styles.inputLabel}>Email</Text>
+            <View style={styles.inputContainer}>
+              <Ionicons name="mail-outline" size={20} color="#8B5CF6" style={styles.inputIcon} />
+              <TextInput 
+                style={styles.textInput} 
+                value={email} 
+                onChangeText={setEmail}
+                placeholder="Email"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputWrapper}>
+            <Text style={styles.inputLabel}>Phone</Text>
+            <View style={styles.inputContainer}>
+              <Ionicons name="call-outline" size={20} color="#8B5CF6" style={styles.inputIcon} />
+              <TextInput 
+                style={styles.textInput} 
+                value={phone} 
+                onChangeText={setPhone}
+                placeholder="Phone number"
+                keyboardType="phone-pad"
+              />
+            </View>
+          </View>
+
+          <DropdownInput label="Contract End Date" value={formatDate(contractEnd)} iconName="calendar-outline" />
+        </View>
+
+      </ScrollView>
+
+      {/* Footer Button */}
+      <View style={[styles.footer, { paddingBottom: bottomInset }]}>
+        <TouchableOpacity 
+          style={styles.updateButton}
+          onPress={() => setIsUpdateVisible(true)}
+          disabled={saving}
+        >
+          <Text style={styles.updateButtonText}>{saving ? 'Saving...' : 'Update'}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Update Confirmation Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isUpdateVisible}
+        onRequestClose={() => setIsUpdateVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPressOut={() => setIsUpdateVisible(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.bottomSheet}>
+            <View style={styles.floatingIconContainer}>
+              <View style={styles.floatingIconBox}>
+                <Ionicons name="person" size={40} color="#FFFFFF" />
+              </View>
+            </View>
+
+            <Text style={styles.modalTitle}>Update Profile</Text>
+            <Text style={styles.modalSubtitle}>
+              Are you sure you want to update your profile? This will help us improve your experience and provide personalized features.
+            </Text>
+
+            <TouchableOpacity 
+              style={styles.btnPrimary}
+              onPress={handleUpdate}
+              disabled={saving}
+            >
+              <Text style={styles.btnPrimaryText}>{saving ? 'Saving...' : 'Yes, Update Profile'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.btnSecondary}
+              onPress={() => setIsUpdateVisible(false)}
+            >
+              <Text style={styles.btnSecondaryText}>No, Let me check</Text>
             </TouchableOpacity>
           </TouchableOpacity>
-        </Modal>
+        </TouchableOpacity>
+      </Modal>
 
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      {/* Success Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isSuccessVisible}
+        onRequestClose={() => setIsSuccessVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPressOut={() => {
+            setIsSuccessVisible(false);
+            navigation.goBack();
+          }}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.bottomSheet}>
+            <View style={styles.floatingIconContainer}>
+              <View style={styles.floatingIconBox}>
+                <Ionicons name="checkmark-circle" size={40} color="#FFFFFF" />
+              </View>
+            </View>
+
+            <Text style={styles.modalTitle}>Profile Updated!</Text>
+            <Text style={styles.modalSubtitle}>
+              Your profile has been successfully updated. We're excited to see you take this step!
+            </Text>
+
+            <TouchableOpacity 
+              style={styles.btnPrimary}
+              onPress={() => {
+                setIsSuccessVisible(false);
+                navigation.goBack();
+              }}
+            >
+              <Text style={styles.btnPrimaryText}>View My Profile</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
+    </View>
   );
 }
 
@@ -334,7 +332,8 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 110,
+    paddingBottom: 20,
+    flexGrow: 1,
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -367,7 +366,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 12,
     position: 'relative',
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   avatarImage: {
     width: '100%',
@@ -435,13 +434,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 0,
+    paddingBottom: 20,
     backgroundColor: '#F3F4F6',
   },
   updateButton: {

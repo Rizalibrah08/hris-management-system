@@ -46,8 +46,8 @@ export default function SubmitLeaveScreen() {
   }, [isFocused]);
 
   const today = new Date();
-  const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth();
+  const [calendarYear, setCalendarYear] = useState(today.getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(today.getMonth());
   const currentDay = today.getDate();
 
   const formatDateStr = (year, month, day) => {
@@ -63,8 +63,8 @@ export default function SubmitLeaveScreen() {
     }
     setSubmitLoading(true);
     try {
-      const startDate = formatDateStr(currentYear, currentMonth, rangeStart);
-      const endDate = formatDateStr(currentYear, currentMonth, rangeEnd);
+      const startDate = formatDateStr(calendarYear, calendarMonth, rangeStart);
+      const endDate = formatDateStr(calendarYear, calendarMonth, rangeEnd);
       await api.leave.submit(
         user?.employeeId,
         selectedCategory,
@@ -85,8 +85,8 @@ export default function SubmitLeaveScreen() {
   const daysOfWeek = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
   
   const getCalendarDays = () => {
-    const year = currentYear;
-    const month = currentMonth;
+    const year = calendarYear;
+    const month = calendarMonth;
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const daysInPrevMonth = new Date(year, month, 0).getDate();
@@ -149,6 +149,24 @@ export default function SubmitLeaveScreen() {
       } else if (parseInt(dayStr) > parseInt(rangeStart)) {
         setRangeEnd(dayStr);
       }
+    }
+  };
+
+  const handlePrevMonth = () => {
+    if (calendarMonth === 0) {
+      setCalendarMonth(11);
+      setCalendarYear(calendarYear - 1);
+    } else {
+      setCalendarMonth(calendarMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (calendarMonth === 11) {
+      setCalendarMonth(0);
+      setCalendarYear(calendarYear + 1);
+    } else {
+      setCalendarMonth(calendarMonth + 1);
     }
   };
 
@@ -328,9 +346,13 @@ export default function SubmitLeaveScreen() {
               
               {/* Calendar Header */}
               <View style={styles.calendarHeader}>
-                <Ionicons name="chevron-back" size={24} color="#8B5CF6" />
-                <Text style={styles.calendarMonthText}>{monthNames[currentMonth]} {currentYear}</Text>
-                <Ionicons name="chevron-forward" size={24} color="#8B5CF6" />
+                <TouchableOpacity onPress={handlePrevMonth}>
+                  <Ionicons name="chevron-back" size={24} color="#8B5CF6" />
+                </TouchableOpacity>
+                <Text style={styles.calendarMonthText}>{monthNames[calendarMonth]} {calendarYear}</Text>
+                <TouchableOpacity onPress={handleNextMonth}>
+                  <Ionicons name="chevron-forward" size={24} color="#8B5CF6" />
+                </TouchableOpacity>
               </View>
 
               {/* Days of Week */}
@@ -385,10 +407,10 @@ export default function SubmitLeaveScreen() {
                   style={[styles.btnPrimaryFull, { marginBottom: 12 }]} 
                   onPress={() => {
                     if (rangeStart) {
-                      const monthStr = monthNames[currentMonth].substring(0, 3);
+                      const monthStr = monthNames[calendarMonth].substring(0, 3);
                       let str = `${rangeStart} ${monthStr}`;
-                      if (rangeEnd) str += ` - ${rangeEnd} ${monthStr} ${currentYear}`;
-                      else str += ` ${currentYear}`;
+                      if (rangeEnd) str += ` - ${rangeEnd} ${monthStr} ${calendarYear}`;
+                      else str += ` ${calendarYear}`;
                       setSelectedDuration(str);
                     }
                     setIsDurationModalVisible(false);

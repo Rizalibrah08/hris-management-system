@@ -1,10 +1,10 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Linking } from 'react-native';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Linking, ScrollView, Animated, PanResponder, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import * as Location from 'expo-location';
-import MapView, { Marker, Circle, UrlTile } from 'react-native-maps';
+import { WebView } from 'react-native-webview';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 
@@ -15,6 +15,10 @@ const FALLBACK_OFFICE_LAT = -6.2088;
 const FALLBACK_OFFICE_LNG = 106.8456;
 const FALLBACK_OFFICE_RADIUS = 500;
 
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const MIN_SHEET_HEIGHT = SCREEN_HEIGHT * 0.45;
+const MAX_SHEET_HEIGHT = SCREEN_HEIGHT * 0.85;
+
 
 export default function ClockInScreen() {
   const navigation = useNavigation();
@@ -24,7 +28,28 @@ export default function ClockInScreen() {
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
-  const [distance, setDistance] = useState(null);
+  const [distance, setDistance] = useState(0);
+
+  const sheetAnim = useRef(new Animated.Value(MIN_SHEET_HEIGHT)).current;
+  const isExpanded = useRef(false);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 10,
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy < -50) {
+          Animated.spring(sheetAnim, { toValue: MAX_SHEET_HEIGHT, useNativeDriver: false, bounciness: 0 }).start();
+          isExpanded.current = true;
+        } else if (gestureState.dy > 50) {
+          Animated.spring(sheetAnim, { toValue: MIN_SHEET_HEIGHT, useNativeDriver: false, bounciness: 0 }).start();
+          isExpanded.current = false;
+        } else {
+          Animated.spring(sheetAnim, { toValue: isExpanded.current ? MAX_SHEET_HEIGHT : MIN_SHEET_HEIGHT, useNativeDriver: false, bounciness: 0 }).start();
+        }
+      },
+    })
+  ).current;
+
   const [officeLat, setOfficeLat] = useState(FALLBACK_OFFICE_LAT);
   const [officeLng, setOfficeLng] = useState(FALLBACK_OFFICE_LNG);
   const [officeRadius, setOfficeRadius] = useState(FALLBACK_OFFICE_RADIUS);
@@ -109,40 +134,49 @@ export default function ClockInScreen() {
       {/* Map Area */}
       <View style={styles.mapContainer}>
         {location ? (
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude: location.latitude,
-              longitude: location.longitude,
-              latitudeDelta: 0.005,
-              longitudeDelta: 0.005,
-            }}
-            showsUserLocation={true}
-            followsUserLocation={true}
-            mapType="none"
-          >
-            <UrlTile
-              urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-              maximumZ={19}
-              flipY={false}
-            />
-            <Marker
-              coordinate={{ latitude: location.latitude, longitude: location.longitude }}
-              title="Posisi Anda"
-              pinColor="#8B5CF6"
-            />
-            <Marker
-              coordinate={{ latitude: officeLat, longitude: officeLng }}
-              title="Kantor"
-              pinColor="#EF4444"
-            />
-            <Circle
-              center={{ latitude: officeLat, longitude: officeLng }}
-              radius={officeRadius}
-              strokeColor="rgba(239, 68, 68, 0.6)"
-              fillColor="rgba(239, 68, 68, 0.1)"
-            />
-          </MapView>
+          <WebView
+            style={{ flex: 1, backgroundColor: 'red' }}
+            originWhitelist={['*']}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            source={{ 
+              html: `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                  <style>
+                      html, body { padding: 0; margin: 0; width: 100%; height: 100%; background-color: #F8F9FA; }
+                      #map { width: 100%; height: 100%; }
+                      .user-marker { background-color: #8B5CF6; border-radius: 50%; width: 20px; height: 20px; border: 3px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+                      .office-marker { background-color: #EF4444; border-radius: 50%; width: 20px; height: 20px; border: 3px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+                  </style>
+              </head>
+              <body>
+                  <div id="map"></div>
+                  <script>
+                      var map = L.map('map', { zoomControl: false, attributionControl: false }).setView([${location.latitude}, ${location.longitude}], 16);
+                      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+                      
+                      var userIcon = L.divIcon({ className: 'user-marker', iconSize: [20, 20], iconAnchor: [10, 10] });
+                      L.marker([${location.latitude}, ${location.longitude}], { icon: userIcon }).addTo(map).bindPopup("Posisi Anda");
+                      
+                      var officeIcon = L.divIcon({ className: 'office-marker', iconSize: [20, 20], iconAnchor: [10, 10] });
+                      L.marker([${officeLat}, ${officeLng}], { icon: officeIcon }).addTo(map).bindPopup("Kantor");
+                      
+                      L.circle([${officeLat}, ${officeLng}], {
+                          color: '#EF4444', weight: 2, opacity: 0.6,
+                          fillColor: '#EF4444', fillOpacity: 0.1,
+                          radius: ${officeRadius}
+                      }).addTo(map);
+                  </script>
+              </body>
+              </html>
+            ` }}
+            scrollEnabled={false}
+          />
         ) : (
           <View style={styles.mapLoading}>
             <ActivityIndicator size="large" color="#8B5CF6" />
@@ -156,7 +190,7 @@ export default function ClockInScreen() {
         )}
       </View>
 
-      <SafeAreaView style={styles.headerSafeArea}>
+      <SafeAreaView style={styles.headerSafeArea} pointerEvents="box-none">
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={24} color="#8B5CF6" />
@@ -166,7 +200,11 @@ export default function ClockInScreen() {
         </View>
       </SafeAreaView>
 
-      <View style={styles.bottomSheet}>
+      <Animated.View style={[styles.bottomSheet, { height: sheetAnim }]}>
+        <View style={styles.dragHandleContainer} {...panResponder.panHandlers}>
+          <View style={styles.dragHandle} />
+        </View>
+        <ScrollView contentContainerStyle={styles.bottomSheetScroll} showsVerticalScrollIndicator={false}>
         {/* GPS Status Banner */}
         {location && (
           <View style={[styles.gpsBanner, isInRange ? styles.gpsIn : styles.gpsOut]}>
@@ -240,7 +278,8 @@ export default function ClockInScreen() {
             </Text>
           </TouchableOpacity>
         )}
-      </View>
+        </ScrollView>
+      </Animated.View>
     </View>
   );
 }
@@ -255,18 +294,21 @@ function haversineDistance(lat1, lng1, lat2, lng2) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F3F4F6' },
-  mapContainer: { ...StyleSheet.absoluteFillObject },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  mapContainer: { flex: 1, backgroundColor: '#F3F4F6' },
   map: { width: '100%', height: '100%' },
   mapLoading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8F9FA' },
   mapLoadingText: { marginTop: 12, fontSize: 14, color: '#6B7280' },
   retryButton: { marginTop: 12, backgroundColor: '#8B5CF6', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20 },
   retryButtonText: { color: '#FFFFFF', fontWeight: 'bold' },
-  headerSafeArea: { zIndex: 10 },
+  headerSafeArea: { position: 'absolute', top: 0, width: '100%', zIndex: 10 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10 },
   backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#111827' },
-  bottomSheet: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: '#FFFFFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 24, paddingBottom: 40, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 10, maxHeight: '65%' },
+  bottomSheet: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: '#FFFFFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 15 },
+  dragHandleContainer: { width: '100%', alignItems: 'center', paddingTop: 12, paddingBottom: 8 },
+  dragHandle: { width: 40, height: 5, borderRadius: 3, backgroundColor: '#D1D5DB' },
+  bottomSheetScroll: { paddingHorizontal: 24, paddingBottom: 40 },
   gpsBanner: { borderRadius: 12, padding: 14, marginBottom: 16, flexDirection: 'row', alignItems: 'center' },
   gpsIn: { backgroundColor: '#16A34A' },
   gpsOut: { backgroundColor: '#EF4444' },
