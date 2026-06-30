@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 import { useReports } from '../hooks/useReports'
 import { api } from '../api/client'
 import { formatRupiah } from '../utils/formatters'
@@ -7,13 +8,51 @@ import '../styles/global.css'
 import '../styles/dashboard.css'
 
 export default function Dashboard() {
+  const { role } = useAuth()
+  const isManager = role === 'Manager'
+
   const { report, loading: loadingReports } = useReports()
   const [attendanceData, setAttendanceData] = useState([])
   const [leaveData, setLeaveData] = useState([])
+  const [myPayslips, setMyPayslips] = useState([])
   const [loadingAttendance, setLoadingAttendance] = useState(false)
   const [loadingLeave, setLoadingLeave] = useState(false)
+  const [loadingPayslips, setLoadingPayslips] = useState(false)
 
   useEffect(() => {
+    if (isManager) {
+      let ignore = false
+      const ctrl = new AbortController()
+      ;(async () => {
+        setLoadingLeave(true)
+        setLoadingPayslips(true)
+        try {
+          const [leave, slips] = await Promise.all([
+            api('/leave', { signal: ctrl.signal }),
+            api('/payslips/my', { signal: ctrl.signal }),
+          ])
+          if (!ignore) {
+            setLeaveData(Array.isArray(leave) ? leave : [])
+            setMyPayslips(Array.isArray(slips) ? slips : [])
+          }
+        } catch {
+          if (!ignore) {
+            setLeaveData([])
+            setMyPayslips([])
+          }
+        } finally {
+          if (!ignore) {
+            setLoadingLeave(false)
+            setLoadingPayslips(false)
+          }
+        }
+      })()
+      return () => {
+        ignore = true
+        ctrl.abort()
+      }
+    }
+
     let ignore = false
     const ctrl = new AbortController()
     ;(async () => {
@@ -44,17 +83,27 @@ export default function Dashboard() {
       ignore = true
       ctrl.abort()
     }
-  }, [])
+  }, [isManager])
 
   const metrics = useMemo(
-    () => [
-      { label: 'Total Karyawan', value: String(report.totalEmployees), note: 'Data realtime', trend: '+12%' },
-      { label: 'Kehadiran Hari Ini', value: `${report.attendanceRate}%`, note: 'Target 95%', trend: 'Stabil' },
-      { label: 'Cuti Menunggu', value: String(report.pendingLeave), note: 'Perlu approval', trend: 'Perlu aksi' },
-      { label: 'Total Payroll', value: formatRupiah(report.payrollTotal), note: 'Periode bulan ini', trend: 'Terkendali' },
-    ],
-    [report]
+    () => isManager
+      ? [
+        { label: 'Cuti Pending Approval', value: String(leaveData.filter((l) => l.status === 'Pending').length), note: 'Perlu aksi Anda', trend: 'Perlu aksi' },
+        { label: 'Cuti Disetujui Bulan Ini', value: String(leaveData.filter((l) => l.status === 'Approved').length), note: 'Sudah diproses', trend: 'Terkendali' },
+        { label: 'Slip Gaji Saya', value: String(myPayslips.length), note: 'Tahun berjalan', trend: 'Aktif' },
+      ]
+      : [
+        { label: 'Total Karyawan', value: String(report.totalEmployees), note: 'Data realtime', trend: '+12%' },
+        { label: 'Kehadiran Hari Ini', value: `${report.attendanceRate}%`, note: 'Target 95%', trend: 'Stabil' },
+        { label: 'Cuti Menunggu', value: String(report.pendingLeave), note: 'Perlu approval', trend: 'Perlu aksi' },
+        { label: 'Total Payroll', value: formatRupiah(report.payrollTotal), note: 'Periode bulan ini', trend: 'Terkendali' },
+      ],
+    [isManager, report, leaveData, myPayslips]
   )
+
+  const pendingLeaves = useMemo(() => leaveData.filter((l) => l.status === 'Pending'), [leaveData])
+  const recentLeaves = useMemo(() => leaveData.slice(0, 5), [leaveData])
+  const recentPayslips = useMemo(() => myPayslips.slice(0, 4), [myPayslips])
 
   const attendanceRows = useMemo(() => {
     return attendanceData.map((a) => ({
@@ -66,8 +115,54 @@ export default function Dashboard() {
     }))
   }, [attendanceData])
 
-  const pendingLeaves = useMemo(() => leaveData.filter((l) => l.status === 'Pending'), [leaveData])
-  const recentLeaves = useMemo(() => leaveData.slice(0, 5), [leaveData])
+  if (isManager) {
+    const isLoading = loadingLeave || loadingPayslips
+    return (
+      <div className="dashboard-page">
+        <MetricsGrid metrics={metrics} />
+
+        <section className="main-grid">
+          <article className="panel">
+            <div className="panel-head">
+              <h3>Cuti Menunggu Approval</h3>
+            </div>
+            {isLoading ? (
+              <p>Memuat data...</p>
+            ) : pendingLeaves.length === 0 ? (
+              <p style={{ color: '#6471a4', fontSize: 14 }}>Tidak ada cuti yang menunggu approval.</p>
+            ) : (
+              <ul className="timeline">
+                {pendingLeaves.slice(0, 6).map((l) => (
+                  <li key={l.id}>
+                    <strong>{l.leave_type} - {l.employee_name}</strong>
+                    <p>{l.start_date?.slice(0, 10)} s/d {l.end_date?.slice(0, 10)} &middot; <span className="status pending">{l.status}</span></p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </article>
+
+          <article className="panel highlight">
+            <h3>Slip Gaji Terbaru</h3>
+            {isLoading ? (
+              <p>Memuat data...</p>
+            ) : recentPayslips.length === 0 ? (
+              <p style={{ color: '#6471a4', fontSize: 14 }}>Belum ada slip gaji.</p>
+            ) : (
+              <ul className="timeline">
+                {recentPayslips.map((s) => (
+                  <li key={s.id}>
+                    <strong>{s.period_month?.slice(0, 10) || s.run_id}</strong>
+                    <p>{formatRupiah(s.net_amount || s.total_net)} &middot; <span className="status approved">Final</span></p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </article>
+        </section>
+      </div>
+    )
+  }
 
   const isLoading = loadingReports || loadingAttendance || loadingLeave
 

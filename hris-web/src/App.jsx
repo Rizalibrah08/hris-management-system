@@ -65,21 +65,33 @@ function App() {
   }
 
   const roleMenus = useMemo(() => {
-    const adminKeys = ['laporan', 'masterdata', 'pengaturan']
-    const base = menus.filter(m => !['role', ...adminKeys].includes(m.key))
-    if (['HRD', 'Finance', 'Super Admin'].includes(role)) {
-      adminKeys.forEach(k => { const found = menus.find(m => m.key === k); if (found) base.push(found) })
+    const menuByKey = Object.fromEntries(menus.map(m => [m.key, m]))
+    const order = ['dashboard', 'karyawan', 'absensi', 'cuti', 'payroll', 'slipgaji', 'laporan', 'masterdata', 'pengaturan', 'role']
+    let keys = ['dashboard', 'slipgaji']
+    if (['HRD', 'Super Admin'].includes(role)) {
+      keys.push('karyawan', 'absensi', 'cuti', 'payroll', 'laporan', 'masterdata', 'pengaturan')
+    }
+    if (role === 'Finance') {
+      keys.push('payroll', 'laporan')
+    }
+    if (role === 'Manager') {
+      keys.push('cuti')
     }
     if (role === 'Super Admin') {
-      const roleMenu = menus.find(m => m.key === 'role')
-      if (roleMenu) base.push(roleMenu)
+      keys.push('role')
     }
-    return base.sort((a, b) => menus.indexOf(a) - menus.indexOf(b))
+    return [...new Set(keys)]
+      .sort((a, b) => order.indexOf(a) - order.indexOf(b))
+      .map(k => menuByKey[k])
+      .filter(Boolean)
   }, [role])
   const [activePage, setActivePage] = useState('dashboard')
   const [runningPayroll, setRunningPayroll] = useState(false)
   const [finalizingPayroll, setFinalizingPayroll] = useState(false)
   const [payrollMessage, setPayrollMessage] = useState('')
+  const [showRejectModal, setShowRejectModal] = useState(false)
+  const [rejectTargetRunId, setRejectTargetRunId] = useState(null)
+  const [rejectComment, setRejectComment] = useState('')
   const [payrollRuns, setPayrollRuns] = useState([])
   const [selectedRunId, setSelectedRunId] = useState(null)
   const [payrollDetail, setPayrollDetail] = useState(null)
@@ -105,7 +117,7 @@ function App() {
   })
   const [loadingReports, setLoadingReports] = useState(false)
 
-  const canRunPayroll = ['HRD', 'Finance', 'Super Admin'].includes(role)
+  const canRunPayroll = ['HRD', 'Super Admin'].includes(role)
   const canApproveFinance = ['Finance', 'Super Admin'].includes(role)
   const canReview = ['HRD', 'Super Admin'].includes(role)
 
@@ -280,13 +292,35 @@ function App() {
     }
   }
 
-  const handleRejectRun = async () => {
-    if (!selectedRunId) return
+  const openRejectModal = (runId) => {
+    const id = runId || selectedRunId
+    if (!id) return
+    setRejectTargetRunId(id)
+    setRejectComment('')
+    setShowRejectModal(true)
+  }
+
+  const closeRejectModal = () => {
+    setShowRejectModal(false)
+    setRejectComment('')
+    setRejectTargetRunId(null)
+  }
+
+  const confirmReject = async () => {
+    if (!rejectTargetRunId) return
+    if (!rejectComment.trim()) {
+      setPayrollMessage('Alasan reject wajib diisi')
+      return
+    }
     try {
-      const data = await api(`/payroll/runs/${selectedRunId}/reject`, { method: 'POST', body: JSON.stringify({ comment: 'Rejected' }) })
-      setPayrollMessage(`Run #${data.id} telah di-reject`)
+      const data = await api(`/payroll/runs/${rejectTargetRunId}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ comment: rejectComment.trim() }),
+      })
+      setPayrollMessage(`Run #${data.id} telah di-reject: ${rejectComment.trim()}`)
+      closeRejectModal()
       await loadPayrollRuns()
-      await loadPayrollDetail(selectedRunId)
+      await loadPayrollDetail(data.id)
     } catch (err) {
       setPayrollMessage(err.message || 'Gagal me-reject payroll run')
     }
@@ -386,14 +420,14 @@ function App() {
         </header>
 
         {activePage === 'dashboard' && <Dashboard />}
-        {activePage === 'karyawan' && <Karyawan />}
-        {activePage === 'absensi' && <Absensi />}
-        {activePage === 'cuti' && <Cuti />}
+        {activePage === 'karyawan' && ['HRD', 'Super Admin'].includes(role) && <Karyawan />}
+        {activePage === 'absensi' && ['HRD', 'Super Admin'].includes(role) && <Absensi />}
+        {activePage === 'cuti' && ['HRD', 'Super Admin', 'Manager'].includes(role) && <Cuti />}
         {activePage === 'role' && role === 'Super Admin' && <RoleManagement />}
         {activePage === 'slipgaji' && <SlipGaji />}
         {activePage === 'masterdata' && ['HRD', 'Super Admin'].includes(role) && <MasterData />}
         {activePage === 'pengaturan' && ['HRD', 'Super Admin'].includes(role) && <Pengaturan />}
-        {['payroll', 'laporan'].includes(activePage) && (
+        {activePage === 'payroll' && ['HRD', 'Finance', 'Super Admin'].includes(role) && (
           <FeaturePages
             activePage={activePage}
             report={report}
@@ -405,7 +439,7 @@ function App() {
             onFinalizeRun={handleFinalizeRun}
             onReviewRun={handleReviewRun}
             onApproveRun={handleApproveRun}
-            onRejectRun={handleRejectRun}
+            onRequestReject={openRejectModal}
             onValidateRun={handleValidateRun}
             onSelectRun={async (runId) => {
               setSelectedRunId(runId)
@@ -426,6 +460,48 @@ function App() {
             loadingReports={loadingReports}
           />
         )}
+        {activePage === 'laporan' && ['HRD', 'Finance', 'Super Admin'].includes(role) && (
+          <FeaturePages
+            activePage={activePage}
+            report={report}
+            role={role}
+            canRunPayroll={canRunPayroll}
+            canApproveFinance={canApproveFinance}
+            canReview={canReview}
+            onRunPayroll={handleRunPayroll}
+            onFinalizeRun={handleFinalizeRun}
+            onReviewRun={handleReviewRun}
+            onApproveRun={handleApproveRun}
+            onRequestReject={openRejectModal}
+            onValidateRun={handleValidateRun}
+            onSelectRun={async (runId) => {
+              setSelectedRunId(runId)
+              await loadPayrollDetail(runId)
+            }}
+            payrollMessage={payrollMessage}
+            runningPayroll={runningPayroll}
+            finalizingPayroll={finalizingPayroll}
+            payrollRuns={payrollRuns}
+            selectedRunId={selectedRunId}
+            payrollDetail={payrollDetail}
+            selectedPayrollItemId={selectedPayrollItemId}
+            onSelectPayrollItem={setSelectedPayrollItemId}
+            payrollDetailSearch={payrollDetailSearch}
+            onPayrollDetailSearchChange={setPayrollDetailSearch}
+            salaryDistribution={salaryDistribution}
+            leaveStats={leaveStats}
+            loadingReports={loadingReports}
+          />
+        )}
+        {showRejectModal && (
+          <RejectModal
+            runId={selectedRunId}
+            comment={rejectComment}
+            onCommentChange={setRejectComment}
+            onCancel={closeRejectModal}
+            onConfirm={confirmReject}
+          />
+        )}
       </main>
     </div>
   )
@@ -442,7 +518,7 @@ function FeaturePages({
   onFinalizeRun,
   onReviewRun,
   onApproveRun,
-  onRejectRun,
+  onRequestReject,
   onValidateRun,
   onSelectRun,
   payrollMessage,
@@ -511,7 +587,7 @@ function FeaturePages({
                         <button className="primary-btn" onClick={onApproveRun}>
                           Approve
                         </button>
-                        <button className="small-btn cancel-btn" onClick={onRejectRun}>
+                        <button className="small-btn cancel-btn" onClick={() => onRequestReject(selectedRunId)}>
                           Reject
                         </button>
                       </>
@@ -937,6 +1013,30 @@ function PayrollItemBreakdown({ item }) {
 
 function formatRupiah(value) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(value || 0)
+}
+
+function RejectModal({ runId, comment, onCommentChange, onCancel, onConfirm }) {
+  return (
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
+        <h3>Reject Payroll Run #{runId}</h3>
+        <p style={{ fontSize: 14, color: '#6471a4', marginBottom: 12 }}>
+          Tulis alasan penolakan. Alasan ini akan tercatat di audit log.
+        </p>
+        <textarea
+          rows={4}
+          placeholder="Contoh: komponen tunjangan belum diverifikasi..."
+          value={comment}
+          onChange={(e) => onCommentChange(e.target.value)}
+          style={{ width: '100%', resize: 'vertical', padding: 8, borderRadius: 6, border: '1px solid #d6dbe8' }}
+        />
+        <div className="modal-actions">
+          <button type="button" className="small-btn cancel-btn" onClick={onCancel}>Batal</button>
+          <button type="button" className="primary-btn" onClick={onConfirm}>Kirim Reject</button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function exportReportsToPDF(report, salaryDistribution, leaveStats) {
