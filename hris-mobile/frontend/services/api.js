@@ -64,6 +64,10 @@ export async function getServerUrl() {
 let authToken = null;
 let onUnauthorizedCallback = null;
 
+// Endpoint publik: 401 di sini = kredensial salah, BUKAN token expired.
+// Jangan trigger onUnauthorized (yang akan wipe sesi) untuk endpoint ini.
+const PUBLIC_ENDPOINTS = new Set(['/auth/login', '/auth/register', '/auth/logout']);
+
 export function setAuthToken(token) {
   authToken = token;
 }
@@ -80,6 +84,23 @@ export function setOnUnauthorized(callback) {
   onUnauthorizedCallback = callback;
 }
 
+function buildError(message, status, opts = {}) {
+  const error = new Error(message);
+  error.status = status;
+  error.isAuthError = opts.isAuthError ?? (status === 401 && !opts.isPublic);
+  error.isNetworkError = opts.isNetworkError ?? false;
+  error.isTimeout = opts.isTimeout ?? false;
+  return error;
+}
+
+function maybeTriggerUnauthorized(endpoint, status) {
+  const isPublic = PUBLIC_ENDPOINTS.has(endpoint);
+  if (status === 401 && onUnauthorizedCallback && !isPublic) {
+    onUnauthorizedCallback();
+  }
+  return !isPublic;
+}
+
 async function request(endpoint, options = {}) {
   const baseUrl = await resolveBaseUrl();
   const url = `${baseUrl}${endpoint}`;
@@ -93,8 +114,13 @@ async function request(endpoint, options = {}) {
 
   console.log(`[API Request] ${options.method || 'GET'} ${url}`);
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  const isPublic = PUBLIC_ENDPOINTS.has(endpoint);
+
   try {
-    const response = await fetch(url, { ...options, headers });
+    const response = await fetch(url, { ...options, headers, signal: controller.signal });
+    clearTimeout(timeout);
 
     if (!response.ok) {
       let message = `Request failed (${response.status})`;
@@ -102,24 +128,30 @@ async function request(endpoint, options = {}) {
         const body = await response.json();
         message = body.message || message;
       } catch {}
-      if (response.status === 401 && onUnauthorizedCallback) {
-        onUnauthorizedCallback();
-      }
-      const error = new Error(message);
-      error.status = response.status;
-      throw error;
+      const protectedEndpoint = maybeTriggerUnauthorized(endpoint, response.status);
+      throw buildError(message, response.status, { isPublic: !protectedEndpoint });
     }
 
     if (response.status === 204) return null;
     return response.json();
   } catch (error) {
+    clearTimeout(timeout);
+    if (error.name === 'AbortError') {
+      const timeoutError = new Error('Request timeout. Koneksi terlalu lambat.');
+      timeoutError.isTimeout = true;
+      console.error(`[API Error] ${timeoutError.message}`);
+      throw timeoutError;
+    }
+    if (error.status) throw error;
     console.error(`[API Error] ${error.message}`);
-    if (error.message.includes('Network request failed')) {
-      throw new Error(
+    if (error.message && error.message.includes('Network request failed')) {
+      throw buildError(
         'Cannot connect to server. Please check:\n' +
         '1. Backend is running (npm run dev:server)\n' +
         '2. Device & PC on same WiFi (LAN mode)\n' +
-        '3. Or set custom URL via Settings'
+        '3. Or set custom URL via Settings',
+        0,
+        { isNetworkError: true, isPublic: true }
       );
     }
     throw error;
@@ -155,25 +187,28 @@ async function requestMultipart(endpoint, formData) {
         const body = await response.json();
         message = body.message || message;
       } catch {}
-      const error = new Error(message);
-      error.status = response.status;
-      throw error;
+      const isProtected = maybeTriggerUnauthorized(endpoint, response.status);
+      throw buildError(message, response.status, { isPublic: !isProtected });
     }
 
     return response.json();
   } catch (error) {
     if (error.name === 'AbortError') {
       const timeoutError = new Error('Upload timeout. Coba lagi dengan koneksi yang lebih stabil.');
+      timeoutError.isTimeout = true;
       console.error(`[API Error] ${timeoutError.message}`);
       throw timeoutError;
     }
+    if (error.status) throw error;
     console.error(`[API Error] ${error.message}`);
     if (error.message && error.message.includes('Network request failed')) {
-      throw new Error(
+      throw buildError(
         'Gagal terhubung ke server. Pastikan:\n' +
         '1. Server HRIS berjalan\n' +
         '2. HP & PC di WiFi yang sama\n' +
-        '3. Coba reload aplikasi'
+        '3. Coba reload aplikasi',
+        0,
+        { isNetworkError: true, isPublic: true }
       );
     }
     throw error;
@@ -206,20 +241,22 @@ async function uploadFileAsync(endpoint, fileUri, fieldName, parameters = {}) {
         const body = JSON.parse(response.body);
         message = body.message || message;
       } catch {}
-      const error = new Error(message);
-      error.status = response.status;
-      throw error;
+      const isProtected = maybeTriggerUnauthorized(endpoint, response.status);
+      throw buildError(message, response.status, { isPublic: !isProtected });
     }
 
     return response.body ? JSON.parse(response.body) : null;
   } catch (error) {
+    if (error.status) throw error;
     console.error(`[API Error] ${error.message}`);
     if (error.message && error.message.includes('Network request failed')) {
-      throw new Error(
+      throw buildError(
         'Gagal terhubung ke server. Pastikan:\n' +
         '1. Server HRIS berjalan\n' +
         '2. HP & PC di WiFi yang sama\n' +
-        '3. Coba reload aplikasi'
+        '3. Coba reload aplikasi',
+        0,
+        { isNetworkError: true, isPublic: true }
       );
     }
     throw error;
