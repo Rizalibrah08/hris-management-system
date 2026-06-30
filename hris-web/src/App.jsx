@@ -15,6 +15,7 @@ import SlipGaji from './pages/SlipGaji'
 import MasterData from './pages/MasterData'
 import Pengaturan from './pages/Pengaturan'
 import { useAuth } from './contexts/AuthContext'
+import { canRunPayroll, canApproveFinance, canReview } from './utils/constants'
 // Payroll page is still handled by FeaturePages component
 
 const menus = [
@@ -117,9 +118,10 @@ function App() {
   })
   const [loadingReports, setLoadingReports] = useState(false)
 
-  const canRunPayroll = ['HRD', 'Super Admin'].includes(role)
-  const canApproveFinance = ['Finance', 'Super Admin'].includes(role)
-  const canReview = ['HRD', 'Super Admin'].includes(role)
+  const canRunPayrollVal = canRunPayroll(role)
+  const canApproveFinanceVal = canApproveFinance(role)
+  const canReviewVal = canReview(role)
+
 
   async function loadDashboardData() {
     try {
@@ -360,6 +362,25 @@ function App() {
     }
   }
 
+  const handleDeleteDraftRun = async (runId) => {
+    if (!runId) return
+    if (!window.confirm(`Yakin ingin menghapus draft payroll run #${runId}? Tindakan ini tidak dapat dibatalkan.`)) return
+    setPayrollMessage('')
+    try {
+      const data = await api(`/payroll/runs/${runId}`, { method: 'DELETE' })
+      setPayrollMessage(data.message || `Draft payroll run #${runId} berhasil dihapus`)
+      if (selectedRunId === runId) {
+        setSelectedRunId(null)
+        setPayrollDetail(null)
+        setSelectedPayrollItemId(null)
+      }
+      await loadPayrollRuns()
+      await loadDashboardData()
+    } catch (err) {
+      setPayrollMessage(err.message || 'Gagal menghapus draft payroll run')
+    }
+  }
+
   if (!token) {
     return <Login />
   }
@@ -432,15 +453,16 @@ function App() {
             activePage={activePage}
             report={report}
             role={role}
-            canRunPayroll={canRunPayroll}
-            canApproveFinance={canApproveFinance}
-            canReview={canReview}
+            canRunPayroll={canRunPayrollVal}
+            canApproveFinance={canApproveFinanceVal}
+            canReview={canReviewVal}
             onRunPayroll={handleRunPayroll}
             onFinalizeRun={handleFinalizeRun}
             onReviewRun={handleReviewRun}
             onApproveRun={handleApproveRun}
             onRequestReject={openRejectModal}
             onValidateRun={handleValidateRun}
+            onDeleteDraftRun={handleDeleteDraftRun}
             onSelectRun={async (runId) => {
               setSelectedRunId(runId)
               await loadPayrollDetail(runId)
@@ -465,15 +487,16 @@ function App() {
             activePage={activePage}
             report={report}
             role={role}
-            canRunPayroll={canRunPayroll}
-            canApproveFinance={canApproveFinance}
-            canReview={canReview}
+            canRunPayroll={canRunPayrollVal}
+            canApproveFinance={canApproveFinanceVal}
+            canReview={canReviewVal}
             onRunPayroll={handleRunPayroll}
             onFinalizeRun={handleFinalizeRun}
             onReviewRun={handleReviewRun}
             onApproveRun={handleApproveRun}
             onRequestReject={openRejectModal}
             onValidateRun={handleValidateRun}
+            onDeleteDraftRun={handleDeleteDraftRun}
             onSelectRun={async (runId) => {
               setSelectedRunId(runId)
               await loadPayrollDetail(runId)
@@ -521,6 +544,7 @@ function FeaturePages({
   onRequestReject,
   onValidateRun,
   onSelectRun,
+  onDeleteDraftRun,
   payrollMessage,
   runningPayroll,
   finalizingPayroll,
@@ -652,6 +676,15 @@ function FeaturePages({
                         <button className="small-btn" onClick={() => onSelectRun(run.id)}>
                           Detail
                         </button>
+                        {run.status === 'draft' && canRunPayroll && (
+                          <button
+                            className="small-btn cancel-btn"
+                            style={{ marginLeft: '4px' }}
+                            onClick={() => onDeleteDraftRun(run.id)}
+                          >
+                            Hapus
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

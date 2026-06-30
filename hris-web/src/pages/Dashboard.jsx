@@ -10,6 +10,7 @@ import '../styles/dashboard.css'
 export default function Dashboard() {
   const { role } = useAuth()
   const isManager = role === 'Manager'
+  const canSeeAttendance = ['HRD', 'Super Admin'].includes(role)
 
   const { report, loading: loadingReports } = useReports()
   const [attendanceData, setAttendanceData] = useState([])
@@ -60,7 +61,9 @@ export default function Dashboard() {
       setLoadingLeave(true)
       try {
         const [attData, leave] = await Promise.all([
-          api('/attendance/today', { signal: ctrl.signal }),
+          canSeeAttendance
+            ? api('/attendance/today', { signal: ctrl.signal })
+            : Promise.resolve([]),
           api('/leave', { signal: ctrl.signal }),
         ])
         if (!ignore) {
@@ -83,7 +86,7 @@ export default function Dashboard() {
       ignore = true
       ctrl.abort()
     }
-  }, [isManager])
+  }, [isManager, canSeeAttendance])
 
   const metrics = useMemo(
     () => isManager
@@ -171,6 +174,7 @@ export default function Dashboard() {
       <MetricsGrid metrics={metrics} />
 
       <section className="main-grid">
+        {canSeeAttendance && (
         <article className="panel table-panel">
           <div className="panel-head">
             <h3>Monitoring Kehadiran Real-time</h3>
@@ -205,6 +209,7 @@ export default function Dashboard() {
             </table>
           )}
         </article>
+        )}
 
         <article className="panel">
           <h3>Pengajuan Cuti & Izin</h3>

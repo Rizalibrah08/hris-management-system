@@ -1650,7 +1650,7 @@ app.get('/payslips/:id/pdf', authRequired, async (req, res) => {
   res.json({ ...payslip, components })
 })
 
-app.get('/reports/dashboard', authRequired, roleRequired('HRD', 'Finance', 'Super Admin'), async (_, res) => {
+app.get('/reports/dashboard', authRequired, roleRequired('HRD', 'Finance', 'Manager', 'Super Admin'), async (_, res) => {
   const [employees, pendingLeave, attendanceToday, payrollTotal, payrollCostBreakdown, attendanceTrend] = await Promise.all([
     query('SELECT COUNT(*) AS total FROM employees'),
     query("SELECT COUNT(*) AS total FROM leave_request WHERE status='Pending'"),

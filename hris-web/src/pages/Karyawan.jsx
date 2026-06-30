@@ -30,6 +30,7 @@ export default function Karyawan() {
   })
   const [salaryForm, setSalaryForm] = useState({
     baseSalary: 0, allowance: 0, deduction: 0,
+    paymentMethod: 'bank_transfer', bankName: '', bankAccountName: '', bankAccountNumber: '',
   })
 
   const clearMessages = () => { setMessage(''); setError('') }
@@ -52,6 +53,10 @@ export default function Karyawan() {
         baseSalary: Number(s.base_salary),
         allowance: Number(s.allowance),
         deduction: Number(s.deduction),
+        paymentMethod: s.payment_method || 'bank_transfer',
+        bankName: s.bank_name || '',
+        bankAccountName: s.bank_account_name || '',
+        bankAccountNumber: s.bank_account_number || '',
       })))
     } catch (err) {
       if (err.name !== 'AbortError') setEmployees([])
@@ -220,6 +225,20 @@ export default function Karyawan() {
     }
   }
 
+  const handleDelete = async (emp) => {
+    if (!window.confirm(`Yakin ingin menghapus karyawan "${emp.name}"? Tindakan ini tidak dapat dibatalkan.`)) return
+    clearMessages()
+    try {
+      await api(`/employees/${emp.id}`, { method: 'DELETE' })
+      setMessage(`Karyawan "${emp.name}" berhasil dihapus`)
+      const ctrl = new AbortController()
+      await loadAll(ctrl.signal)
+      ctrl.abort()
+    } catch (err) {
+      setError(err.message || 'Gagal menghapus karyawan')
+    }
+  }
+
   const openSalary = (emp) => {
     const sal = getSalary(emp.id)
     setSalaryEmployee(emp)
@@ -227,6 +246,10 @@ export default function Karyawan() {
       baseSalary: sal ? sal.baseSalary : 8000000,
       allowance: sal ? sal.allowance : 1000000,
       deduction: sal ? sal.deduction : 250000,
+      paymentMethod: sal ? sal.paymentMethod : 'bank_transfer',
+      bankName: sal ? sal.bankName : '',
+      bankAccountName: sal ? sal.bankAccountName : '',
+      bankAccountNumber: sal ? sal.bankAccountNumber : '',
     })
     setShowSalaryModal(true)
     clearMessages()
@@ -244,6 +267,10 @@ export default function Karyawan() {
           baseSalary: Number(salaryForm.baseSalary),
           allowance: Number(salaryForm.allowance),
           deduction: Number(salaryForm.deduction),
+          paymentMethod: salaryForm.paymentMethod,
+          bankName: salaryForm.paymentMethod === 'bank_transfer' ? salaryForm.bankName || null : null,
+          bankAccountName: salaryForm.paymentMethod === 'bank_transfer' ? salaryForm.bankAccountName || null : null,
+          bankAccountNumber: salaryForm.paymentMethod === 'bank_transfer' ? salaryForm.bankAccountNumber || null : null,
         }),
       })
       setMessage(`Gaji ${salaryEmployee.name} berhasil disimpan`)
@@ -344,6 +371,7 @@ export default function Karyawan() {
                         <button className="small-btn toggle-btn" onClick={() => handleToggleActive(emp)}>
                           {emp.is_active ? 'Nonaktifkan' : 'Aktifkan'}
                         </button>
+                        <button className="small-btn cancel-btn" onClick={() => handleDelete(emp)}>Hapus</button>
                       </td>
                     </tr>
                   )
@@ -488,6 +516,51 @@ export default function Karyawan() {
                 <div className="salary-preview">
                   <span>Take Home Pay: <strong>{formatRupiah(salaryForm.baseSalary + salaryForm.allowance - salaryForm.deduction)}</strong></span>
                 </div>
+                <hr style={{ margin: '12px 0', border: 'none', borderTop: '1px solid var(--border)' }} />
+                <div className="form-group">
+                  <label htmlFor="sal-payment-method">Metode Pembayaran</label>
+                  <select
+                    id="sal-payment-method"
+                    value={salaryForm.paymentMethod}
+                    onChange={(e) => setSalaryForm((p) => ({ ...p, paymentMethod: e.target.value }))}
+                  >
+                    <option value="bank_transfer">Transfer Bank</option>
+                    <option value="cash">Tunai (Cash)</option>
+                  </select>
+                </div>
+                {salaryForm.paymentMethod === 'bank_transfer' && (
+                  <>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="sal-bank-name">Nama Bank</label>
+                        <input
+                          id="sal-bank-name"
+                          value={salaryForm.bankName}
+                          onChange={(e) => setSalaryForm((p) => ({ ...p, bankName: e.target.value }))}
+                          placeholder="cth: BCA, Mandiri, BRI"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="sal-account-name">Nama Pemilik Rekening</label>
+                        <input
+                          id="sal-account-name"
+                          value={salaryForm.bankAccountName}
+                          onChange={(e) => setSalaryForm((p) => ({ ...p, bankAccountName: e.target.value }))}
+                          placeholder="Sesuai buku tabungan"
+                        />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="sal-account-number">Nomor Rekening</label>
+                      <input
+                        id="sal-account-number"
+                        value={salaryForm.bankAccountNumber}
+                        onChange={(e) => setSalaryForm((p) => ({ ...p, bankAccountNumber: e.target.value }))}
+                        placeholder="cth: 1234567890"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
               <div className="modal-actions">
                 <button type="button" className="small-btn cancel-btn" onClick={() => { setShowSalaryModal(false); setSalaryEmployee(null); clearMessages() }}>Batal</button>
