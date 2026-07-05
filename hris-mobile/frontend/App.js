@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
+import CustomSplash from './components/CustomSplash';
 
 import OnboardingScreen from './screens/OnboardingScreen';
 import LoginScreen from './screens/LoginScreen';
@@ -79,6 +80,7 @@ function AppContent() {
   const { user, loading, sessionError, refreshSession } = useAuth();
   const navigationRef = useRef(null);
   const [retrying, setRetrying] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     if (!loading && navigationRef.current) {
@@ -171,6 +173,7 @@ function AppContent() {
       </Stack.Navigator>
     </NavigationContainer>
 
+    {showSplash && <CustomSplash onFinish={() => setShowSplash(false)} />}
     </View>
   );
 }
