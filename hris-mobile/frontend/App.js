@@ -154,6 +154,7 @@ function AppContent() {
         </View>
       )}
       <NavigationContainer ref={navigationRef} theme={MyTheme}>
+      <Stack.Navigator>
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false, gestureEnabled: false }} />
@@ -169,6 +170,7 @@ function AppContent() {
         <Stack.Screen name="AttendanceCalendar" component={AttendanceCalendarScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
+
     </View>
   );
 }

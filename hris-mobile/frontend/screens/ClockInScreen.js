@@ -122,7 +122,23 @@ export default function ClockInScreen() {
   const handleClockInPress = () => {
     if (hasClockedOut) {
       navigation.navigate('Attendance');
-    } else if (isClockedIn) {
+      return;
+    }
+    // Block selfie camera if user is out of office geofence
+    if (!location) {
+      Alert.alert('Lokasi belum tersedia', 'Aktifkan GPS dan tunggu posisi terdeteksi sebelum absen.');
+      getLocation();
+      return;
+    }
+    if (!isInRange) {
+      Alert.alert(
+        'Di luar area kantor',
+        `Jarak Anda ~${distance}m, maksimal ${officeRadius}m. Anda tidak dapat clock in dari luar area kantor.`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    if (isClockedIn) {
       navigation.navigate('Camera', { action: 'clockout', attendanceId: todayAtt?.id, gps: gpsString });
     } else {
       navigation.navigate('Camera', { action: 'clockin', gps: gpsString });

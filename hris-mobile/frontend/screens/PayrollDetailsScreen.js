@@ -58,9 +58,10 @@ export default function PayrollDetailsScreen() {
     const deductions = [];
     if (Array.isArray(data.components)) {
       data.components.forEach((c) => {
-        if (c.type === 'earning') {
+        const t = c.component_type || c.type;
+        if (t === 'earning') {
           earnings.push(c);
-        } else {
+        } else if (t === 'deduction') {
           deductions.push(c);
         }
       });
@@ -129,22 +130,17 @@ export default function PayrollDetailsScreen() {
           <Text style={styles.cardSubtitle}>Details about payroll</Text>
           
           <View style={styles.divider} />
-          
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Basic Salary</Text>
-            <Text style={styles.detailValue}>Rp {formatCurrency(baseSalary)}</Text>
-          </View>
 
           {earnings.map((e, i) => (
             <View key={`e-${i}`} style={styles.detailRow}>
-              <Text style={styles.detailLabel}>{e.name || 'Earning'}</Text>
+              <Text style={styles.detailLabel}>{e.component_name_snapshot || e.name || 'Earning'}</Text>
               <Text style={[styles.detailValue, { color: '#10B981' }]}>Rp {formatCurrency(e.amount)}+</Text>
             </View>
           ))}
 
           {deductions.map((d, i) => (
             <View key={`d-${i}`} style={styles.detailRow}>
-              <Text style={styles.detailLabel}>{d.name || 'Deduction'}</Text>
+              <Text style={styles.detailLabel}>{d.component_name_snapshot || d.name || 'Deduction'}</Text>
               <Text style={[styles.detailValue, { color: '#EF4444' }]}>Rp {formatCurrency(Math.abs(d.amount))}-</Text>
             </View>
           ))}

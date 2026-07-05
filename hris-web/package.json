@@ -11,6 +11,7 @@
     "dev:server": "nodemon backend/src/server.js",
     "dev:all": "concurrently \"npm run dev:server\" \"npm run dev\"",
     "db:setup": "node backend/src/setup-db.js",
+    "db:migrate-leaves": "node backend/src/migrate-existing-leaves.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",

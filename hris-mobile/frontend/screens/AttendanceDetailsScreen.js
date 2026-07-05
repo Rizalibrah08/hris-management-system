@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, Text, StyleSheet, TouchableOpacity, 
-  Image, ScrollView, Modal, ActivityIndicator 
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity,
+  Image, ScrollView, Modal, ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import { WebView } from 'react-native-webview';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 
@@ -23,6 +24,16 @@ const formatDuration = (start, end) => {
   const secs = Math.floor((diffMs % 60000) / 1000);
   return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} hrs`;
 };
+
+// Parse "lat,lng" string → {lat, lng} atau null.
+function parseGps(gps) {
+  if (!gps || typeof gps !== 'string') return null;
+  const [latStr, lngStr] = gps.split(',').map(s => s.trim());
+  const lat = parseFloat(latStr);
+  const lng = parseFloat(lngStr);
+  if (isNaN(lat) || isNaN(lng)) return null;
+  return { lat, lng };
+}
 
 export default function AttendanceDetailsScreen() {
   const navigation = useNavigation();
@@ -58,8 +69,34 @@ export default function AttendanceDetailsScreen() {
   const clockInOut = displayItem.clock_in
     ? `${formatTime(displayItem.clock_in)} — ${displayItem.clock_out ? formatTime(displayItem.clock_out) : 'Now'}`
     : '-';
-  // GPS belum digunakan untuk saat ini
-  // const gpsLocation = displayItem.gps_location || '-';
+  const gpsLocation = displayItem.gps_location || '-';
+  const gpsCoords = useMemo(() => parseGps(displayItem.gps_location), [displayItem.gps_location]);
+
+  const miniMapHtml = useMemo(() => {
+    if (!gpsCoords) return '';
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body { padding: 0; margin: 0; width: 100%; height: 100%; background-color: #F8F9FA; }
+    #map { width: 100%; height: 100%; }
+    .pin-marker { background-color: #8B5CF6; border-radius: 50%; width: 18px; height: 18px; border: 3px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    var map = L.map('map', { zoomControl: false, attributionControl: false }).setView([${gpsCoords.lat}, ${gpsCoords.lng}], 16);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    var pin = L.divIcon({ className: 'pin-marker', iconSize: [18, 18], iconAnchor: [9, 9] });
+    L.marker([${gpsCoords.lat}, ${gpsCoords.lng}], { icon: pin }).addTo(map).bindPopup("Lokasi Clock In");
+  </script>
+</body>
+</html>`;
+  }, [gpsCoords]);
 
   if (loading) {
     return (
@@ -112,8 +149,7 @@ export default function AttendanceDetailsScreen() {
                 </View>
               )}
               <View style={styles.overlayInfo}>
-                {/* GPS belum digunakan */}
-                {/* <Text style={styles.overlayText}>{gpsLocation}</Text> */}
+                <Text style={styles.overlayText}>{gpsLocation}</Text>
                 <Text style={styles.overlayText}>
                   {displayItem.clock_in
                     ? new Date(displayItem.clock_in).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' GMT +07:00'
@@ -142,12 +178,27 @@ export default function AttendanceDetailsScreen() {
                 <Text style={styles.statLabel}>Status</Text>
                 <Text style={styles.statValue}>{displayItem.status || '-'}</Text>
               </View>
-              {/* GPS belum digunakan */}
-              {/* <View style={styles.statBox}>
+              <View style={styles.statBox}>
                 <Text style={styles.statLabel}>GPS Location</Text>
                 <Text style={styles.statValue}>{gpsLocation}</Text>
-              </View> */}
+              </View>
             </View>
+
+            {gpsCoords ? (
+              <View style={styles.miniMapContainer}>
+                <Text style={styles.sectionTitle}>Lokasi Clock In</Text>
+                <View style={styles.miniMap}>
+                  <WebView
+                    style={{ flex: 1, backgroundColor: '#F8F9FA' }}
+                    originWhitelist={['*']}
+                    javaScriptEnabled={true}
+                    domStorageEnabled={true}
+                    source={{ html: miniMapHtml }}
+                    scrollEnabled={false}
+                  />
+                </View>
+              </View>
+            ) : null}
           </View>
         </View>
       </ScrollView>
@@ -305,6 +356,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#374151',
+  },
+  miniMapContainer: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  miniMap: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F3F4F6',
   },
   footer: {
     paddingHorizontal: 20,

@@ -123,6 +123,7 @@ async function run() {
     ['office_latitude', '-6.2088'],
     ['office_longitude', '106.8456'],
     ['office_radius', '500'],
+    ['late_threshold_hour', '09:00'],
   ]
   for (const [key, value] of defaultSettings) {
     await conn.execute(

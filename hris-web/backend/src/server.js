@@ -9,7 +9,7 @@ import multer from 'multer'
 import os from 'os'
 import fs from 'node:fs'
 import { v2 as cloudinary } from 'cloudinary'
-import { query } from './db.js'
+import { query, getConnection } from './db.js'
 import { authRequired, roleRequired } from './middleware.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -103,6 +103,29 @@ function haversineDistance(lat1, lng1, lat2, lng2) {
   const dLng = toRad(lng2 - lng1)
   const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+// Parse "HH:MM" threshold string → minutes since midnight. Invalid → 9*60 = 540.
+function parseThresholdHHMM(value) {
+  if (!value || typeof value !== 'string') return 9 * 60
+  const m = value.trim().match(/^(\d{1,2}):(\d{2})$/)
+  if (!m) return 9 * 60
+  const h = Math.min(23, Math.max(0, parseInt(m[1], 10)))
+  const mm = Math.min(59, Math.max(0, parseInt(m[2], 10)))
+  return h * 60 + mm
+}
+
+// Determine attendance status based on clock-in time vs threshold (HH:MM string).
+function computeAttendanceStatus(clockInDate, lateThresholdHourStr) {
+  const threshold = parseThresholdHHMM(lateThresholdHourStr)
+  const clockMin = clockInDate.getHours() * 60 + clockInDate.getMinutes()
+  return clockMin > threshold ? 'Telat' : 'Tepat Waktu'
+}
+
+// Read late_threshold_hour from company_settings (cached per request via query).
+async function getLateThresholdHour() {
+  const rows = await query("SELECT setting_value FROM company_settings WHERE setting_key='late_threshold_hour'")
+  return rows.length > 0 ? rows[0].setting_value : '09:00'
 }
 
 app.post('/auth/login', async (req, res) => {
@@ -413,17 +436,6 @@ app.post('/employees/import', authRequired, roleRequired('HRD', 'Super Admin'), 
 app.post('/attendance/clockin', authRequired, uploadSelfie.single('selfie'), async (req, res) => {
   const employee_id = req.body.employee_id
   const _gps_location = req.body.gps_location
-  let selfie = null
-  if (req.file) {
-    try {
-      selfie = await uploadToCloudinary(req.file.buffer, 'hris/selfies')
-    } catch (err) {
-      console.error('Cloudinary upload error:', err)
-      return res.status(500).json({ message: 'Gagal mengunggah foto selfie' })
-    }
-  } else if (req.body.selfie) {
-    selfie = req.body.selfie
-  }
 
   const empId = employee_id || req.user.employeeId
   if (!empId) return res.status(400).json({ message: 'employee_id wajib diisi' })
@@ -438,7 +450,7 @@ app.post('/attendance/clockin', authRequired, uploadSelfie.single('selfie'), asy
   )
   if (active.length > 0) return res.status(409).json({ message: 'Sudah clock in hari ini', attendance: active[0] })
 
-  // Geofence validation
+  // Geofence validation — check BEFORE uploading selfie to avoid wasting bandwidth
   if (_gps_location) {
     try {
       const [latStr, lngStr] = _gps_location.split(',').map(s => s.trim())
@@ -467,10 +479,25 @@ app.post('/attendance/clockin', authRequired, uploadSelfie.single('selfie'), asy
     }
   }
 
+  // Upload selfie only after geofence passes — prevents photo being sent when user is out of range
+  let selfie = null
+  if (req.file) {
+    try {
+      selfie = await uploadToCloudinary(req.file.buffer, 'hris/selfies')
+    } catch (err) {
+      console.error('Cloudinary upload error:', err)
+      return res.status(500).json({ message: 'Gagal mengunggah foto selfie' })
+    }
+  } else if (req.body.selfie) {
+    selfie = req.body.selfie
+  }
+
+  const lateThresholdHour = await getLateThresholdHour()
+  const attendanceStatus = computeAttendanceStatus(new Date(), lateThresholdHour)
   const inserted = await query(
     `INSERT INTO attendance(employee_id, clock_in, gps_location, selfie, status)
-     VALUES (?, NOW(), ?, ?, 'Aktif')`,
-     [empId, _gps_location || null, selfie || null],
+     VALUES (?, NOW(), ?, ?, ?)`,
+     [empId, _gps_location || null, selfie || null, attendanceStatus],
   )
   const created = await query('SELECT * FROM attendance WHERE id = ?', [inserted.insertId])
   res.status(201).json(created[0])
@@ -561,7 +588,63 @@ app.put('/leave/approve', authRequired, roleRequired('Manager', 'HRD', 'Super Ad
   if (!leave_id || !status) return res.status(400).json({ message: 'leave_id dan status wajib diisi' })
   const allowed = ['Approved', 'Rejected']
   if (!allowed.includes(status)) return res.status(400).json({ message: `Status harus salah satu: ${allowed.join(', ')}` })
-  await query('UPDATE leave_request SET status=? WHERE id=?', [status, leave_id])
+
+  const existing = await query('SELECT * FROM leave_request WHERE id = ?', [leave_id])
+  if (existing.length === 0) return res.status(404).json({ message: 'Pengajuan tidak ditemukan' })
+  const leave = existing[0]
+
+  const wasApproved = leave.status === 'Approved'
+  const conn = await getConnection()
+  try {
+    await conn.beginTransaction()
+
+    await conn.execute('UPDATE leave_request SET status=? WHERE id=?', [status, leave_id])
+
+    if (status === 'Approved' && !wasApproved) {
+      // Materialisasi: INSERT baris attendance status izin/cuti untuk setiap hari kerja dalam rentang.
+      const attStatus = leave.leave_type === 'Sakit' ? 'Sakit' : 'Izin'
+      const start = new Date(leave.start_date)
+      const end = new Date(leave.end_date)
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dow = d.getDay()
+        if (dow === 0 || dow === 6) continue // skip Sabtu/Minggu
+        const dateStr = d.toISOString().slice(0, 10)
+        // Skip jika sudah ada record (clock-in manual lebih diutamakan)
+        const [exists] = await conn.execute(
+          'SELECT id FROM attendance WHERE employee_id = ? AND DATE(clock_in) = ?',
+          [leave.employee_id, dateStr],
+        )
+        if (exists.length > 0) continue
+        const clockInVal = `${dateStr} 00:00:00`
+        await conn.execute(
+          'INSERT INTO attendance(employee_id, clock_in, status) VALUES (?, ?, ?)',
+          [leave.employee_id, clockInVal, attStatus],
+        )
+      }
+    } else if (status === 'Rejected' && wasApproved) {
+      // Auto-DELETE baris sistem izin yang dibuat untuk rentang ini.
+      const start = new Date(leave.start_date)
+      const end = new Date(leave.end_date)
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dow = d.getDay()
+        if (dow === 0 || dow === 6) continue
+        const dateStr = d.toISOString().slice(0, 10)
+        await conn.execute(
+          "DELETE FROM attendance WHERE employee_id = ? AND DATE(clock_in) = ? AND clock_out IS NULL AND status IN ('Izin','Sakit','Cuti')",
+          [leave.employee_id, dateStr],
+        )
+      }
+    }
+
+    await conn.commit()
+  } catch (err) {
+    await conn.rollback()
+    console.error('Leave approve materialize error:', err)
+    return res.status(500).json({ message: 'Gagal memproses pengajuan cuti', error: err.message })
+  } finally {
+    conn.release()
+  }
+
   const updated = await query('SELECT * FROM leave_request WHERE id = ?', [leave_id])
   if (updated.length > 0) {
     await notifyUserByEmployeeId(
@@ -2273,7 +2356,7 @@ app.put('/company-settings', authRequired, roleRequired('Super Admin', 'HRD'), a
 
 app.get('/company-settings/location', authRequired, async (req, res) => {
   const rows = await query(
-    "SELECT setting_key, setting_value FROM company_settings WHERE setting_key IN ('office_latitude', 'office_longitude', 'office_radius', 'company_name', 'company_address')"
+    "SELECT setting_key, setting_value FROM company_settings WHERE setting_key IN ('office_latitude', 'office_longitude', 'office_radius', 'company_name', 'company_address', 'late_threshold_hour')"
   )
   const map = {}
   rows.forEach(r => { map[r.setting_key] = r.setting_value })
@@ -2283,6 +2366,7 @@ app.get('/company-settings/location', authRequired, async (req, res) => {
     radius: parseInt(map.office_radius) || 500,
     companyName: map.company_name || 'PT HRIS Indonesia',
     companyAddress: map.company_address || 'Jakarta, Indonesia',
+    lateThresholdHour: map.late_threshold_hour || '09:00',
   })
 })
 

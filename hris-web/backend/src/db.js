@@ -19,3 +19,8 @@ export async function query(text, params = []) {
   const [rows] = await pool.execute(text, params)
   return rows
 }
+
+// Get a dedicated connection for transactional flows.
+export async function getConnection() {
+  return await pool.getConnection()
+}

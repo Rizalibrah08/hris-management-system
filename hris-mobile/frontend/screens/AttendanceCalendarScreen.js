@@ -9,6 +9,33 @@ import { api } from '../services/api';
 const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 const dayHeaders = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
+// Parse "HH:MM" threshold string → minutes since midnight (default 09:00 = 540).
+function parseThreshold(value) {
+  if (!value || typeof value !== 'string') return 9 * 60;
+  const m = value.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return 9 * 60;
+  const h = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+  const mm = Math.min(59, Math.max(0, parseInt(m[2], 10)));
+  return h * 60 + mm;
+}
+
+// Tentukan dayStatus dari record attendance.
+// Prioritas: status DB ('Telat'/'Tepat Waktu'/'Izin'/'Sakit'/'Cuti').
+// Fallback (data lama status='Aktif'): hitung client-side vs threshold.
+function computeDayStatus(a, thresholdMin) {
+  if (!a) return null;
+  if (a.status === 'Izin' || a.status === 'Sakit' || a.status === 'Cuti') return 'izin';
+  if (a.status === 'Telat') return 'telat';
+  if (a.status === 'Tepat Waktu') return 'hadir';
+  // Fallback untuk data lama dengan status 'Aktif'
+  if (a.clock_in) {
+    const d = new Date(a.clock_in);
+    const clockMin = d.getHours() * 60 + d.getMinutes();
+    return clockMin > thresholdMin ? 'telat' : 'hadir';
+  }
+  return null;
+}
+
 export default function AttendanceCalendarScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
@@ -17,6 +44,15 @@ export default function AttendanceCalendarScreen() {
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [attendanceMap, setAttendanceMap] = useState({});
   const [loading, setLoading] = useState(true);
+  const [lateThreshold, setLateThreshold] = useState(9 * 60); // default 09:00
+
+  useEffect(() => {
+    api.company.getLocation()
+      .then((s) => {
+        if (s && s.lateThresholdHour) setLateThreshold(parseThreshold(s.lateThresholdHour));
+      })
+      .catch(() => null);
+  }, []);
 
   const fetchMonth = useCallback(async (year, month) => {
     setLoading(true);
@@ -28,11 +64,8 @@ export default function AttendanceCalendarScreen() {
         for (const a of data) {
           if (a.clock_in) {
             const day = new Date(a.clock_in).getDate();
-            const hour = new Date(a.clock_in).getHours();
-            let status = 'hadir';
-            if (hour >= 9) status = 'telat';
-            if (a.status === 'Izin' || a.status === 'Sakit') status = 'izin';
-            map[day] = { ...a, dayStatus: status };
+            const status = computeDayStatus(a, lateThreshold);
+            if (status) map[day] = { ...a, dayStatus: status };
           }
         }
       }
@@ -42,7 +75,7 @@ export default function AttendanceCalendarScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [lateThreshold]);
 
   useEffect(() => {
     fetchMonth(currentYear, currentMonth);
@@ -116,11 +149,28 @@ export default function AttendanceCalendarScreen() {
     }
   };
 
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  // Hitung hari kerja (Senin-Jumat) sampai hari ini (atau seluruh bulan jika bulan lampau).
+  const effectiveDay = (currentYear === today.getFullYear() && currentMonth === today.getMonth())
+    ? today.getDate()
+    : daysInMonth;
+  let workingDays = 0;
+  for (let d = 1; d <= effectiveDay; d++) {
+    const dow = new Date(currentYear, currentMonth, d).getDay();
+    if (dow !== 0 && dow !== 6) workingDays += 1;
+  }
+  const hadirCount = Object.values(attendanceMap).filter(a => a.dayStatus === 'hadir').length;
+  const telatCount = Object.values(attendanceMap).filter(a => a.dayStatus === 'telat').length;
+  const izinCount = Object.values(attendanceMap).filter(a => a.dayStatus === 'izin').length;
+  const alphaCount = Math.max(0, workingDays - hadirCount - telatCount - izinCount);
+
   const stats = {
-    hadir: Object.values(attendanceMap).filter(a => a.dayStatus === 'hadir' || a.dayStatus === 'telat').length,
-    telat: Object.values(attendanceMap).filter(a => a.dayStatus === 'telat').length,
-    izin: Object.values(attendanceMap).filter(a => a.dayStatus === 'izin').length,
-    total: new Date(currentYear, currentMonth + 1, 0).getDate(),
+    hadir: hadirCount + telatCount,
+    telat: telatCount,
+    izin: izinCount,
+    alpha: alphaCount,
+    workingDays,
+    total: daysInMonth,
   };
 
   const weeks = getCalendarDays();
@@ -164,6 +214,16 @@ export default function AttendanceCalendarScreen() {
               <Text style={[styles.statValue, { color: '#1E40AF' }]}>{stats.izin}</Text>
               <Text style={[styles.statLabel, { color: '#1E40AF' }]}>Izin</Text>
             </View>
+            <View style={[styles.statCard, { backgroundColor: '#FEE2E2' }]}>
+              <Text style={[styles.statValue, { color: '#991B1B' }]}>{stats.alpha}</Text>
+              <Text style={[styles.statLabel, { color: '#991B1B' }]}>Alpha</Text>
+            </View>
+          </View>
+
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryText}>
+              Bulan ini: {stats.workingDays} hari kerja, {stats.hadir} hadir, {stats.telat} telat, {stats.izin} izin, {stats.alpha} alpha
+            </Text>
           </View>
 
           <View style={styles.calendarCard}>
@@ -196,6 +256,7 @@ export default function AttendanceCalendarScreen() {
             <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: '#D1FAE5' }]} /><Text style={styles.legendText}>Hadir</Text></View>
             <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: '#FEF3C7' }]} /><Text style={styles.legendText}>Telat</Text></View>
             <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: '#DBEAFE' }]} /><Text style={styles.legendText}>Izin</Text></View>
+            <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: '#FEE2E2' }]} /><Text style={styles.legendText}>Alpha</Text></View>
             <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: '#F3F4F6' }]} /><Text style={styles.legendText}>Tidak Hadir</Text></View>
           </View>
         </ScrollView>
@@ -219,6 +280,8 @@ const styles = StyleSheet.create({
   statCard: { flex: 1, borderRadius: 12, padding: 12, alignItems: 'center' },
   statValue: { fontSize: 22, fontWeight: 'bold' },
   statLabel: { fontSize: 12, marginTop: 2 },
+  summaryCard: { backgroundColor: '#F3F4F6', borderRadius: 10, padding: 10, marginBottom: 16 },
+  summaryText: { fontSize: 12, color: '#374151', textAlign: 'center' },
   calendarCard: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 12, marginBottom: 16 },
   dayHeaderRow: { flexDirection: 'row', marginBottom: 8 },
   dayHeaderText: { flex: 1, textAlign: 'center', fontSize: 12, color: '#9CA3AF', fontWeight: '600' },
