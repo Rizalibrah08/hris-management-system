@@ -10,32 +10,42 @@ export default function SlipGaji() {
   const { role } = useAuth()
   const [payslips, setPayslips] = useState([])
   const [payrollRuns, setPayrollRuns] = useState([])
+  const [payslipCountByRun, setPayslipCountByRun] = useState({})
   const [loading, setLoading] = useState(false)
+  const [loadingRuns, setLoadingRuns] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [detail, setDetail] = useState(null)
-  const [generating, setGenerating] = useState(false)
-  const [selectedRunId, setSelectedRunId] = useState('')
+  const [generating, setGenerating] = useState('')
+  const [filterRunId, setFilterRunId] = useState('')
 
   const isAdmin = ['HRD', 'Finance', 'Super Admin'].includes(role)
 
   const loadPayslips = useCallback(async (signal) => {
     setLoading(true)
+    setLoadingRuns(true)
     try {
       const endpoint = isAdmin ? '/payslips' : '/payslips/my'
       const data = await api(endpoint, { signal })
-      setPayslips(Array.isArray(data) ? data : [])
+      const list = Array.isArray(data) ? data : []
+      setPayslips(list)
+      if (isAdmin) {
+        const counts = {}
+        list.forEach((p) => { counts[p.payroll_run_id] = (counts[p.payroll_run_id] || 0) + 1 })
+        setPayslipCountByRun(counts)
+      }
     } catch (err) {
       if (err.name !== 'AbortError') setPayslips([])
     } finally {
       setLoading(false)
+      setLoadingRuns(false)
     }
   }, [isAdmin])
 
   const loadRuns = useCallback(async (signal) => {
     try {
       const data = await api('/payroll/runs', { signal })
-      setPayrollRuns(Array.isArray(data) ? data.filter((r) => r.status === 'finalized') : [])
+      setPayrollRuns(Array.isArray(data) ? data : [])
     } catch {
       setPayrollRuns([])
     }
@@ -48,22 +58,20 @@ export default function SlipGaji() {
     return () => ctrl.abort()
   }, [loadPayslips, loadRuns, isAdmin])
 
-  const handleGenerate = async () => {
-    if (!selectedRunId) { setError('Pilih payroll run terlebih dahulu'); return }
+  const handleGenerate = async (runId) => {
     setError('')
     setMessage('')
-    setGenerating(true)
+    setGenerating(String(runId))
     try {
-      const data = await api(`/payroll/runs/${selectedRunId}/payslips/generate`, { method: 'POST' })
-      setMessage(data.message)
-      setSelectedRunId('')
+      const data = await api(`/payroll/runs/${runId}/payslips/generate`, { method: 'POST' })
+      setMessage(data.message || 'Payslip berhasil digenerate')
       const ctrl = new AbortController()
       await Promise.all([loadPayslips(ctrl.signal), loadRuns(ctrl.signal)])
       ctrl.abort()
     } catch (err) {
       setError(err.message || 'Gagal generate payslip')
     } finally {
-      setGenerating(false)
+      setGenerating('')
     }
   }
 
@@ -86,9 +94,13 @@ export default function SlipGaji() {
   }
 
   const availableRuns = useMemo(() => {
-    const generatedRunIds = new Set(payslips.map((p) => p.payroll_run_id))
-    return payrollRuns.filter((r) => !generatedRunIds.has(r.id))
-  }, [payrollRuns, payslips])
+    return payrollRuns.filter((r) => r.status === 'finalized' && !(payslipCountByRun[r.id] > 0))
+  }, [payrollRuns, payslipCountByRun])
+
+  const visiblePayslips = useMemo(() => {
+    if (!filterRunId) return payslips
+    return payslips.filter((p) => String(p.payroll_run_id) === String(filterRunId))
+  }, [payslips, filterRunId])
 
   return (
     <section className="feature-layout">
@@ -97,29 +109,94 @@ export default function SlipGaji() {
 
       {isAdmin && (
         <article className="panel">
-          <h3>Generate Slip Gaji</h3>
-          <div className="generate-form">
-            <select value={selectedRunId} onChange={(e) => setSelectedRunId(e.target.value)}>
-              <option value="">-- Pilih Payroll Run --</option>
-              {availableRuns.map((r) => (
-                <option key={r.id} value={r.id}>
-                  Run #{r.id} — {String(r.period_month).slice(0, 7)} — {r.employee_count} karyawan
-                </option>
-              ))}
-            </select>
-            <button className="primary-btn" onClick={handleGenerate} disabled={generating || availableRuns.length === 0}>
-              {generating ? 'Generating...' : 'Generate Slip Gaji'}
-            </button>
-          </div>
+          <h3>List Payroll Run</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
+            Daftar semua payroll run. Slip gaji hanya bisa dibuat untuk run berstatus <strong>finalized</strong> yang belum diterbitkan.
+          </p>
+          {payrollRuns.length === 0 ? (
+            <p className="empty-text">
+              {loadingRuns ? 'Memuat payroll run...' : 'Belum ada payroll run. Buat dan finalisasi payroll di halaman Payroll terlebih dahulu.'}
+            </p>
+          ) : (
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Periode</th>
+                    <th>Status</th>
+                    <th>Jumlah Karyawan</th>
+                    <th>Total Net</th>
+                    <th>Slip Diterbitkan</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payrollRuns.map((r) => {
+                    const slipCount = payslipCountByRun[r.id] ?? null
+                    const canGenerate = r.status === 'finalized' && !slipCount
+                    const isPublished = r.status === 'published' || (slipCount && slipCount > 0)
+                    return (
+                      <tr key={r.id}>
+                        <td>#{r.id}</td>
+                        <td>{String(r.period_month || '').slice(0, 7)}</td>
+                        <td><span className={`status-badge status-${r.status}`}>{r.status}</span></td>
+                        <td>{r.employee_count ?? '-'}</td>
+                        <td className="amount-cell net">{formatRupiah(r.total_net)}</td>
+                        <td>{slipCount == null ? '—' : slipCount}</td>
+                        <td className="action-cell">
+                          {canGenerate ? (
+                            <button
+                              className="small-btn"
+                              onClick={() => handleGenerate(r.id)}
+                              disabled={generating === String(r.id)}
+                            >
+                              {generating === String(r.id) ? 'Generating...' : 'Generate Slip'}
+                            </button>
+                          ) : isPublished ? (
+                            <button
+                              className="small-btn"
+                              onClick={() => setFilterRunId(filterRunId === String(r.id) ? '' : String(r.id))}
+                            >
+                              {filterRunId === String(r.id) ? 'Sembunyikan' : 'Lihat Slip'}
+                            </button>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                              {r.status === 'draft' ? 'Finalisasi dahulu' : r.status === 'approved' ? 'Finalisasi dahulu' : '—'}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {/* Hidden legacy helper kept for reference (empty now) */}
+          <span style={{ display: 'none' }}>{availableRuns.length}</span>
         </article>
       )}
 
       <article className="panel">
-        <h3>Daftar Slip Gaji</h3>
+        <div className="panel-head">
+          <h3>Daftar Slip Gaji</h3>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {isAdmin && filterRunId && (
+              <button className="small-btn cancel-btn" onClick={() => setFilterRunId('')}>
+                Reset Filter (Run #{filterRunId})
+              </button>
+            )}
+          </div>
+        </div>
         {loading ? (
           <p className="loading-text">Memuat data...</p>
-        ) : payslips.length === 0 ? (
-          <p className="empty-text">Belum ada slip gaji yang tersedia.</p>
+        ) : visiblePayslips.length === 0 ? (
+          <p className="empty-text">
+            {isAdmin && payrollRuns.length > 0
+              ? 'Belum ada slip gaji yang diterbitkan. Generate dari salah satu payroll run di atas.'
+              : 'Belum ada slip gaji yang tersedia untuk Anda.'}
+          </p>
         ) : (
           <div className="table-container">
             <table>
@@ -136,7 +213,7 @@ export default function SlipGaji() {
                 </tr>
               </thead>
               <tbody>
-                {payslips.map((p) => (
+                {visiblePayslips.map((p) => (
                   <tr key={p.id}>
                     {isAdmin && <td>{p.employee_name}</td>}
                     <td><span className="mono">{p.slip_number}</span></td>

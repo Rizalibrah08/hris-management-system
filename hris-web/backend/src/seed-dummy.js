@@ -181,15 +181,16 @@ export async function seedDummyData(conn) {
   }
 
   // Generate 3 Payroll Runs (April, May, June)
+  // State konsisten dengan backend: 'published' = sudah ada payslip, 'finalized' = siap generate, 'reviewed' = masih proses
   const periods = [
-    { period: '2026-04-01', status: 'finalized', pub: '2026-04-28' },
-    { period: '2026-05-01', status: 'finalized', pub: '2026-05-28' },
-    { period: '2026-06-01', status: 'reviewed', pub: null },
+    { period: '2026-04-01', status: 'published', pub: '2026-04-28', generateSlips: true },
+    { period: '2026-05-01', status: 'finalized', pub: null, generateSlips: false },
+    { period: '2026-06-01', status: 'reviewed', pub: null, generateSlips: false },
   ]
 
   let payslipCount = 0
 
-  for (const { period, status, pub } of periods) {
+  for (const { period, status, pub, generateSlips } of periods) {
     const [runResult] = await conn.execute(
       'INSERT INTO payroll_runs (period_month, status, employee_count, created_by) VALUES (?, ?, ?, ?)',
       [period, status, allEmps.length, allEmps[0].user_id] // assuming first user is admin
@@ -260,13 +261,15 @@ export async function seedDummyData(conn) {
         )
       }
 
-      // Generate Payslip
-      const slipNo = `SLIP-${emp.nik}-${period.substring(0,7).replace('-','')}`
-      await conn.execute(
-        'INSERT INTO payslips (employee_id, payroll_run_id, payroll_run_item_id, slip_number, period_month, gross_amount, allowance_amount, deduction_amount, net_amount, tax_amount, bpjs_amount, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [emp.id, runId, itemId, slipNo, period, gross, gross - profile.base_salary, ded, net, tax, bpjs, pub ? pub + ' 09:00:00' : null]
-      )
-      payslipCount++
+      // Generate Payslip hanya untuk run yang sudah published
+      if (generateSlips) {
+        const slipNo = `SLIP-${emp.nik}-${period.substring(0,7).replace('-','')}`
+        await conn.execute(
+          'INSERT INTO payslips (employee_id, payroll_run_id, payroll_run_item_id, slip_number, period_month, gross_amount, allowance_amount, deduction_amount, net_amount, tax_amount, bpjs_amount, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [emp.id, runId, itemId, slipNo, period, gross, gross - profile.base_salary, ded, net, tax, bpjs, pub ? pub + ' 09:00:00' : null]
+        )
+        payslipCount++
+      }
     }
 
     // Update run totals

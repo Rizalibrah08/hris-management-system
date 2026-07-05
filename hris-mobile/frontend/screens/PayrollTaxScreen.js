@@ -1,30 +1,36 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
-import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
 const formatCurrency = (n) => Number(n || 0).toLocaleString('id-ID');
+const formatPeriod = (d) => {
+  if (!d) return '-';
+  try {
+    const date = new Date(d);
+    return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  } catch {
+    return String(d).slice(0, 7);
+  }
+};
 
 export default function PayrollTaxScreen() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
-  const { user } = useAuth();
-  const [payrollData, setPayrollData] = useState([]);
+  const [payslips, setPayslips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.payroll.myRuns();
-      const periods = data?.periods || [];
-      setPayrollData(periods);
+      const data = await api.payslips.my();
+      setPayslips(Array.isArray(data) ? data : []);
     } catch {
-      setPayrollData([]);
+      setPayslips([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -35,24 +41,14 @@ export default function PayrollTaxScreen() {
     if (isFocused) fetchData();
   }, [isFocused, fetchData]);
 
-  const getPeriodLabel = (run) => {
-    if (run.period_month) return formatDate(run.period_month);
-    return '-';
-  };
-
-  const getGross = (run) => Number(run.gross_amount || 0);
-  const getNet = (run) => Number(run.net_amount || 0);
-  const getPaidOn = (run) => run.period_month || run.created_at;
-  const getHours = (run) => run.total_hours || '160:00';
-
-  if (loading && payrollData.length === 0) {
+  if (loading && payslips.length === 0) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={24} color="#8B5CF6" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Payroll and Tax</Text>
+          <Text style={styles.headerTitle}>Slip Gaji</Text>
           <View style={{ width: 40 }} />
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -68,45 +64,53 @@ export default function PayrollTaxScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={24} color="#8B5CF6" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Payroll and Tax</Text>
+        <Text style={styles.headerTitle}>Slip Gaji</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} colors={['#8B5CF6']} />}
       >
-        {payrollData.length === 0 ? (
+        {payslips.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="document-text-outline" size={80} color="#EDE9FE" />
-            <Text style={styles.emptyTitle}>No Payroll Data</Text>
+            <Text style={styles.emptyTitle}>Belum Ada Slip Gaji</Text>
             <Text style={styles.emptySubtitle}>
-              It looks like there are no payroll records available yet.
+              Slip gaji Anda akan muncul di sini setelah HR memproses dan menerbitkan payroll untuk periode tertentu.
             </Text>
           </View>
         ) : (
-          payrollData.map((item, idx) => (
-            <TouchableOpacity 
-              key={item.id || idx} 
+          payslips.map((item) => (
+            <TouchableOpacity
+              key={item.id}
               style={styles.card}
-              onPress={() => navigation.navigate('PayrollDetails', { item })}
+              onPress={() => navigation.navigate('PayrollDetails', { payslipId: item.id })}
               activeOpacity={0.7}
             >
-              <Text style={styles.monthTitle}>{getPeriodLabel(item)}</Text>
-              
+              <View style={styles.cardHeader}>
+                <Text style={styles.monthTitle}>{formatPeriod(item.period_month)}</Text>
+                <View style={styles.statusBadge}>
+                  <Ionicons name="checkmark-circle" size={12} color="#16A34A" />
+                  <Text style={styles.statusText}>Diterbitkan</Text>
+                </View>
+              </View>
+
               <View style={styles.statsContainer}>
                 <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>Total Hours</Text>
-                  <Text style={styles.statValue}>{getHours(item)}</Text>
+                  <Text style={styles.statLabel}>Slip No</Text>
+                  <Text style={styles.statValueMono} numberOfLines={1} ellipsizeMode="tail">
+                    {item.slip_number || '-'}
+                  </Text>
                 </View>
-                
+
                 <View style={styles.statBoxCenter}>
-                  <Text style={styles.statLabel}>Received</Text>
-                  <Text style={styles.statValue}>Rp {formatCurrency(getNet(item))}</Text>
+                  <Text style={styles.statLabel}>Take Home</Text>
+                  <Text style={styles.statValue}>Rp {formatCurrency(item.net_amount)}</Text>
                 </View>
-                
+
                 <View style={styles.statBoxRight}>
-                  <Text style={styles.statLabel}>Paid On</Text>
-                  <Text style={styles.statValue}>{formatDate(getPaidOn(item))}</Text>
+                  <Text style={styles.statLabel}>Tgl Terbit</Text>
+                  <Text style={styles.statValue}>{formatDate(item.published_at)}</Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -179,11 +183,31 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   monthTitle: {
     fontSize: 15,
     fontWeight: 'bold',
     color: '#111827',
-    marginBottom: 12,
+    flex: 1,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: 11,
+    color: '#16A34A',
+    fontWeight: '600',
+    marginLeft: 4,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -197,19 +221,24 @@ const styles = StyleSheet.create({
     flex: 1.2,
   },
   statBoxCenter: {
-    flex: 0.8,
+    flex: 1,
   },
   statBoxRight: {
-    flex: 1,
+    flex: 0.9,
     alignItems: 'flex-start',
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
     marginBottom: 4,
   },
   statValue: {
-    fontSize: 15,
+    fontSize: 13,
     color: '#374151',
+  },
+  statValueMono: {
+    fontSize: 11,
+    color: '#374151',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 });

@@ -1730,7 +1730,18 @@ app.get('/payslips/:id/pdf', authRequired, async (req, res) => {
     [payslip.payroll_run_item_id],
   )
 
-  res.json({ ...payslip, components })
+  const companyRows = await query(
+    "SELECT setting_key, setting_value FROM company_settings WHERE setting_key IN ('company_name','company_address')"
+  )
+  const company = {}
+  companyRows.forEach(r => { company[r.setting_key] = r.setting_value })
+
+  res.json({
+    ...payslip,
+    components,
+    companyName: company.company_name || '',
+    companyAddress: company.company_address || '',
+  })
 })
 
 app.get('/reports/dashboard', authRequired, roleRequired('HRD', 'Finance', 'Manager', 'Super Admin'), async (_, res) => {

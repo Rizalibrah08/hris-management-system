@@ -332,12 +332,6 @@ export const api = {
     quota: () => request('/leave/quota'),
   },
 
-  payroll: {
-    mySalary: () => request('/payroll/my'),
-    myRuns: () => request('/payroll/my-runs'),
-    myRunDetail: (id) => request(`/payroll/my-runs/${id}`),
-  },
-
   payslips: {
     my: () => request('/payslips/my'),
     detail: (id) => request(`/payslips/${id}`),
