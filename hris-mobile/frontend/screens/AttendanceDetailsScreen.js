@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 import { WebView } from 'react-native-webview';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
@@ -221,11 +222,22 @@ export default function AttendanceDetailsScreen() {
               <p><strong>Catatan:</strong> ${d.notes || '-'}</p>
             </body></html>`;
             try {
-              const { uri } = await Print.printToFileAsync({ html });
+              const { base64 } = await Print.printToFileAsync({ html, base64: true });
+              const fileName = `kehadiran_${Date.now()}.pdf`;
+              const destUri = FileSystem.documentDirectory + fileName;
+              await FileSystem.writeAsStringAsync(destUri, base64, {
+                encoding: FileSystem.EncodingType.Base64,
+              });
               if (await Sharing.isAvailableAsync()) {
-                await Sharing.shareAsync(uri);
+                await Sharing.shareAsync(destUri, {
+                  mimeType: 'application/pdf',
+                  dialogTitle: 'Ekspor Detail Kehadiran',
+                  UTI: 'com.adobe.pdf',
+                });
               }
-            } catch {}
+            } catch (err) {
+              Alert.alert('Gagal', err.message || 'Tidak dapat mengekspor PDF');
+            }
           }}
         >
           <Text style={styles.exportButtonText}>Ekspor PDF</Text>

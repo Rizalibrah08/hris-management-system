@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 import { api } from '../services/api';
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
@@ -135,9 +136,18 @@ export default function PayrollDetailsScreen() {
 </body>
 </html>`;
 
-      const { uri } = await Print.printToFileAsync({ html });
+      const { base64 } = await Print.printToFileAsync({ html, base64: true });
+      const fileName = `slip_gaji_${period.replace(/\s/g, '_')}_${Date.now()}.pdf`;
+      const destUri = FileSystem.documentDirectory + fileName;
+      await FileSystem.writeAsStringAsync(destUri, base64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: `Slip Gaji ${period}` });
+        await Sharing.shareAsync(destUri, {
+          mimeType: 'application/pdf',
+          dialogTitle: `Slip Gaji ${period}`,
+          UTI: 'com.adobe.pdf',
+        });
       }
     } catch (err) {
       Alert.alert('Gagal', err.message || 'Tidak dapat mengunduh PDF slip gaji');

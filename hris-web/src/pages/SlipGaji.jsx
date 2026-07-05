@@ -18,6 +18,7 @@ export default function SlipGaji() {
   const [detail, setDetail] = useState(null)
   const [generating, setGenerating] = useState('')
   const [filterRunId, setFilterRunId] = useState('')
+  const [selectedRunId, setSelectedRunId] = useState('')
 
   // Search & Filter state
   const [search, setSearch] = useState('')
@@ -62,13 +63,15 @@ export default function SlipGaji() {
     return () => ctrl.abort()
   }, [loadPayslips, loadRuns, isAdmin])
 
-  const handleGenerate = async (runId) => {
+  const handleGenerate = async () => {
+    if (!selectedRunId) { setError('Pilih payroll run terlebih dahulu'); return }
     setError('')
     setMessage('')
-    setGenerating(String(runId))
+    setGenerating(selectedRunId)
     try {
-      const data = await api(`/payroll/runs/${runId}/payslips/generate`, { method: 'POST' })
+      const data = await api(`/payroll/runs/${selectedRunId}/payslips/generate`, { method: 'POST' })
       setMessage(data.message || 'Payslip berhasil digenerate')
+      setSelectedRunId('')
       const ctrl = new AbortController()
       await Promise.all([loadPayslips(ctrl.signal), loadRuns(ctrl.signal)])
       ctrl.abort()
@@ -138,71 +141,35 @@ export default function SlipGaji() {
 
       {isAdmin && (
         <article className="panel">
-          <h3>List Payroll Run</h3>
+          <h3>Generate Slip Gaji</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
-            Daftar semua payroll run. Slip gaji hanya bisa dibuat untuk run berstatus <strong>finalized</strong> yang belum diterbitkan.
+            Pilih payroll run berstatus <strong>finalized</strong> yang belum diterbitkan slip-nya, lalu klik Generate.
           </p>
-          {payrollRuns.length === 0 ? (
+          {availableRuns.length === 0 ? (
             <p className="empty-text">
-              {loadingRuns ? 'Memuat payroll run...' : 'Belum ada payroll run. Buat dan finalisasi payroll di halaman Payroll terlebih dahulu.'}
+              {loadingRuns ? 'Memuat payroll run...' : 'Tidak ada payroll run siap generate. Finalisasi payroll di halaman Payroll terlebih dahulu.'}
             </p>
           ) : (
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Periode</th>
-                    <th>Status</th>
-                    <th>Jumlah Karyawan</th>
-                    <th>Total Net</th>
-                    <th>Slip Diterbitkan</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {payrollRuns.map((r) => {
-                    const slipCount = payslipCountByRun[r.id] ?? null
-                    const canGenerate = r.status === 'finalized' && !slipCount
-                    const isPublished = r.status === 'published' || (slipCount && slipCount > 0)
-                    return (
-                      <tr key={r.id}>
-                        <td>#{r.id}</td>
-                        <td>{String(r.period_month || '').slice(0, 7)}</td>
-                        <td><span className={`status-badge status-${r.status}`}>{r.status}</span></td>
-                        <td>{r.employee_count ?? '-'}</td>
-                        <td className="amount-cell net">{formatRupiah(r.total_net)}</td>
-                        <td>{slipCount == null ? '—' : slipCount}</td>
-                        <td className="action-cell">
-                          {canGenerate ? (
-                            <button
-                              className="small-btn"
-                              onClick={() => handleGenerate(r.id)}
-                              disabled={generating === String(r.id)}
-                            >
-                              {generating === String(r.id) ? 'Generating...' : 'Generate Slip'}
-                            </button>
-                          ) : isPublished ? (
-                            <button
-                              className="small-btn"
-                              onClick={() => {
-                                setFilterRunId(filterRunId === String(r.id) ? '' : String(r.id))
-                                resetFilters()
-                              }}
-                            >
-                              {filterRunId === String(r.id) ? 'Sembunyikan' : 'Lihat Slip'}
-                            </button>
-                          ) : (
-                            <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>
-                              {r.status === 'draft' ? 'Finalisasi dahulu' : r.status === 'approved' ? 'Finalisasi dahulu' : '—'}
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+            <div className="generate-form" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <select
+                value={selectedRunId}
+                onChange={(e) => setSelectedRunId(e.target.value)}
+                style={{ flex: 1, minWidth: 240, padding: '10px 14px', border: '1.5px solid var(--border-input, #d1d5db)', borderRadius: 'var(--radius-sm)', fontSize: 14 }}
+              >
+                <option value="">-- Pilih Payroll Run --</option>
+                {availableRuns.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    Run #{r.id} — {String(r.period_month || '').slice(0, 7)} — {r.employee_count ?? 0} karyawan — {formatRupiah(r.total_net)}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="primary-btn"
+                onClick={handleGenerate}
+                disabled={generating !== '' || !selectedRunId}
+              >
+                {generating !== '' ? 'Generating...' : 'Generate Slip Gaji'}
+              </button>
             </div>
           )}
           {/* Hidden legacy helper kept for reference (empty now) */}
