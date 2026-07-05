@@ -308,9 +308,6 @@ export default function Pengaturan() {
             <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
               Klik peta atau drag marker untuk pilih lokasi. Bisa juga cari alamat di bawah, atau gunakan tombol "Gunakan Lokasi Saya".
             </p>
-            <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
-              Klik peta atau drag marker untuk pilih lokasi. Bisa juga cari alamat di bawah, atau gunakan tombol "Gunakan Lokasi Saya".
-            </p>
 
             {/* Search box */}
             <div className="map-search-wrapper">

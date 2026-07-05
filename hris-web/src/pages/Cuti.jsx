@@ -23,6 +23,11 @@ export default function Cuti() {
   const [selectedEmployeeName, setSelectedEmployeeName] = useState('')
   const [leaveTypes, setLeaveTypes] = useState([])
 
+  // Search & Filter state
+  const [search, setSearch] = useState('')
+  const [filterDept, setFilterDept] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+
   const canApprove = ['HRD', 'Super Admin', 'Manager'].includes(role)
   const isAdmin = ['HRD', 'Super Admin'].includes(role)
 
@@ -69,6 +74,24 @@ export default function Cuti() {
   const approvedCount = useMemo(() => leaveData.filter((l) => l.status === 'Approved').length, [leaveData])
   const rejectedCount = useMemo(() => leaveData.filter((l) => l.status === 'Rejected').length, [leaveData])
   const pendingCount = useMemo(() => leaveData.filter((l) => l.status === 'Pending').length, [leaveData])
+
+  // Daftar departemen unik dari data cuti
+  const departments = useMemo(() => {
+    const depts = leaveData
+      .map((l) => l.department)
+      .filter((d) => d && d !== '-')
+    return [...new Set(depts)].sort()
+  }, [leaveData])
+
+  // Filtered data berdasarkan search, departemen, dan status
+  const filteredLeaveData = useMemo(() => {
+    return leaveData.filter((l) => {
+      const matchSearch = !search || (l.employee_name || '').toLowerCase().includes(search.toLowerCase())
+      const matchDept = !filterDept || l.department === filterDept
+      const matchStatus = !filterStatus || l.status === filterStatus
+      return matchSearch && matchDept && matchStatus
+    })
+  }, [leaveData, search, filterDept, filterStatus])
 
   const clearMessages = () => {
     setMessage('')
@@ -159,6 +182,14 @@ export default function Cuti() {
     clearMessages()
   }
 
+  const resetFilters = () => {
+    setSearch('')
+    setFilterDept('')
+    setFilterStatus('')
+  }
+
+  const hasActiveFilter = search || filterDept || filterStatus
+
   return (
     <section className="feature-layout">
       {message && <div className="toast success">{message}</div>}
@@ -235,13 +266,69 @@ export default function Cuti() {
       )}
 
       <article className="panel">
-        <div className="panel-head">
-          <h3>Daftar Pengajuan Cuti & Izin</h3>
+        <div className="panel-head" style={{ marginBottom: 14 }}>
+          <h3 style={{ margin: 0 }}>Daftar Pengajuan Cuti &amp; Izin</h3>
         </div>
+
+        {/* Search & Filter Bar */}
+        <div className="search-filter-bar">
+          <div className="search-input-wrap">
+            <input
+              id="cuti-search"
+              className="search-input"
+              type="text"
+              placeholder="Cari nama karyawan..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button className="clear-search-btn" onClick={() => setSearch('')} title="Hapus pencarian">
+                ×
+              </button>
+            )}
+          </div>
+          <div className="filter-wrap">
+            <select
+              id="cuti-filter-dept"
+              className="filter-select"
+              value={filterDept}
+              onChange={(e) => setFilterDept(e.target.value)}
+            >
+              <option value="">Semua Jabatan</option>
+              {departments.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-wrap">
+            <select
+              id="cuti-filter-status"
+              className="filter-select"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="">Semua Status</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+          {hasActiveFilter && (
+            <button className="reset-filter-btn" onClick={resetFilters}>
+              Reset Filter
+            </button>
+          )}
+          <span className="result-count">
+            {filteredLeaveData.length} dari {leaveData.length} pengajuan
+          </span>
+        </div>
+
         {loading ? (
           <p className="loading-text">Memuat data...</p>
         ) : leaveData.length === 0 ? (
           <p className="empty-text">Belum ada pengajuan cuti atau izin.</p>
+        ) : filteredLeaveData.length === 0 ? (
+          <p className="empty-text">Tidak ada hasil yang sesuai dengan filter.</p>
         ) : (
           <div className="table-container">
             <table>
@@ -258,10 +345,12 @@ export default function Cuti() {
                 </tr>
               </thead>
               <tbody>
-                {leaveData.map((l) => (
+                {filteredLeaveData.map((l) => (
                   <tr key={l.id}>
                     <td>{l.employee_name}</td>
-                    <td>{l.department || '-'}</td>
+                    <td>
+                      <span className="dept-badge">{l.department || '-'}</span>
+                    </td>
                     <td>
                       <span className="leave-type-badge">{l.leave_type}</span>
                     </td>

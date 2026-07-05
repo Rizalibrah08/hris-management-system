@@ -19,6 +19,10 @@ export default function SlipGaji() {
   const [generating, setGenerating] = useState('')
   const [filterRunId, setFilterRunId] = useState('')
 
+  // Search & Filter state
+  const [search, setSearch] = useState('')
+  const [filterDept, setFilterDept] = useState('')
+
   const isAdmin = ['HRD', 'Finance', 'Super Admin'].includes(role)
 
   const loadPayslips = useCallback(async (signal) => {
@@ -97,10 +101,35 @@ export default function SlipGaji() {
     return payrollRuns.filter((r) => r.status === 'finalized' && !(payslipCountByRun[r.id] > 0))
   }, [payrollRuns, payslipCountByRun])
 
-  const visiblePayslips = useMemo(() => {
+  // Filter berdasarkan payroll run
+  const runFilteredPayslips = useMemo(() => {
     if (!filterRunId) return payslips
     return payslips.filter((p) => String(p.payroll_run_id) === String(filterRunId))
   }, [payslips, filterRunId])
+
+  // Daftar departemen unik dari slip gaji
+  const departments = useMemo(() => {
+    const depts = runFilteredPayslips
+      .map((p) => p.department)
+      .filter((d) => d && d !== '-')
+    return [...new Set(depts)].sort()
+  }, [runFilteredPayslips])
+
+  // Filter akhir berdasarkan search nama + departemen
+  const visiblePayslips = useMemo(() => {
+    return runFilteredPayslips.filter((p) => {
+      const matchSearch = !search || (p.employee_name || '').toLowerCase().includes(search.toLowerCase())
+      const matchDept = !filterDept || p.department === filterDept
+      return matchSearch && matchDept
+    })
+  }, [runFilteredPayslips, search, filterDept])
+
+  const hasActiveFilter = search || filterDept
+
+  const resetFilters = () => {
+    setSearch('')
+    setFilterDept('')
+  }
 
   return (
     <section className="feature-layout">
@@ -156,7 +185,10 @@ export default function SlipGaji() {
                           ) : isPublished ? (
                             <button
                               className="small-btn"
-                              onClick={() => setFilterRunId(filterRunId === String(r.id) ? '' : String(r.id))}
+                              onClick={() => {
+                                setFilterRunId(filterRunId === String(r.id) ? '' : String(r.id))
+                                resetFilters()
+                              }}
                             >
                               {filterRunId === String(r.id) ? 'Sembunyikan' : 'Lihat Slip'}
                             </button>
@@ -179,30 +211,80 @@ export default function SlipGaji() {
       )}
 
       <article className="panel">
-        <div className="panel-head">
-          <h3>Daftar Slip Gaji</h3>
+        <div className="panel-head" style={{ marginBottom: 14 }}>
+          <h3 style={{ margin: 0 }}>Daftar Slip Gaji</h3>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {isAdmin && filterRunId && (
-              <button className="small-btn cancel-btn" onClick={() => setFilterRunId('')}>
+              <button className="small-btn cancel-btn" onClick={() => { setFilterRunId(''); resetFilters() }}>
                 Reset Filter (Run #{filterRunId})
               </button>
             )}
           </div>
         </div>
+
+        {/* Search & Filter Bar — hanya tampil saat ada data */}
+        {!loading && runFilteredPayslips.length > 0 && (
+          <div className="search-filter-bar">
+            {isAdmin && (
+              <div className="search-input-wrap">
+                <input
+                  id="slipgaji-search"
+                  className="search-input"
+                  type="text"
+                  placeholder="Cari nama karyawan..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                {search && (
+                  <button className="clear-search-btn" onClick={() => setSearch('')} title="Hapus pencarian">
+                    ×
+                  </button>
+                )}
+              </div>
+            )}
+            {isAdmin && departments.length > 0 && (
+              <div className="filter-wrap">
+                <select
+                  id="slipgaji-filter-dept"
+                  className="filter-select"
+                  value={filterDept}
+                  onChange={(e) => setFilterDept(e.target.value)}
+                >
+                  <option value="">Semua Jabatan</option>
+                  {departments.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {hasActiveFilter && (
+              <button className="reset-filter-btn" onClick={resetFilters}>
+                Reset Filter
+              </button>
+            )}
+            <span className="result-count">
+              {visiblePayslips.length} dari {runFilteredPayslips.length} slip gaji
+            </span>
+          </div>
+        )}
+
         {loading ? (
           <p className="loading-text">Memuat data...</p>
-        ) : visiblePayslips.length === 0 ? (
+        ) : runFilteredPayslips.length === 0 ? (
           <p className="empty-text">
             {isAdmin && payrollRuns.length > 0
               ? 'Belum ada slip gaji yang diterbitkan. Generate dari salah satu payroll run di atas.'
               : 'Belum ada slip gaji yang tersedia untuk Anda.'}
           </p>
+        ) : visiblePayslips.length === 0 ? (
+          <p className="empty-text">Tidak ada hasil yang sesuai dengan filter.</p>
         ) : (
           <div className="table-container">
             <table>
               <thead>
                 <tr>
                   {isAdmin && <th>Karyawan</th>}
+                  {isAdmin && <th>Departemen</th>}
                   <th>No. Slip</th>
                   <th>Periode</th>
                   <th>Pendapatan</th>
@@ -216,6 +298,11 @@ export default function SlipGaji() {
                 {visiblePayslips.map((p) => (
                   <tr key={p.id}>
                     {isAdmin && <td>{p.employee_name}</td>}
+                    {isAdmin && (
+                      <td>
+                        <span className="dept-badge">{p.department || '-'}</span>
+                      </td>
+                    )}
                     <td><span className="mono">{p.slip_number}</span></td>
                     <td>{p.period_month?.slice(0, 7)}</td>
                     <td className="amount-cell earning">{formatRupiah(p.gross_amount)}</td>

@@ -20,6 +20,8 @@ export default function Absensi() {
   const [attendanceData, setAttendanceData] = useState([])
   const [report, setReport] = useState({ attendanceRate: 0 })
   const [loading, setLoading] = useState(false)
+  const [search, setSearch] = useState('')
+  const [filterDept, setFilterDept] = useState('')
 
   useEffect(() => {
     const ctrl = new AbortController()
@@ -61,6 +63,23 @@ export default function Absensi() {
     }))
   }, [attendanceData])
 
+  // Daftar departemen unik untuk filter
+  const departments = useMemo(() => {
+    const depts = attendanceRows
+      .map((r) => r.dept)
+      .filter((d) => d && d !== '-')
+    return [...new Set(depts)].sort()
+  }, [attendanceRows])
+
+  // Filter berdasarkan search dan departemen
+  const filteredRows = useMemo(() => {
+    return attendanceRows.filter((row) => {
+      const matchSearch = !search || row.name?.toLowerCase().includes(search.toLowerCase())
+      const matchDept = !filterDept || row.dept === filterDept
+      return matchSearch && matchDept
+    })
+  }, [attendanceRows, search, filterDept])
+
   const lateCount = attendanceRows.filter((r) => r.status === 'Terlambat').length
   const aktifCount = attendanceRows.filter((r) => r.status === 'Aktif').length
 
@@ -85,7 +104,53 @@ export default function Absensi() {
       </article>
 
       <article className="panel">
-        <h3>Log Kehadiran Hari Ini</h3>
+        <div className="panel-head" style={{ marginBottom: 14 }}>
+          <h3 style={{ margin: 0 }}>Log Kehadiran Hari Ini</h3>
+        </div>
+
+        {/* Search & Filter Bar */}
+        <div className="search-filter-bar">
+          <div className="search-input-wrap">
+            <input
+              id="absensi-search"
+              className="search-input"
+              type="text"
+              placeholder="Cari nama karyawan..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button className="clear-search-btn" onClick={() => setSearch('')} title="Hapus pencarian">
+                ×
+              </button>
+            )}
+          </div>
+          <div className="filter-wrap">
+            <select
+              id="absensi-filter-dept"
+              className="filter-select"
+              value={filterDept}
+              onChange={(e) => setFilterDept(e.target.value)}
+            >
+              <option value="">Semua Jabatan</option>
+              {departments.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
+          {(search || filterDept) && (
+            <button
+              className="reset-filter-btn"
+              onClick={() => { setSearch(''); setFilterDept('') }}
+            >
+              Reset Filter
+            </button>
+          )}
+          <span className="result-count">
+            {filteredRows.length} dari {attendanceRows.length} karyawan
+          </span>
+        </div>
+
         {loading ? <p>Memuat data...</p> : null}
         <div className="table-container">
           <table>
@@ -101,39 +166,49 @@ export default function Absensi() {
               </tr>
             </thead>
             <tbody>
-              {attendanceRows.map((row, idx) => (
-                <tr key={idx}>
-                  <td>{row.name}</td>
-                  <td>{row.dept}</td>
-                  <td>{row.clockIn}</td>
-                  <td className={row.clockOut === 'Belum' ? 'muted' : ''}>{row.clockOut}</td>
-                  <td>
-                    {row.selfie ? (
-                      <a href={row.selfie.startsWith('http') ? row.selfie : `${import.meta.env.VITE_UPLOADS_URL || ''}${row.selfie}`} target="_blank" rel="noopener noreferrer">
-                        <img src={row.selfie.startsWith('http') ? row.selfie : `${import.meta.env.VITE_UPLOADS_URL || ''}${row.selfie}`} alt="selfie" style={{ width: 40, height: 40, borderRadius: 4, objectFit: 'cover' }} />
-                      </a>
-                    ) : <span className="muted">-</span>}
-                  </td>
-                  <td>
-                    {row.hasGps ? (
-                      <a
-                        href={`https://www.openstreetmap.org/?mlat=${row.gpsCoords.lat}&mlon=${row.gpsCoords.lng}#map=17/${row.gpsCoords.lat}/${row.gpsCoords.lng}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="gps-badge valid"
-                        title="Lihat di Google Maps"
-                      >
-                        {row.gpsDisplay}
-                      </a>
-                    ) : (
-                      <span className="gps-badge none">{row.gpsDisplay}</span>
-                    )}
-                  </td>
-                  <td>
-                    <span className={`status ${row.status.toLowerCase()}`}>{row.status}</span>
+              {filteredRows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="empty-text">
+                    {search || filterDept ? 'Tidak ada hasil yang sesuai dengan filter.' : 'Belum ada data kehadiran.'}
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredRows.map((row, idx) => (
+                  <tr key={idx}>
+                    <td>{row.name}</td>
+                    <td>
+                      <span className="dept-badge">{row.dept}</span>
+                    </td>
+                    <td>{row.clockIn}</td>
+                    <td className={row.clockOut === 'Belum' ? 'muted' : ''}>{row.clockOut}</td>
+                    <td>
+                      {row.selfie ? (
+                        <a href={row.selfie.startsWith('http') ? row.selfie : `${import.meta.env.VITE_UPLOADS_URL || ''}${row.selfie}`} target="_blank" rel="noopener noreferrer">
+                          <img src={row.selfie.startsWith('http') ? row.selfie : `${import.meta.env.VITE_UPLOADS_URL || ''}${row.selfie}`} alt="selfie" style={{ width: 40, height: 40, borderRadius: 4, objectFit: 'cover' }} />
+                        </a>
+                      ) : <span className="muted">-</span>}
+                    </td>
+                    <td>
+                      {row.hasGps ? (
+                        <a
+                          href={`https://www.openstreetmap.org/?mlat=${row.gpsCoords.lat}&mlon=${row.gpsCoords.lng}#map=17/${row.gpsCoords.lat}/${row.gpsCoords.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="gps-badge valid"
+                          title="Lihat di Google Maps"
+                        >
+                          {row.gpsDisplay}
+                        </a>
+                      ) : (
+                        <span className="gps-badge none">{row.gpsDisplay}</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className={`status ${row.status.toLowerCase()}`}>{row.status}</span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
