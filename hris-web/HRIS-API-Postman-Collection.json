@@ -1,0 +1,852 @@
+{
+  "info": {
+    "name": "HRIS API",
+    "description": "Koleksi endpoint API HRIS untuk pengujian.\n\nCara pakai:\n1. Import file ini dan file `hris-postman-environment.json` ke Postman\n2. Pilih environment \"HRIS Local\"\n3. Jalankan request \"Login\" di folder Auth — token akan otomatis tersimpan ke variabel `token`\n4. Semua request lain sudah menggunakan Bearer Token `{{token}}`\n\nDefault credentials:\n- Super Admin: EMP-20220101-001 / admin123\n- System Admin: EMP-20220501-005 / admin123\n- HRD: EMP-20220201-002 / admin123\n- Finance: EMP-20220301-003 / admin123\n- Manager: EMP-20220401-004 / admin123",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "employeeId", "value": "1", "type": "string" },
+    { "key": "runId", "value": "1", "type": "string" },
+    { "key": "leaveId", "value": "1", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (Super Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nik\": \"EMP-20220101-001\",\n  \"password\": \"admin123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  pm.collectionVariables.set('employeeId', json.employeeId);",
+                  "  console.log('Token saved for role:', json.role);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (System Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nik\": \"EMP-20220501-005\",\n  \"password\": \"admin123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  pm.collectionVariables.set('employeeId', json.employeeId);",
+                  "  console.log('Token saved for role:', json.role);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (HRD)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nik\": \"EMP-20220201-002\",\n  \"password\": \"admin123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  pm.collectionVariables.set('employeeId', json.employeeId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (Finance)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nik\": \"EMP-20220301-003\",\n  \"password\": \"admin123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  pm.collectionVariables.set('employeeId', json.employeeId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (Manager)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nik\": \"EMP-20220401-004\",\n  \"password\": \"admin123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  pm.collectionVariables.set('employeeId', json.employeeId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nik\": \"EMP-20250701-099\",\n  \"name\": \"Test User\",\n  \"password\": \"admin123\",\n  \"email\": \"test@hris.local\",\n  \"phone\": \"08123456789\",\n  \"department_id\": 1,\n  \"position_id\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Current User (me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/auth/logout"
+          }
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "Get All Employees",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/employees" }
+        },
+        {
+          "name": "Get My Employee Profile",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/employees/me" }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/employees/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"email\": \"updated@hris.local\",\n  \"phone\": \"08123456789\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/employees",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Employee\",\n  \"department_id\": 1,\n  \"position_id\": 1,\n  \"email\": \"new@hris.local\",\n  \"phone\": \"08123456789\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('employeeId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Employee",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/employees/{{employeeId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Employee\",\n  \"department_id\": 1,\n  \"position_id\": 1,\n  \"email\": \"updated@hris.local\",\n  \"phone\": \"08123456789\",\n  \"is_active\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Employee",
+          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/employees/{{employeeId}}" }
+        },
+        {
+          "name": "Import Employees (CSV)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/employees/import",
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": "" }]
+            }
+          }
+        },
+        {
+          "name": "Get Delegation List",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/employees/delegation-list" }
+        },
+        {
+          "name": "Upload My Photo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/employees/me/photo",
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "photo", "type": "file", "src": "" }]
+            }
+          }
+        },
+        {
+          "name": "Get My Photo",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/employees/me/photo" }
+        }
+      ]
+    },
+    {
+      "name": "Attendance",
+      "item": [
+        {
+          "name": "Clock In",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/attendance/clockin",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "employee_id", "value": "{{employeeId}}", "type": "text" },
+                { "key": "gps_location", "value": "-6.2088,106.8456", "type": "text" },
+                { "key": "selfie", "type": "file", "src": "" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Clock Out",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/attendance/clockout",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gps_location\": \"-6.2088,106.8456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Attendance History",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/attendance/my" }
+        },
+        {
+          "name": "Get My Attendance Status Today",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/attendance/my-status" }
+        },
+        {
+          "name": "Get Today's Attendance (All)",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/attendance/today" }
+        }
+      ]
+    },
+    {
+      "name": "Leave",
+      "item": [
+        {
+          "name": "Submit Leave Request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/leave",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employee_id\": {{employeeId}},\n  \"leave_type\": \"Cuti Tahunan\",\n  \"start_date\": \"2026-07-10\",\n  \"end_date\": \"2026-07-12\",\n  \"reason\": \"Liburan keluarga\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('leaveId', json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve / Reject Leave",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/leave/approve",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"leave_id\": {{leaveId}},\n  \"status\": \"Approved\",\n  \"comment\": \"Disetujui\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Leave Requests",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/leave/my" }
+        },
+        {
+          "name": "Get All Leave Requests",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/leave" }
+        },
+        {
+          "name": "Cancel Leave Request",
+          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/leave/{{leaveId}}" }
+        },
+        {
+          "name": "Get Leave Quota",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/leave/quota" }
+        }
+      ]
+    },
+    {
+      "name": "Salary Components & Profiles",
+      "item": [
+        {
+          "name": "Get Salary Components",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/salary-components" }
+        },
+        {
+          "name": "Create Salary Component",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/salary-components",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"TJ_OVERTIME\",\n  \"name\": \"Tunjangan Lembur\",\n  \"type\": \"earning\",\n  \"taxable\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Salary Component",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/salary-components/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tunjangan Lembur Updated\",\n  \"taxable\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Salary Component",
+          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/salary-components/1" }
+        },
+        {
+          "name": "Get All Salary Profiles",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/salary-profiles" }
+        },
+        {
+          "name": "Get Salary Profile by Employee",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/salary-profiles/{{employeeId}}" }
+        },
+        {
+          "name": "Create Salary Profile",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/salary-profiles",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": {{employeeId}},\n  \"baseSalary\": 5000000,\n  \"allowance\": 1000000,\n  \"deduction\": 500000,\n  \"paymentMethod\": \"bank_transfer\",\n  \"bankName\": \"BCA\",\n  \"bankAccountName\": \"Employee Name\",\n  \"bankAccountNumber\": \"1234567890\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Salary Profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/salary-profiles/{{employeeId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"baseSalary\": 6000000,\n  \"allowance\": 1500000,\n  \"deduction\": 600000,\n  \"paymentMethod\": \"bank_transfer\",\n  \"bankName\": \"BCA\",\n  \"bankAccountName\": \"Employee Name\",\n  \"bankAccountNumber\": \"1234567890\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Salary Profile",
+          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/salary-profiles/{{employeeId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Payroll",
+      "item": [
+        {
+          "name": "Generate Payroll Run (Draft)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/payroll/runs/generate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"periodMonth\": \"2026-07-01\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const id = json.id || json.runId;",
+                  "if (id) pm.collectionVariables.set('runId', id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Payroll Runs",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/payroll/runs" }
+        },
+        {
+          "name": "Get Payroll Run Detail",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/payroll/runs/{{runId}}" }
+        },
+        {
+          "name": "Validate Payroll Run",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/payroll/runs/{{runId}}/validate" }
+        },
+        {
+          "name": "Submit Review (HRD)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/payroll/runs/{{runId}}/review",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Reviewed by HRD\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Approve Run (Finance)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/payroll/runs/{{runId}}/approve",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Approved by Finance\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reject Run",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/payroll/runs/{{runId}}/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Needs correction\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Finalize Run (Finance)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/payroll/runs/{{runId}}/finalize",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Finalized by Finance\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Draft Run",
+          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/payroll/runs/{{runId}}" }
+        },
+        {
+          "name": "Quick Run (Finalized)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/payroll/run",
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        },
+        {
+          "name": "Generate Payslips for Run",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/payroll/runs/{{runId}}/payslips/generate",
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        },
+        {
+          "name": "Get Audit Logs",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/payroll/audit-logs" }
+        },
+        {
+          "name": "Get Approval History",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/payroll/approvals/{{runId}}" }
+        },
+        {
+          "name": "Get My Payroll Summary",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/payroll/my" }
+        },
+        {
+          "name": "Get My Payroll Runs",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/payroll/my-runs" }
+        },
+        {
+          "name": "Get My Payroll Run Detail",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/payroll/my-runs/{{runId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Payslips",
+      "item": [
+        {
+          "name": "Get All Payslips",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/payslips" }
+        },
+        {
+          "name": "Get My Payslips",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/payslips/my" }
+        },
+        {
+          "name": "Get Payslip by ID",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/payslips/1" }
+        },
+        {
+          "name": "Download Payslip PDF",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/pdf" }],
+            "url": "{{baseUrl}}/payslips/1/pdf"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Master Data",
+      "item": [
+        {
+          "name": "Departments",
+          "item": [
+            { "name": "Get All Departments", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/departments" } },
+            {
+              "name": "Create Department",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": "{{baseUrl}}/departments",
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Research & Development\"\n}" }
+              }
+            },
+            {
+              "name": "Update Department",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": "{{baseUrl}}/departments/1",
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Engineering Updated\"\n}" }
+              }
+            },
+            { "name": "Delete Department", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/departments/1" } }
+          ]
+        },
+        {
+          "name": "Positions",
+          "item": [
+            { "name": "Get All Positions", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/positions" } },
+            {
+              "name": "Create Position",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": "{{baseUrl}}/positions",
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Senior Data Engineer\"\n}" }
+              }
+            },
+            {
+              "name": "Update Position",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": "{{baseUrl}}/positions/1",
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Software Engineer Updated\"\n}" }
+              }
+            },
+            { "name": "Delete Position", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/positions/1" } }
+          ]
+        },
+        {
+          "name": "Leave Types",
+          "item": [
+            { "name": "Get All Leave Types", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/leave-types" } },
+            {
+              "name": "Create Leave Type",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": "{{baseUrl}}/leave-types",
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Cuti Haid\"\n}" }
+              }
+            },
+            {
+              "name": "Update Leave Type",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "url": "{{baseUrl}}/leave-types/1",
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Cuti Tahunan Updated\"\n}" }
+              }
+            },
+            { "name": "Delete Leave Type", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/leave-types/1" } }
+          ]
+        },
+        {
+          "name": "Roles",
+          "item": [
+            { "name": "Get All Roles", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/roles" } }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/users" }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nik\": \"EMP-20250701-100\",\n  \"password\": \"admin123\",\n  \"role_id\": 5,\n  \"employee_id\": null,\n  \"email\": \"newuser@hris.local\",\n  \"phone\": \"08123456789\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/users/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role_id\": 3,\n  \"is_active\": 1,\n  \"email\": \"updated@hris.local\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/users/1/password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"admin123\",\n  \"newPassword\": \"newpass123\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        { "name": "Dashboard Report", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/reports/dashboard" } },
+        { "name": "Salary Distribution Report", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/reports/salary-distribution" } },
+        { "name": "Leave Stats Report", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/reports/leave-stats" } }
+      ]
+    },
+    {
+      "name": "Company Settings",
+      "item": [
+        { "name": "Get Company Settings", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/company-settings" } },
+        {
+          "name": "Update Company Settings",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/company-settings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"settings\": {\n    \"company_name\": \"PT HRIS Indonesia\",\n    \"company_address\": \"Jakarta, Indonesia\",\n    \"office_latitude\": \"-6.2088\",\n    \"office_longitude\": \"106.8456\"\n  }\n}"
+            }
+          }
+        },
+        { "name": "Get Office Location", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/company-settings/location" } }
+      ]
+    },
+    {
+      "name": "Mobile & Self-Service",
+      "item": [
+        { "name": "Get Mobile Dashboard", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/dashboard/mobile" } },
+        {
+          "name": "Get My Notifications",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/notifications/my" }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": { "method": "PUT", "header": [], "url": "{{baseUrl}}/notifications/1/read" }
+        },
+        {
+          "name": "Mark All Notifications Read",
+          "request": { "method": "PUT", "header": [], "url": "{{baseUrl}}/notifications/read-all" }
+        },
+        {
+          "name": "Get My Assets",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/assets/my" }
+        },
+        {
+          "name": "Create Expense",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/expenses",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Transportasi client\",\n  \"amount\": 150000,\n  \"category\": \"Transport\",\n  \"description\": \"Taxi ke kantor klien\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Expenses",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/expenses/my" }
+        },
+        {
+          "name": "Create Task",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/tasks",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Review laporan bulanan\",\n  \"description\": \"Cek konsistensi data\",\n  \"priority\": \"High\",\n  \"due_date\": \"2026-07-10\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Tasks",
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/tasks/my" }
+        },
+        {
+          "name": "Update Task",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/tasks/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"In Progress\",\n  \"priority\": \"High\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

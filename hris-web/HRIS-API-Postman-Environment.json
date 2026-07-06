@@ -1,0 +1,10 @@
+{
+  "name": "HRIS Local",
+  "values": [
+    { "key": "baseUrl", "value": "http://localhost:5000", "type": "default", "enabled": true },
+    { "key": "token", "value": "", "type": "default", "enabled": true },
+    { "key": "employeeId", "value": "1", "type": "default", "enabled": true },
+    { "key": "runId", "value": "1", "type": "default", "enabled": true },
+    { "key": "leaveId", "value": "1", "type": "default", "enabled": true }
+  ]
+}
