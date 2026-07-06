@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -11,6 +11,7 @@ export default function CameraScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const cameraRef = useRef(null);
+  const insets = useSafeAreaInsets();
 
   const action = route.params?.action || 'clockin';
   const attendanceId = route.params?.attendanceId;
@@ -52,7 +53,7 @@ export default function CameraScreen() {
       <CameraView style={styles.camera} facing={facing} ref={cameraRef} />
       <SafeAreaView style={[styles.safeArea, StyleSheet.absoluteFillObject]}>
         {/* Top Bar */}
-        <View style={styles.topBar}>
+        <View style={[styles.topBar, { paddingTop: insets.top || 40 }]}>
           <TouchableOpacity style={styles.topBarIcon} onPress={() => navigation.goBack()}>
             <Ionicons name="close" size={28} color="#FFFFFF" />
           </TouchableOpacity>
@@ -95,7 +96,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 40, // Memberikan jarak dari langit-langit layar (margin top)
     backgroundColor: 'transparent',
     paddingBottom: 15,
   },

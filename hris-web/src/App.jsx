@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { PieChart, Pie, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { LOGO_BASE64 } from './utils/logoBase64'
 import './styles/global.css'
 import './styles/payroll.css'
 import './styles/laporan.css'
@@ -1073,10 +1074,18 @@ function RejectModal({ runId, comment, onCommentChange, onCancel, onConfirm }) {
 }
 
 function exportReportsToPDF(report, salaryDistribution, leaveStats) {
+  // Tambahkan logo ke halaman yang diberikan
+  function addPageWithLogoApp(doc) {
+    doc.addImage(LOGO_BASE64, 'PNG', 15, 10, 20, 20)
+  }
+
   const doc = new jsPDF()
   const pageHeight = doc.internal.pageSize.getHeight()
   const margin = 15
-  let yPos = margin
+  let yPos = margin + 25
+
+  // Logo di halaman pertama
+  addPageWithLogoApp(doc)
 
   // Title
   doc.setFontSize(18)
@@ -1121,7 +1130,8 @@ function exportReportsToPDF(report, salaryDistribution, leaveStats) {
   if (salaryDistribution.byDepartment && salaryDistribution.byDepartment.length > 0) {
     if (yPos > pageHeight - 40) {
       doc.addPage()
-      yPos = margin
+      addPageWithLogoApp(doc)
+      yPos = margin + 25
     }
     doc.setFontSize(12)
     doc.setFont(undefined, 'bold')
@@ -1159,7 +1169,8 @@ function exportReportsToPDF(report, salaryDistribution, leaveStats) {
   if (leaveStats.byType && leaveStats.byType.length > 0) {
     if (yPos > pageHeight - 40) {
       doc.addPage()
-      yPos = margin
+      addPageWithLogoApp(doc)
+      yPos = margin + 25
     }
     doc.setFontSize(12)
     doc.setFont(undefined, 'bold')
@@ -1199,7 +1210,8 @@ function exportReportsToPDF(report, salaryDistribution, leaveStats) {
   if (report.payrollCostBreakdown && report.payrollCostBreakdown.length > 0) {
     if (yPos > pageHeight - 40) {
       doc.addPage()
-      yPos = margin
+      addPageWithLogoApp(doc)
+      yPos = margin + 25
     }
     doc.setFontSize(12)
     doc.setFont(undefined, 'bold')

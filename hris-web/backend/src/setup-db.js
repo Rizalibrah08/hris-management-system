@@ -96,23 +96,23 @@ async function run() {
   // bcrypt hash for 'admin123'
   const hash = '$2b$10$2Y8uPaG8pBSGyd7fwqcLbOY67TEKq/qjvlUr9XwJG0DP4I92G1.rW'
   const adminUsers = [
-    // [nik, roleName, employeeName, departmentName, positionName, email]
-    ['ADM001', 'Super Admin', 'Administrator', 'IT Support', 'IT Support Specialist', 'admin@hris.local'],
-    ['HRD001', 'HRD', 'HRD Staff', 'HRD', 'HR Manager', 'hrd@hris.local'],
-    ['FIN001', 'Finance', 'Finance Staff', 'Finance', 'Finance Manager', 'finance@hris.local'],
-    ['MGR001', 'Manager', 'Manager Staff', 'Engineering', 'Engineering Manager', 'manager@hris.local'],
+    // [nik, roleName, employeeName, departmentName, positionName, email, joinDate]
+    ['EMP-20220101-001', 'Super Admin', 'Administrator', 'IT Support', 'IT Support Specialist', 'admin@hris.local', '2022-01-01'],
+    ['EMP-20220201-002', 'HRD', 'HRD Manager', 'HRD', 'HR Manager', 'hrd@hris.local', '2022-02-01'],
+    ['EMP-20220301-003', 'Finance', 'Finance Manager', 'Finance', 'Finance Manager', 'finance@hris.local', '2022-03-01'],
+    ['EMP-20220401-004', 'Manager', 'Engineering Manager', 'Engineering', 'Engineering Manager', 'manager@hris.local', '2022-04-01'],
   ]
-  for (const [nik, roleName, empName, deptName, posName, email] of adminUsers) {
-    // Create employee record first
+  for (const [nik, roleName, empName, deptName, posName, email, joinDate] of adminUsers) {
+    // Create employee record first (permanent employees, no contract_end)
     const [empResult] = await conn.execute(
-      'INSERT INTO employees(name, department_id, position_id, email) VALUES (?,?,?,?)',
-      [empName, await getDeptId(deptName), await getPosId(posName), email],
+      'INSERT INTO employees(name, department_id, position_id, email, is_active) VALUES (?,?,?,?,?)',
+      [empName, await getDeptId(deptName), await getPosId(posName), email, 1],
     )
     const empId = empResult.insertId
     // Create user linked to the employee
     await conn.execute(
-      'INSERT INTO users(nik, email, password, role_id, employee_id) VALUES (?,?,?,?,?)',
-      [nik, email, hash, await getRoleId(roleName), empId],
+      'INSERT INTO users(nik, email, password, role_id, employee_id, is_active) VALUES (?,?,?,?,?,?)',
+      [nik, email, hash, await getRoleId(roleName), empId, 1],
     )
   }
 
@@ -138,7 +138,8 @@ async function run() {
   await conn.end()
   console.log(`\nDatabase "${database}" siap (${host}:${port})`)
   console.log(`  Master: ${roles.length} roles, ${departments.length} dept, ${positions.length} posisi, ${leaveTypes.length} jenis cuti, ${components.length} komponen payroll`)
-  console.log(`  Users: ${adminUsers.map(u => u[0]).join(', ')} (password: admin123)`)
+  console.log(`  Admin Users: EMP-20220101-001 (Super Admin), EMP-20220201-002 (HRD), EMP-20220301-003 (Finance), EMP-20220401-004 (Manager)`)
+  console.log(`  Password: admin123`)
   console.log(`\n  Import karyawan via Excel template di templates/employee-import-template.xlsx`)
 }
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Platform, TouchableOpacity, Alert } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as NavigationBar from 'expo-navigation-bar';
 import { NavigationContainer, CommonActions, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -35,7 +36,7 @@ const Tab = createBottomTabNavigator();
 
 function MainTabs() {
   const { user } = useAuth()
-  const isEmployee = user?.role === 'Employee'
+  const insets = useSafeAreaInsets();
 
   const tabs = [
     { name: 'Home', component: DashboardScreen, iconFocused: 'home', iconOutline: 'home-outline' },
@@ -45,6 +46,8 @@ function MainTabs() {
     { name: 'Profile', component: ProfileScreen, iconFocused: 'person', iconOutline: 'person-outline' },
   ]
 
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 0;
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -53,9 +56,14 @@ function MainTabs() {
         tabBarStyle: {
           backgroundColor: '#1E1E1E',
           borderTopWidth: 0,
-          minHeight: 70,
-          paddingBottom: 10,
-          paddingTop: 10,
+          height: 60 + bottomInset,
+          paddingBottom: bottomInset > 0 ? bottomInset : 8,
+          paddingTop: 8,
+          elevation: 20,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
         },
         tabBarIcon: ({ focused, color, size }) => {
           const tab = tabs.find(t => t.name === route.name)
@@ -134,6 +142,7 @@ function AppContent() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#1E1E1E' }}>
+      <StatusBar hidden />
       {user && sessionError && (
         <View style={styles.sessionBanner}>
           <View style={{ flex: 1 }}>
@@ -156,20 +165,20 @@ function AppContent() {
         </View>
       )}
       <NavigationContainer ref={navigationRef} theme={MyTheme}>
-      <Stack.Navigator>
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false, gestureEnabled: false }} />
-        <Stack.Screen name="ClockIn" component={ClockInScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Camera" component={CameraScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="SubmitClockIn" component={SubmitClockInScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AttendanceDetails" component={AttendanceDetailsScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="PayrollTax" component={PayrollTaxScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="PayrollDetails" component={PayrollDetailsScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="PersonalData" component={PersonalDataScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="SubmitLeave" component={SubmitLeaveScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Notifications" component={NotificationScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AttendanceCalendar" component={AttendanceCalendarScreen} options={{ headerShown: false }} />
+      <Stack.Navigator screenOptions={{ headerShown: false, statusBarHidden: true }}>
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Main" component={MainTabs} options={{ gestureEnabled: false }} />
+        <Stack.Screen name="ClockIn" component={ClockInScreen} />
+        <Stack.Screen name="Camera" component={CameraScreen} />
+        <Stack.Screen name="SubmitClockIn" component={SubmitClockInScreen} />
+        <Stack.Screen name="AttendanceDetails" component={AttendanceDetailsScreen} />
+        <Stack.Screen name="PayrollTax" component={PayrollTaxScreen} />
+        <Stack.Screen name="PayrollDetails" component={PayrollDetailsScreen} />
+        <Stack.Screen name="PersonalData" component={PersonalDataScreen} />
+        <Stack.Screen name="SubmitLeave" component={SubmitLeaveScreen} />
+        <Stack.Screen name="Notifications" component={NotificationScreen} />
+        <Stack.Screen name="AttendanceCalendar" component={AttendanceCalendarScreen} />
       </Stack.Navigator>
     </NavigationContainer>
 
@@ -182,6 +191,7 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, sta
 
 export default function App() {
   useEffect(() => {
+    // Hide navigation bar Android untuk tampilan yang clean
     Platform.OS === 'android' && NavigationBar.setVisibilityAsync("hidden");
   }, []);
 

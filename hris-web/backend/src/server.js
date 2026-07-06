@@ -243,29 +243,39 @@ app.get('/employees/me', authRequired, async (req, res) => {
   if (!employeeId) {
     return res.status(404).json({ message: 'User tidak memiliki data karyawan' })
   }
-  const rows = await query(
-    `SELECT e.id, e.name, e.email, e.phone, e.photo_url, d.name AS department, p.name AS position, e.contract_end, e.department_id, e.position_id
-     FROM employees e
-     LEFT JOIN departments d ON d.id = e.department_id
-     LEFT JOIN positions p ON p.id = e.position_id
-     WHERE e.id = ?`,
-    [employeeId],
-  )
-  if (rows.length === 0) return res.status(404).json({ message: 'Data karyawan tidak ditemukan' })
-  const emp = rows[0]
-  res.json({
-    ...emp,
-    photoUrl: emp.photo_url,
-  })
+  try {
+    const rows = await query(
+      `SELECT e.id, e.name, e.email, e.phone, e.photo_url, d.name AS department, p.name AS position, e.contract_end, e.department_id, e.position_id
+       FROM employees e
+       LEFT JOIN departments d ON d.id = e.department_id
+       LEFT JOIN positions p ON p.id = e.position_id
+       WHERE e.id = ?`,
+      [employeeId],
+    )
+    if (rows.length === 0) return res.status(404).json({ message: 'Data karyawan tidak ditemukan' })
+    const emp = rows[0]
+    res.json({
+      ...emp,
+      photoUrl: emp.photo_url,
+    })
+  } catch (err) {
+    console.error('[GET /employees/me] DB error:', err.message)
+    res.status(500).json({ message: 'Gagal memuat data profil karyawan. Coba lagi nanti.' })
+  }
 })
 
 app.put('/employees/me', authRequired, async (req, res) => {
   const employeeId = req.user.employeeId
   if (!employeeId) return res.status(404).json({ message: 'User tidak memiliki data karyawan' })
   const { phone, email } = req.body
-  await query('UPDATE employees SET phone=?, email=? WHERE id=?', [phone, email, employeeId])
-  const updated = await query('SELECT * FROM employees WHERE id = ?', [employeeId])
-  res.json(updated[0])
+  try {
+    await query('UPDATE employees SET phone=?, email=? WHERE id=?', [phone, email, employeeId])
+    const updated = await query('SELECT * FROM employees WHERE id = ?', [employeeId])
+    res.json(updated[0])
+  } catch (err) {
+    console.error('[PUT /employees/me] DB error:', err.message)
+    res.status(500).json({ message: 'Gagal memperbarui data profil. Coba lagi nanti.' })
+  }
 })
 
 app.get('/employees', authRequired, roleRequired('HRD', 'Super Admin'), async (_, res) => {

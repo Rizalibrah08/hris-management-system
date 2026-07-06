@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Image, StyleSheet, Animated, Dimensions, StatusBar } from 'react-native';
+import { Image, StyleSheet, Animated, Dimensions } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 
 const SCREEN_HEIGHT = Dimensions.get('screen').height;
 const SCREEN_WIDTH = Dimensions.get('screen').width;

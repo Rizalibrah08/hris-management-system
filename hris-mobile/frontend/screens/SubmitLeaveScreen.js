@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Modal, Alert, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,6 +9,7 @@ import { api } from '../services/api';
 export default function SubmitLeaveScreen() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [description, setDescription] = useState('');
   const [emergencyPhone, setEmergencyPhone] = useState('');
@@ -190,7 +191,7 @@ export default function SubmitLeaveScreen() {
         style={{ flex: 1 }}
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top || 40 }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={24} color="#8B5CF6" />
           </TouchableOpacity>
@@ -198,7 +199,7 @@ export default function SubmitLeaveScreen() {
           <View style={{ width: 40 }} />
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Fill Leave Information</Text>
@@ -595,7 +596,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 40,
     paddingBottom: 20,
     backgroundColor: '#FFFFFF',
   },
@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 110, // make space for footer button
+    paddingBottom: 20,
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -707,13 +707,9 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 20, // To stay consistent
+    paddingBottom: 20,
     backgroundColor: '#F3F4F6',
   },
   submitButton: {

@@ -193,8 +193,15 @@ npx expo start
 | Mobile | Scan QR code di terminal Expo |
 
 **Login default:**
-- NIK: `ADM001`
+- NIK: `EMP-20220101-001` (Super Admin)
 - Password: `admin123`
+
+**Admin users lainnya:**
+- `EMP-20220201-002` (HRD Manager)
+- `EMP-20220301-003` (Finance Manager)  
+- `EMP-20220401-004` (Engineering Manager)
+
+**Format NIK**: `EMP-YYYYMMDD-XXX` (YYYYMMDD = tanggal bergabung)
 
 ---
 

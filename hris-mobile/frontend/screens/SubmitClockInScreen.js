@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity, 
   Image, TextInput, ScrollView, Dimensions, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, Alert 
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -15,6 +15,7 @@ const { width } = Dimensions.get('window');
 export default function SubmitClockInScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const photoUri = route.params?.photoUri || '';
   const action = route.params?.action || 'clockin';
@@ -73,7 +74,7 @@ export default function SubmitClockInScreen() {
         style={{ flex: 1 }}
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top || 40 }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={24} color="#8B5CF6" />
           </TouchableOpacity>
@@ -83,6 +84,7 @@ export default function SubmitClockInScreen() {
         </View>
 
         <ScrollView 
+          style={{ flex: 1 }}
           showsVerticalScrollIndicator={false} 
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
@@ -125,7 +127,7 @@ export default function SubmitClockInScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 30) }]}>
           <TouchableOpacity 
             style={[styles.submitButton, loading && styles.submitButtonDisabled]}
             onPress={handleSubmit}
@@ -191,7 +193,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 40, // Increased to avoid status bar
     paddingBottom: 20,
   },
   backButton: {
@@ -289,7 +290,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingHorizontal: 20,
-    paddingBottom: 30, // for bottom safe area
     paddingTop: 10,
     backgroundColor: '#F9FAFB',
   },

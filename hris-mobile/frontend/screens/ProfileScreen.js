@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,15 +9,20 @@ import { api } from '../services/api';
 export default function ProfileScreen() {
   const navigation = useNavigation();
   const { user, logout } = useAuth();
+  const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const loadProfile = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
       const data = await api.employees.me();
       setProfile(data);
     } catch (err) {
       console.error('Profile load error:', err.message);
+      setError(err.message || 'Gagal memuat profil. Coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -37,6 +42,7 @@ export default function ProfileScreen() {
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#8B5CF6" />
+          <Text style={styles.loadingText}>Memuat profil...</Text>
         </View>
       </View>
     );
@@ -48,10 +54,45 @@ export default function ProfileScreen() {
   const email = profile?.email || user?.email || '-';
   const phone = profile?.phone || user?.phone || '-';
 
+  if (error && !profile) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.headerBackground}>
+          <SafeAreaView edges={['top']}>
+            <View style={styles.headerTop}>
+              <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>My Profile</Text>
+              <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+        </View>
+        <View style={styles.errorContainer}>
+          <Ionicons name="cloud-offline-outline" size={56} color="#D1D5DB" />
+          <Text style={styles.errorTitle}>Gagal Memuat Profil</Text>
+          <Text style={styles.errorMessage}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadProfile}>
+            <Ionicons name="refresh-outline" size={18} color="#FFFFFF" />
+            <Text style={styles.retryButtonText}>Coba Lagi</Text>
+          </TouchableOpacity>
+          <Text style={styles.fallbackHint}>Menampilkan data sementara dari sesi login</Text>
+          <View style={styles.fallbackCard}>
+            <Ionicons name="person-circle-outline" size={40} color="#8B5CF6" style={{ marginBottom: 8 }} />
+            <Text style={styles.fallbackName}>{employeeName}</Text>
+            {user?.email ? <Text style={styles.fallbackEmail}>{user.email}</Text> : null}
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.headerBackground}>
-        <SafeAreaView>
+        <SafeAreaView edges={['top']}>
           <View style={styles.headerTop}>
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
               <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
@@ -64,7 +105,7 @@ export default function ProfileScreen() {
         </SafeAreaView>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 + insets.bottom }]}>
         <View style={styles.bodyContainer}>
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarBox}>
@@ -130,7 +171,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFFFFF' },
   backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
   logoutButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { paddingBottom: 40 },
+  scrollContent: { paddingBottom: 90 },
   bodyContainer: { paddingHorizontal: 20, paddingTop: 10 },
   avatarWrapper: { alignItems: 'center', marginBottom: 24 },
   avatarBox: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#EDEBFE', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
@@ -147,4 +188,14 @@ const styles = StyleSheet.create({
   itemText: { fontSize: 14, color: '#374151' },
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FEF2F2', paddingVertical: 14, borderRadius: 12, marginTop: 10, gap: 8 },
   logoutBtnText: { color: '#EF4444', fontSize: 15, fontWeight: '600' },
+  loadingText: { marginTop: 12, fontSize: 14, color: '#6B7280' },
+  errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 },
+  errorTitle: { fontSize: 18, fontWeight: '700', color: '#111827', marginTop: 16, marginBottom: 8 },
+  errorMessage: { fontSize: 13, color: '#6B7280', textAlign: 'center', marginBottom: 24 },
+  retryButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#8B5CF6', paddingVertical: 12, paddingHorizontal: 28, borderRadius: 12, gap: 8 },
+  retryButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
+  fallbackHint: { fontSize: 12, color: '#9CA3AF', marginTop: 32, marginBottom: 12 },
+  fallbackCard: { backgroundColor: '#F5F3FF', borderRadius: 16, padding: 20, alignItems: 'center', width: '100%' },
+  fallbackName: { fontSize: 16, fontWeight: '700', color: '#111827' },
+  fallbackEmail: { fontSize: 13, color: '#6B7280', marginTop: 4 },
 });

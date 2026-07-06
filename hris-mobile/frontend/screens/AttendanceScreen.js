@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
@@ -11,6 +11,7 @@ export default function AttendanceScreen() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const [attStatus, setAttStatus] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -85,9 +86,9 @@ export default function AttendanceScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 + insets.bottom }]}>
         <LinearGradient colors={['#7C3AED', '#8B5CF6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.headerBackground}>
-          <SafeAreaView>
+          <SafeAreaView edges={['top']}>
             <View style={styles.headerContent}>
               <View style={styles.headerTextContainer}>
                 <Text style={styles.headerTitle}>{hasClockedIn ? 'Sudah Clock In!' : "Let's Clock In!"}</Text>
@@ -214,8 +215,8 @@ export default function AttendanceScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F3F4F6' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { paddingBottom: 40 },
-  headerBackground: { paddingTop: 40, paddingBottom: 60, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
+  scrollContent: { paddingBottom: 90 },
+  headerBackground: { paddingBottom: 60, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
   headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 20 },
   headerTextContainer: { flex: 1 },
   headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 8 },

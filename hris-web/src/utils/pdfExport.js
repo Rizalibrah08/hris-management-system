@@ -1,12 +1,21 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { formatRupiah } from './formatters'
+import { LOGO_BASE64 } from './logoBase64'
+
+// Tambahkan logo ke halaman yang diberikan
+function addPageWithLogo(doc) {
+  doc.addImage(LOGO_BASE64, 'PNG', 15, 10, 20, 20)
+}
 
 export function exportReportsToPDF(report, salaryDistribution, leaveStats) {
   const doc = new jsPDF()
   const pageHeight = doc.internal.pageSize.getHeight()
   const margin = 15
-  let yPos = margin
+  let yPos = margin + 25
+
+  // Logo di halaman pertama
+  addPageWithLogo(doc)
 
   // Title
   doc.setFontSize(18)
@@ -51,7 +60,8 @@ export function exportReportsToPDF(report, salaryDistribution, leaveStats) {
   if (salaryDistribution.byDepartment && salaryDistribution.byDepartment.length > 0) {
     if (yPos > pageHeight - 40) {
       doc.addPage()
-      yPos = margin
+      addPageWithLogo(doc)
+      yPos = margin + 25
     }
     doc.setFontSize(12)
     doc.setFont(undefined, 'bold')
@@ -89,7 +99,8 @@ export function exportReportsToPDF(report, salaryDistribution, leaveStats) {
   if (leaveStats.byType && leaveStats.byType.length > 0) {
     if (yPos > pageHeight - 40) {
       doc.addPage()
-      yPos = margin
+      addPageWithLogo(doc)
+      yPos = margin + 25
     }
     doc.setFontSize(12)
     doc.setFont(undefined, 'bold')
@@ -129,7 +140,8 @@ export function exportReportsToPDF(report, salaryDistribution, leaveStats) {
   if (report.payrollCostBreakdown && report.payrollCostBreakdown.length > 0) {
     if (yPos > pageHeight - 40) {
       doc.addPage()
-      yPos = margin
+      addPageWithLogo(doc)
+      yPos = margin + 25
     }
     doc.setFontSize(12)
     doc.setFont(undefined, 'bold')

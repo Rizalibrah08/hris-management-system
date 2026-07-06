@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { api } from '../services/api';
@@ -20,6 +20,7 @@ const formatPeriod = (d) => {
 export default function PayrollTaxScreen() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
   const [payslips, setPayslips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -43,8 +44,8 @@ export default function PayrollTaxScreen() {
 
   if (loading && payslips.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <View style={[styles.header, { paddingTop: insets.top || 40 }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={24} color="#8B5CF6" />
           </TouchableOpacity>
@@ -59,7 +60,7 @@ export default function PayrollTaxScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={24} color="#8B5CF6" />
@@ -68,7 +69,7 @@ export default function PayrollTaxScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 + insets.bottom }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} colors={['#8B5CF6']} />}
       >
         {payslips.length === 0 ? (
@@ -131,7 +132,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 40,
     paddingBottom: 20,
     backgroundColor: '#FFFFFF',
   },
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 40,
+    paddingBottom: 90,
   },
   emptyContainer: {
     alignItems: 'center',

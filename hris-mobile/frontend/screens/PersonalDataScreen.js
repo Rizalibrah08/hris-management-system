@@ -206,7 +206,7 @@ export default function PersonalDataScreen() {
       </ScrollView>
 
       {/* Footer Button */}
-      <View style={[styles.footer, { paddingBottom: bottomInset }]}>
+      <View style={[styles.footer, { paddingBottom: Math.max(bottomInset, 20) }]}>
         <TouchableOpacity 
           style={styles.updateButton}
           onPress={() => setIsUpdateVisible(true)}
@@ -312,7 +312,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 40,
     paddingBottom: 20,
     backgroundColor: '#FFFFFF',
   },
@@ -436,7 +435,6 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 20,
     backgroundColor: '#F3F4F6',
   },
   updateButton: {

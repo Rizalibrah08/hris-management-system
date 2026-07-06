@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,6 +9,7 @@ import { api } from '../services/api';
 export default function DashboardScreen() {
   const navigation = useNavigation();
   const { user, logout } = useAuth();
+  const insets = useSafeAreaInsets();
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -31,7 +32,7 @@ export default function DashboardScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#8B5CF6" />
         </View>
@@ -46,10 +47,10 @@ export default function DashboardScreen() {
   const pendingLeave = dashboard?.pendingLeave || 0;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, { paddingBottom: 24 + insets.bottom }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#8B5CF6']} />}
       >
         <View style={styles.header}>
@@ -168,7 +169,7 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F3F4F6' },
-  container: { paddingHorizontal: 20, paddingTop: 40, paddingBottom: 40 },
+  container: { paddingHorizontal: 20, paddingTop: 20 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   userInfo: { flexDirection: 'row', alignItems: 'center' },
