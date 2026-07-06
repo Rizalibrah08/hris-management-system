@@ -159,7 +159,7 @@ app.post('/auth/login', async (req, res) => {
     expiresIn: '1d',
   })
 
-  const webRoles = ['Super Admin', 'HRD', 'Finance', 'Manager']
+  const webRoles = ['Super Admin', 'System Admin', 'HRD', 'Finance', 'Manager']
   const allowedPortals = webRoles.includes(user.role) ? ['web', 'mobile'] : ['mobile']
 
   let employeeName = null
@@ -278,7 +278,7 @@ app.put('/employees/me', authRequired, async (req, res) => {
   }
 })
 
-app.get('/employees', authRequired, roleRequired('HRD', 'Super Admin'), async (_, res) => {
+app.get('/employees', authRequired, roleRequired('HRD', 'Super Admin', 'System Admin'), async (_, res) => {
   const rows = await query(
     `SELECT e.id, e.name, e.department_id, e.position_id, d.name department, p.name position,
             e.contract_end, e.email, e.phone, e.is_active, u.nik
@@ -291,7 +291,7 @@ app.get('/employees', authRequired, roleRequired('HRD', 'Super Admin'), async (_
   res.json(rows)
 })
 
-app.post('/employees', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+app.post('/employees', authRequired, roleRequired('HRD', 'Super Admin', 'System Admin'), async (req, res) => {
   const { name, department_id, position_id, contract_end, email, phone } = req.body
   if (!name) return res.status(400).json({ message: 'Nama wajib diisi' })
   
@@ -341,7 +341,7 @@ app.post('/employees', authRequired, roleRequired('HRD', 'Super Admin'), async (
   })
 })
 
-app.put('/employees/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+app.put('/employees/:id', authRequired, roleRequired('HRD', 'Super Admin', 'System Admin'), async (req, res) => {
   const { id } = req.params
   const { name, department_id, position_id, contract_end, email, phone, is_active } = req.body
   if (!name) return res.status(400).json({ message: 'Nama wajib diisi' })
@@ -354,13 +354,13 @@ app.put('/employees/:id', authRequired, roleRequired('HRD', 'Super Admin'), asyn
   res.json(updated[0] || null)
 })
 
-app.delete('/employees/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+app.delete('/employees/:id', authRequired, roleRequired('HRD', 'Super Admin', 'System Admin'), async (req, res) => {
   await query('DELETE FROM employees WHERE id=?', [req.params.id])
   res.status(204).end()
 })
 
 // === EMPLOYEE IMPORT (CSV) ===
-app.post('/employees/import', authRequired, roleRequired('HRD', 'Super Admin'), uploadImport.single('file'), async (req, res) => {
+app.post('/employees/import', authRequired, roleRequired('HRD', 'Super Admin', 'System Admin'), uploadImport.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'File CSV wajib diupload' })
 
   const fs = await import('node:fs/promises')
@@ -1754,7 +1754,7 @@ app.get('/payslips/:id/pdf', authRequired, async (req, res) => {
   })
 })
 
-app.get('/reports/dashboard', authRequired, roleRequired('HRD', 'Finance', 'Manager', 'Super Admin'), async (_, res) => {
+app.get('/reports/dashboard', authRequired, roleRequired('HRD', 'Finance', 'Manager', 'Super Admin', 'System Admin'), async (_, res) => {
   const [employees, pendingLeave, attendanceToday, payrollTotal, payrollCostBreakdown, attendanceTrend] = await Promise.all([
     query('SELECT COUNT(*) AS total FROM employees'),
     query("SELECT COUNT(*) AS total FROM leave_request WHERE status='Pending'"),
@@ -1850,7 +1850,7 @@ app.get('/reports/salary-distribution', authRequired, roleRequired('HRD', 'Finan
   })
 })
 
-app.get('/reports/leave-stats', authRequired, roleRequired('HRD', 'Finance', 'Manager', 'Super Admin'), async (_, res) => {
+app.get('/reports/leave-stats', authRequired, roleRequired('HRD', 'Finance', 'Manager', 'Super Admin', 'System Admin'), async (_, res) => {
   const [byType, byStatus, monthlySummary] = await Promise.all([
     query(
       `SELECT 
@@ -1911,7 +1911,7 @@ app.get('/roles', authRequired, async (_, res) => {
 })
 
 // === Departments CRUD ===
-app.post('/departments', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+app.post('/departments', authRequired, roleRequired('HRD', 'Super Admin', 'System Admin'), async (req, res) => {
   const { name } = req.body
   if (!name?.trim()) return res.status(400).json({ message: 'Nama departemen wajib diisi' })
   try {
@@ -1923,7 +1923,7 @@ app.post('/departments', authRequired, roleRequired('HRD', 'Super Admin'), async
   }
 })
 
-app.put('/departments/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+app.put('/departments/:id', authRequired, roleRequired('HRD', 'Super Admin', 'System Admin'), async (req, res) => {
   const { name } = req.body
   if (!name?.trim()) return res.status(400).json({ message: 'Nama departemen wajib diisi' })
   const rows = await query('SELECT id FROM departments WHERE id = ?', [Number(req.params.id)])
@@ -1937,7 +1937,7 @@ app.put('/departments/:id', authRequired, roleRequired('HRD', 'Super Admin'), as
   }
 })
 
-app.delete('/departments/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+app.delete('/departments/:id', authRequired, roleRequired('HRD', 'Super Admin', 'System Admin'), async (req, res) => {
   const id = Number(req.params.id)
   const rows = await query('SELECT id FROM departments WHERE id = ?', [id])
   if (!rows.length) return res.status(404).json({ message: 'Departemen tidak ditemukan' })
@@ -1948,7 +1948,7 @@ app.delete('/departments/:id', authRequired, roleRequired('HRD', 'Super Admin'),
 })
 
 // === Positions CRUD ===
-app.post('/positions', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+app.post('/positions', authRequired, roleRequired('HRD', 'Super Admin', 'System Admin'), async (req, res) => {
   const { name } = req.body
   if (!name?.trim()) return res.status(400).json({ message: 'Nama jabatan wajib diisi' })
   try {
@@ -1960,7 +1960,7 @@ app.post('/positions', authRequired, roleRequired('HRD', 'Super Admin'), async (
   }
 })
 
-app.put('/positions/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+app.put('/positions/:id', authRequired, roleRequired('HRD', 'Super Admin', 'System Admin'), async (req, res) => {
   const { name } = req.body
   if (!name?.trim()) return res.status(400).json({ message: 'Nama jabatan wajib diisi' })
   const rows = await query('SELECT id FROM positions WHERE id = ?', [Number(req.params.id)])
@@ -1974,7 +1974,7 @@ app.put('/positions/:id', authRequired, roleRequired('HRD', 'Super Admin'), asyn
   }
 })
 
-app.delete('/positions/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+app.delete('/positions/:id', authRequired, roleRequired('HRD', 'Super Admin', 'System Admin'), async (req, res) => {
   const id = Number(req.params.id)
   const rows = await query('SELECT id FROM positions WHERE id = ?', [id])
   if (!rows.length) return res.status(404).json({ message: 'Jabatan tidak ditemukan' })
@@ -1990,7 +1990,7 @@ app.get('/leave-types', authRequired, async (_, res) => {
   res.json(rows)
 })
 
-app.post('/leave-types', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+app.post('/leave-types', authRequired, roleRequired('HRD', 'Super Admin', 'System Admin'), async (req, res) => {
   const { name } = req.body
   if (!name?.trim()) return res.status(400).json({ message: 'Nama jenis izin wajib diisi' })
   try {
@@ -2002,7 +2002,7 @@ app.post('/leave-types', authRequired, roleRequired('HRD', 'Super Admin'), async
   }
 })
 
-app.put('/leave-types/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+app.put('/leave-types/:id', authRequired, roleRequired('HRD', 'Super Admin', 'System Admin'), async (req, res) => {
   const { name } = req.body
   if (!name?.trim()) return res.status(400).json({ message: 'Nama jenis izin wajib diisi' })
   const rows = await query('SELECT id FROM leave_types WHERE id = ?', [Number(req.params.id)])
@@ -2016,7 +2016,7 @@ app.put('/leave-types/:id', authRequired, roleRequired('HRD', 'Super Admin'), as
   }
 })
 
-app.delete('/leave-types/:id', authRequired, roleRequired('HRD', 'Super Admin'), async (req, res) => {
+app.delete('/leave-types/:id', authRequired, roleRequired('HRD', 'Super Admin', 'System Admin'), async (req, res) => {
   const id = Number(req.params.id)
   const rows = await query('SELECT id FROM leave_types WHERE id = ?', [id])
   if (!rows.length) return res.status(404).json({ message: 'Jenis izin tidak ditemukan' })
@@ -2027,10 +2027,10 @@ app.delete('/leave-types/:id', authRequired, roleRequired('HRD', 'Super Admin'),
 })
 
 // =============================
-// User Management (Super Admin only)
+// User Management (Super Admin & System Admin)
 // =============================
 
-app.get('/users', authRequired, roleRequired('Super Admin'), async (_, res) => {
+app.get('/users', authRequired, roleRequired('Super Admin', 'System Admin'), async (_, res) => {
   const rows = await query(
     `SELECT u.id, u.nik, u.email, u.phone, u.role_id, r.name AS role,
             u.employee_id, e.name AS employee_name, d.name AS department,
@@ -2044,10 +2044,14 @@ app.get('/users', authRequired, roleRequired('Super Admin'), async (_, res) => {
   res.json(rows)
 })
 
-app.post('/users', authRequired, roleRequired('Super Admin'), async (req, res) => {
+app.post('/users', authRequired, roleRequired('Super Admin', 'System Admin'), async (req, res) => {
   const { nik, password, role_id, employee_id, email, phone } = req.body
   if (!nik || !password || !role_id) {
     return res.status(400).json({ message: 'NIK, password, dan role_id wajib diisi' })
+  }
+  const [targetRole] = await query('SELECT name FROM roles WHERE id = ?', [role_id])
+  if (targetRole?.name === 'Super Admin' && req.user.role !== 'Super Admin') {
+    return res.status(403).json({ message: 'Hanya Super Admin yang dapat menetapkan role Super Admin' })
   }
   const hash = await bcrypt.hash(password, 10)
   try {
@@ -2065,11 +2069,17 @@ app.post('/users', authRequired, roleRequired('Super Admin'), async (req, res) =
   }
 })
 
-app.put('/users/:id', authRequired, roleRequired('Super Admin'), async (req, res) => {
+app.put('/users/:id', authRequired, roleRequired('Super Admin', 'System Admin'), async (req, res) => {
   const { id } = req.params
   const { role_id, employee_id, email, phone, is_active } = req.body
   const existing = await query('SELECT * FROM users WHERE id = ?', [id])
   if (existing.length === 0) return res.status(404).json({ message: 'User tidak ditemukan' })
+  if (role_id !== undefined) {
+    const [targetRole] = await query('SELECT name FROM roles WHERE id = ?', [role_id])
+    if (targetRole?.name === 'Super Admin' && req.user.role !== 'Super Admin') {
+      return res.status(403).json({ message: 'Hanya Super Admin yang dapat menetapkan role Super Admin' })
+    }
+  }
   await query(
     `UPDATE users SET role_id=COALESCE(?,role_id), employee_id=COALESCE(?,employee_id),
      email=COALESCE(?,email), phone=COALESCE(?,phone), is_active=COALESCE(?,is_active)
@@ -2088,7 +2098,7 @@ app.put('/users/:id/password', authRequired, async (req, res) => {
   const { id } = req.params
   const { oldPassword, newPassword } = req.body
 
-  if (req.user.sub !== Number(id) && req.user.role !== 'Super Admin') {
+  if (req.user.sub !== Number(id) && !['Super Admin', 'System Admin'].includes(req.user.role)) {
     return res.status(403).json({ message: 'Anda hanya dapat mengubah password sendiri' })
   }
 
@@ -2358,7 +2368,7 @@ app.get('/company-settings', authRequired, async (req, res) => {
   res.json(settings)
 })
 
-app.put('/company-settings', authRequired, roleRequired('Super Admin', 'HRD'), async (req, res) => {
+app.put('/company-settings', authRequired, roleRequired('Super Admin', 'HRD', 'System Admin'), async (req, res) => {
   const { settings } = req.body
   if (!settings || typeof settings !== 'object') {
     return res.status(400).json({ message: 'Format settings tidak valid' })

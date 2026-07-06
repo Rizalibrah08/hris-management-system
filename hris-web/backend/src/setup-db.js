@@ -46,7 +46,7 @@ async function run() {
 
   // === MASTER DATA ===
 
-  const roles = ['Super Admin', 'HRD', 'Finance', 'Manager', 'Employee']
+  const roles = ['Super Admin', 'System Admin', 'HRD', 'Finance', 'Manager', 'Employee']
   for (const name of roles) {
     await conn.execute('INSERT INTO roles(name) VALUES (?)', [name])
   }
@@ -63,7 +63,7 @@ async function run() {
     'Data Analyst', 'Product Manager', 'Legal Counsel', 'UI/UX Designer',
     'DevOps Engineer', 'HR Admin', 'Recruitment Specialist', 'Accountant',
     'Tax Specialist', 'Content Writer', 'SEO Specialist', 'Admin Staff',
-    'IT Support Specialist', 'Junior Software Engineer', 'Graphic Designer',
+    'IT Support Specialist', 'IT Administrator', 'Junior Software Engineer', 'Graphic Designer',
   ]
   for (const name of positions) {
     await conn.execute('INSERT INTO positions(name) VALUES (?)', [name])
@@ -101,6 +101,7 @@ async function run() {
     ['EMP-20220201-002', 'HRD', 'HRD Manager', 'HRD', 'HR Manager', 'hrd@hris.local', '2022-02-01'],
     ['EMP-20220301-003', 'Finance', 'Finance Manager', 'Finance', 'Finance Manager', 'finance@hris.local', '2022-03-01'],
     ['EMP-20220401-004', 'Manager', 'Engineering Manager', 'Engineering', 'Engineering Manager', 'manager@hris.local', '2022-04-01'],
+    ['EMP-20220501-005', 'System Admin', 'IT Administrator', 'IT Support', 'IT Administrator', 'sysadmin@hris.local', '2022-05-01'],
   ]
   for (const [nik, roleName, empName, deptName, posName, email, joinDate] of adminUsers) {
     // Create employee record first (permanent employees, no contract_end)
@@ -138,7 +139,7 @@ async function run() {
   await conn.end()
   console.log(`\nDatabase "${database}" siap (${host}:${port})`)
   console.log(`  Master: ${roles.length} roles, ${departments.length} dept, ${positions.length} posisi, ${leaveTypes.length} jenis cuti, ${components.length} komponen payroll`)
-  console.log(`  Admin Users: EMP-20220101-001 (Super Admin), EMP-20220201-002 (HRD), EMP-20220301-003 (Finance), EMP-20220401-004 (Manager)`)
+  console.log(`  Admin Users: EMP-20220101-001 (Super Admin), EMP-20220501-005 (System Admin), EMP-20220201-002 (HRD), EMP-20220301-003 (Finance), EMP-20220401-004 (Manager)`)
   console.log(`  Password: admin123`)
   console.log(`\n  Import karyawan via Excel template di templates/employee-import-template.xlsx`)
 }

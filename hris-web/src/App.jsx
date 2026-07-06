@@ -82,6 +82,9 @@ function App() {
     if (role === 'Super Admin') {
       keys.push('role')
     }
+    if (role === 'System Admin') {
+      keys.push('karyawan', 'laporan', 'masterdata', 'pengaturan', 'role')
+    }
     return [...new Set(keys)]
       .sort((a, b) => order.indexOf(a) - order.indexOf(b))
       .map(k => menuByKey[k])
@@ -442,13 +445,13 @@ function App() {
         </header>
 
         {activePage === 'dashboard' && <Dashboard />}
-        {activePage === 'karyawan' && ['HRD', 'Super Admin'].includes(role) && <Karyawan />}
+        {activePage === 'karyawan' && ['HRD', 'Super Admin', 'System Admin'].includes(role) && <Karyawan />}
         {activePage === 'absensi' && ['HRD', 'Super Admin'].includes(role) && <Absensi />}
         {activePage === 'cuti' && ['HRD', 'Super Admin', 'Manager'].includes(role) && <Cuti />}
-        {activePage === 'role' && role === 'Super Admin' && <RoleManagement />}
+        {activePage === 'role' && ['Super Admin', 'System Admin'].includes(role) && <RoleManagement />}
         {activePage === 'slipgaji' && <SlipGaji />}
-        {activePage === 'masterdata' && ['HRD', 'Super Admin'].includes(role) && <MasterData />}
-        {activePage === 'pengaturan' && ['HRD', 'Super Admin'].includes(role) && <Pengaturan />}
+        {activePage === 'masterdata' && ['HRD', 'Super Admin', 'System Admin'].includes(role) && <MasterData />}
+        {activePage === 'pengaturan' && ['HRD', 'Super Admin', 'System Admin'].includes(role) && <Pengaturan />}
         {activePage === 'payroll' && ['HRD', 'Finance', 'Super Admin'].includes(role) && (
           <FeaturePages
             activePage={activePage}
@@ -483,7 +486,7 @@ function App() {
             loadingReports={loadingReports}
           />
         )}
-        {activePage === 'laporan' && ['HRD', 'Finance', 'Super Admin'].includes(role) && (
+        {activePage === 'laporan' && ['HRD', 'Finance', 'Super Admin', 'System Admin'].includes(role) && (
           <FeaturePages
             activePage={activePage}
             report={report}
