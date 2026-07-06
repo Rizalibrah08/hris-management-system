@@ -42,9 +42,7 @@ export default function DashboardScreen() {
 
   const clockInInfo = dashboard?.todayClockIn;
   const employeeName = user?.employeeName || user?.nik || 'Employee';
-  const totalEmployees = dashboard?.totalEmployees || 0;
-  const attendanceRate = dashboard?.attendanceRate || 0;
-  const pendingLeave = dashboard?.pendingLeave || 0;
+
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -86,23 +84,7 @@ export default function DashboardScreen() {
           <Ionicons name="time" size={50} color="#FFFFFF" style={{ opacity: 0.8 }} />
         </View>
 
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Ionicons name="people" size={24} color="#8B5CF6" />
-            <Text style={styles.statValue}>{totalEmployees}</Text>
-            <Text style={styles.statLabel}>Karyawan</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Ionicons name="checkmark-done" size={24} color="#10B981" />
-            <Text style={styles.statValue}>{attendanceRate}%</Text>
-            <Text style={styles.statLabel}>Kehadiran</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Ionicons name="document-text" size={24} color="#F59E0B" />
-            <Text style={styles.statValue}>{pendingLeave}</Text>
-            <Text style={styles.statLabel}>Cuti Pending</Text>
-          </View>
-        </View>
+
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Attendance Hari Ini</Text>
@@ -186,10 +168,7 @@ const styles = StyleSheet.create({
   bannerTextContainer: { flex: 1 },
   bannerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: 'bold', marginBottom: 4 },
   bannerSubtitle: { color: '#EDEBFE', fontSize: 13 },
-  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  statCard: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 12, padding: 14, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
-  statValue: { fontSize: 20, fontWeight: 'bold', color: '#111827', marginTop: 4 },
-  statLabel: { fontSize: 11, color: '#6B7280', marginTop: 2 },
+
   card: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
   cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#111827', marginBottom: 16 },
   illustrationContainer: { alignItems: 'center' },
